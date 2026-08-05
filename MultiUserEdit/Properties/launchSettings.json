@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "MultiUserEdit": {
+      "commandName": "Project"
+    },
+    "プロファイル 1": {
+      "commandName": "Executable",
+      "executablePath": "C:\\ドキュメント\\YukkuriMovieMaker_v4_Lite_Plugin\\YukkuriMovieMaker.exe"
+    }
+  }
+}

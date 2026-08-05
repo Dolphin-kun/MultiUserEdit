@@ -1,0 +1,112 @@
+<UserControl x:Class="MultiUserEdit.Views.RulesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="500" d:DesignWidth="400">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="12">
+
+            <!-- ── 【ホスト用パネル (IsHost = True)】 ───────────────────────── -->
+            <StackPanel Visibility="{Binding IsHost, Converter={StaticResource BoolToVisConverter}}">
+                <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="操作権限ルール設定 (Host管理)" FontWeight="Bold" FontSize="14" />
+                        <TextBlock Text="全体デフォルトルールを設定します。特定の個別ユーザーのルールを変更する場合は『ホーム』画面の参加者一覧から鉛筆ボタンをクリックしてください。" FontSize="11" Opacity="0.8" TextWrapping="Wrap" Margin="0,4,0,0" LineHeight="15" />
+                    </StackPanel>
+                </Border>
+
+                <!-- デフォルトルール一括設定 -->
+                <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" CornerRadius="4" Padding="12">
+                    <StackPanel>
+                        <TextBlock Text="全体デフォルト権限" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
+
+                        <!-- 4段階プリセット -->
+                        <StackPanel Margin="0,0,0,10">
+                            <RadioButton x:Name="GlobalFullRadio" Content="フル編集 (全操作を許可)" GroupName="GlobalPresetGroup" Checked="OnGlobalPresetChecked" Cursor="Hand" Margin="0,3" />
+                            <RadioButton x:Name="GlobalStandardRadio" Content="標準編集 (シーン削除等の操作制限)" GroupName="GlobalPresetGroup" Checked="OnGlobalPresetChecked" Cursor="Hand" Margin="0,3" />
+                            <RadioButton x:Name="GlobalReadOnlyRadio" Content="閲覧専用 (編集不可・閲覧のみ)" GroupName="GlobalPresetGroup" Checked="OnGlobalPresetChecked" Cursor="Hand" Margin="0,3" />
+                            <RadioButton x:Name="GlobalLiveMirrorRadio" Content="ライブミラーリング (ホスト画面・再生完全同期)" GroupName="GlobalPresetGroup" Checked="OnGlobalPresetChecked" Cursor="Hand" Margin="0,3" />
+                        </StackPanel>
+
+                        <Separator Margin="0,4,0,10" />
+
+                        <!-- 詳細カスタマイズ -->
+                        <TextBlock Text="詳細ルールのカスタマイズ" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
+                        <CheckBox x:Name="GlobalAddItemsCheck" Content="アイテムの追加を許可" Cursor="Hand" Margin="0,3" />
+                        <CheckBox x:Name="GlobalMoveItemsCheck" Content="アイテムの移動・サイズ変更を許可" Cursor="Hand" Margin="0,3" />
+                        <CheckBox x:Name="GlobalDeleteItemsCheck" Content="アイテムの削除を許可" Cursor="Hand" Margin="0,3" />
+                        <CheckBox x:Name="GlobalEditPropsCheck" Content="プロパティの編集を許可" Cursor="Hand" Margin="0,3" />
+                        <CheckBox x:Name="GlobalManageScenesCheck" Content="シーン（タイムライン）の作成・削除を許可" Cursor="Hand" Margin="0,3" />
+                        <CheckBox x:Name="GlobalSyncSeekCheck" Content="ホストのシーク位置・画面に自動追従する" Cursor="Hand" Margin="0,3" />
+
+                        <Button Content="全体ルールを全参加者に適用" Click="OnApplyGlobalRulesClick" Cursor="Hand" Height="30" Margin="0,16,0,0" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+
+            <!-- ── 【ゲスト用閲覧パネル (IsHost = False)】 ─────────────────── -->
+            <StackPanel x:Name="GuestPanel">
+                <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="現在の操作権限ルール" FontWeight="Bold" FontSize="14" />
+                        <TextBlock Text="ホストによって設定されているあなたの操作権限ステータスです。" FontSize="11" Opacity="0.8" TextWrapping="Wrap" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" CornerRadius="4" Padding="12">
+                    <StackPanel>
+                        <!-- 権限レベル表示 -->
+                        <Grid Margin="0,0,0,10">
+                            <TextBlock Text="現在の権限レベル:" FontSize="12" Opacity="0.8" VerticalAlignment="Center" />
+                            <TextBlock x:Name="GuestLevelText" Text="フル編集" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+
+                        <Separator Margin="0,0,0,10" />
+
+                        <!-- 各操作ごとの許可ステータスリスト -->
+                        <StackPanel Margin="0,2">
+                            <Grid Margin="0,4">
+                                <TextBlock Text="・アイテムの追加" FontSize="12" />
+                                <TextBlock x:Name="GuestAddText" Text="許可" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right" />
+                            </Grid>
+
+                            <Grid Margin="0,4">
+                                <TextBlock Text="・アイテムの移動・リサイズ" FontSize="12" />
+                                <TextBlock x:Name="GuestMoveText" Text="許可" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right" />
+                            </Grid>
+
+                            <Grid Margin="0,4">
+                                <TextBlock Text="・アイテムの削除" FontSize="12" />
+                                <TextBlock x:Name="GuestDeleteText" Text="許可" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right" />
+                            </Grid>
+
+                            <Grid Margin="0,4">
+                                <TextBlock Text="・パラメータ・プロパティ編集" FontSize="12" />
+                                <TextBlock x:Name="GuestPropsText" Text="許可" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right" />
+                            </Grid>
+
+                            <Grid Margin="0,4">
+                                <TextBlock Text="・シーン（タイムライン）操作" FontSize="12" />
+                                <TextBlock x:Name="GuestManageScenesText" Text="許可" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right" />
+                            </Grid>
+
+                            <Grid Margin="0,4">
+                                <TextBlock Text="・ホスト画面シーク同期" FontSize="12" />
+                                <TextBlock x:Name="GuestSyncSeekText" Text="オフ" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right" />
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

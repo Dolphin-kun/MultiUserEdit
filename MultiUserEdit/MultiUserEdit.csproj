@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+
+		<Version>1.0.0</Version>
+
+		<!--Pdb内にソースコードのフルパスを含めない-->
+		<RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</RepoRoot>
+		<PathMap>$(RepoRoot)=.</PathMap>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="Newtonsoft.Json">
+		  <HintPath>$(YMM4DirPath)Newtonsoft.Json.dll</HintPath>
+		</Reference>
+		<Reference Include="YukkuriMovieMaker">
+			<HintPath>$(YMM4DirPath)YukkuriMovieMaker.dll</HintPath>
+		</Reference>
+		<Reference Include="YukkuriMovieMaker.Controls">
+			<HintPath>$(YMM4DirPath)YukkuriMovieMaker.Controls.dll</HintPath>
+		</Reference>
+		<Reference Include="YukkuriMovieMaker.Plugin">
+			<HintPath>$(YMM4DirPath)YukkuriMovieMaker.Plugin.dll</HintPath>
+		</Reference>
+		<Reference Include="ReactiveProperty">
+			<HintPath>$(YMM4DirPath)ReactiveProperty.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+	</ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="mkdir &quot;$(YMM4DirPath)user\plugin\$(ProjectName)&quot; &gt; NUL 2&gt;&amp;1&#xD;&#xA;copy &quot;$(TargetPath)&quot; &quot;$(YMM4DirPath)user\plugin\$(ProjectName)\&quot;" />
+		<Exec Command="mkdir &quot;$(SubYMM4DirPath)user\plugin\$(ProjectName)&quot; &gt; NUL 2&gt;&amp;1&#xD;&#xA;copy &quot;$(TargetPath)&quot; &quot;$(SubYMM4DirPath)user\plugin\$(ProjectName)\&quot;" />
+	</Target>
+</Project>
