@@ -1,7 +1,6 @@
 using Newtonsoft.Json;
 using MultiUserEdit.Commons.Events;
 using MultiUserEdit.ViewModels;
-using System.IO;
 
 namespace MultiUserEdit.Commons.EventHandlers
 {
@@ -17,18 +16,14 @@ namespace MultiUserEdit.Commons.EventHandlers
 
             try
             {
-                JsonConvert.PopulateObject(editEvent.ItemJson, item, ItemSerializerOptions.Default);
-
-                var currentPath = MediaFileResolver.GetFilePath(item);
-                if (!string.IsNullOrEmpty(currentPath) && !File.Exists(currentPath))
-                {
-                    var resolvedPath = MediaFileResolver.ResolveLocalTempPath(currentPath);
-                    MediaFileResolver.SetFilePath(item, resolvedPath);
-                }
+                // 生きた（タイムラインに表示中の）アイテムへ直接PopulateObjectする前に、JSON文字列の段階で
+                // ファイル名をローカルの解決済み絶対パスへ置き換えておく。PopulateObject後に直す方式だと、
+                // その一瞬だけ壊れたファイル名だけの値がUIへ反映されてしまうため。
+                var itemJson = MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, item, editEvent.MediaFileNames);
+                JsonConvert.PopulateObject(itemJson, item, ItemSerializerOptions.Default);
 
                 CharacterResolver.TryResolveCharacter(item);
                 SceneResolver.ResolveSceneId(item, viewModel.Scenes);
-                viewModel.UpdateItemJsonCache(item);
             }
             catch { }
         }

@@ -30,8 +30,8 @@ namespace MultiUserEdit.Commons
             for (int i = 0; i < count; i++)
             {
                 var child = VisualTreeHelper.GetChild(parent, i);
-                var name = child.GetType().FullName ?? child.GetType().Name;
-                if (name == typeName) return child;
+                var type = child.GetType();
+                if (type.Name == typeName || type.FullName == typeName) return child;
 
                 var result = FindVisualChildByTypeName(child, typeName);
                 if (result != null) return result;

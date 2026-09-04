@@ -3,6 +3,7 @@ using MultiUserEdit.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 using YukkuriMovieMaker.Settings;
+using YukkuriMovieMaker.Views;
 
 namespace MultiUserEdit.Views
 {
@@ -46,9 +47,10 @@ namespace MultiUserEdit.Views
             var parentWindow = Window.GetWindow(this);
             viewModel.AdornerManager?.AttachAdorner(viewModel, parentWindow);
 
-            var previewView = VisualTreeHelperExtensions.FindVisualChildByTypeName(parentWindow, "YukkuriMovieMaker.Views.PreviewView");
-            var previewVm = (previewView as FrameworkElement)?.DataContext;
-            var isPlayingProp = previewVm?.GetType().GetProperty("IsPlaying", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            // PreviewViewModel は非公開型で IsPlaying を公開する API が無いためリフレクション参照が必要。
+            // ただしビジュアルツリー探索とGetProperty解決は毎フレーム行うと非常に重いので、初回のみ実施してキャッシュする。
+            var previewVm = (VisualTreeHelperExtensions.FindVisualChild<PreviewView>(parentWindow) as FrameworkElement)?.DataContext;
+            var isPlayingProp = previewVm?.GetType().GetProperty("IsPlaying");
 
             bool GetCurrentPlaying()
             {

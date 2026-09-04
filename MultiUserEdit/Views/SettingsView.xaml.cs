@@ -10,5 +10,11 @@ namespace MultiUserEdit.Views
             Resources.Add("EnumToBoolConverter", new EnumToBoolConverter());
             InitializeComponent();
         }
+
+        // 入力欄がホイールを吸ってしまい、設定画面全体のスクロールが止まるのを防ぐ
+        private void OnInputPreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+        {
+            Behaviors.MouseWheelRedirector.Redirect(sender, e);
+        }
     }
 }

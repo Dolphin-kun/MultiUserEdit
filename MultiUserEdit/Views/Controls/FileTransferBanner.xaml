@@ -10,7 +10,7 @@
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
     </UserControl.Resources>
 
-    <Grid Visibility="{Binding IsTransferring, Converter={StaticResource BoolToVisConverter}}">
+    <Grid x:Name="RootGrid" Visibility="{Binding IsTransferring, Converter={StaticResource BoolToVisConverter}}">
         <Border x:Name="BannerBorder" 
                 Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}" 
                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" 

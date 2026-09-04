@@ -3,13 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:converters="clr-namespace:MultiUserEdit.Views.Converters"
-             mc:Ignorable="d" 
+             xmlns:icons="clr-namespace:YukkuriMovieMaker.Resources.Icons;assembly=YukkuriMovieMaker.Plugin"
+             mc:Ignorable="d"
              d:DesignHeight="500" d:DesignWidth="400">
-    
+
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
-        <converters:RoleToPencilVisibilityConverter x:Key="RoleToPencilVisConverter" />
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -54,7 +53,7 @@
                     <!-- ホスト: ルーム作成 -->
                     <Button Command="{Binding CreateRoomCommand}" Cursor="Hand" Height="32" Margin="0,0,0,10">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Path Data="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" />
+                            <Path Data="{DynamicResource {x:Static icons:GeometryKeys.Plus}}" Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" />
                             <TextBlock Text="新しいルームを作成" VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
@@ -69,12 +68,14 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
-                        <TextBox Text="{Binding InputRoomId, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="6,4" FontSize="12" VerticalContentAlignment="Center" Margin="0,0,6,0" />
-                        <Button Grid.Column="1" Command="{Binding JoinRoomCommand}" Cursor="Hand" Content="参加" Width="60" Height="28" />
+                        <PasswordBox x:Name="InputRoomIdPasswordBox" PasswordChanged="OnInputRoomIdPasswordChanged"
+                                     PreviewMouseWheel="OnInputPreviewMouseWheel"
+                                     Height="28" Padding="6,4" FontSize="12" VerticalContentAlignment="Center" Margin="0,0,6,0" />
+                        <Button Grid.Column="1" Command="{Binding JoinRoomCommand}" Click="OnJoinRoomClick" Cursor="Hand" Content="参加" Width="60" Height="28" />
                     </Grid>
                     <Button Command="{Binding JoinFromClipboardCommand}" Cursor="Hand" Padding="6,4" Margin="0,4,0,0" HorizontalAlignment="Right">
                         <StackPanel Orientation="Horizontal">
-                            <Path Data="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0" />
+                            <Path Data="{DynamicResource {x:Static icons:GeometryKeys.ContentCopy}}" Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0" />
                             <TextBlock Text="クリップボードのリンクから参加" FontSize="11" />
                         </StackPanel>
                     </Button>
@@ -116,18 +117,12 @@
                                         
                                         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Role}" FontSize="11" Opacity="0.7" VerticalAlignment="Center" Margin="0,0,6,0" />
-                                            <!-- ホストのみ、かつ相手がゲストの時だけ表示される権限編集用鉛筆ボタン -->
-                                            <Button Click="OnEditParticipantPermissionClick" 
-                                                    Cursor="Hand" Background="Transparent" BorderThickness="0" Padding="4,2">
-                                                <Button.Visibility>
-                                                    <MultiBinding Converter="{StaticResource RoleToPencilVisConverter}">
-                                                        <Binding Path="DataContext.IsHost" RelativeSource="{RelativeSource AncestorType=UserControl}" />
-                                                        <Binding Path="Role" />
-                                                    </MultiBinding>
-                                                </Button.Visibility>
-                                                <Path Data="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z" 
-                                                      Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" 
-                                                      Width="11" Height="11" Stretch="Uniform" />
+                                            <!-- ホスト・ゲストを問わず表示するメニューボタン（プロフィール／権限） -->
+                                            <Button Click="OnParticipantMenuClick"
+                                                    Cursor="Hand" Background="Transparent" BorderThickness="0" Padding="4,2" ToolTip="ユーザー情報を開く">
+                                                <Path Data="{DynamicResource {x:Static icons:GeometryKeys.DotsVertical}}"
+                                                      Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
+                                                      Width="13" Height="13" Stretch="Uniform" />
                                             </Button>
                                         </StackPanel>
                                     </Grid>
@@ -146,23 +141,38 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                             <Button Command="{Binding CopyRoomIdCommand}" Cursor="Hand" Padding="6,3" Margin="0,0,4,0">
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z" Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0" />
+                                    <Path Data="{DynamicResource {x:Static icons:GeometryKeys.ContentCopy}}" Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0" />
                                     <TextBlock Text="IDコピー" FontSize="11" />
                                 </StackPanel>
                             </Button>
                             <Button Command="{Binding CopyInviteLinkCommand}" Cursor="Hand" Padding="6,3">
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0" />
+                                    <Path Data="{DynamicResource {x:Static icons:GeometryKeys.LinkVariant}}" Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0" />
                                     <TextBlock Text="招待リンクコピー" FontSize="11" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>
                     </Grid>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,4,0,10">
-                        <TextBlock Text="ルームID: " FontSize="12" Opacity="0.8" />
-                        <TextBlock Text="{Binding RoomId}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="220" />
-                    </StackPanel>
+                    <Grid Margin="0,4,0,10" Visibility="{Binding IsConnected, Converter={StaticResource BoolToVisConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <TextBlock Text="ルームID: " FontSize="12" Opacity="0.8" VerticalAlignment="Center" />
+                            <TextBlock x:Name="RoomIdMaskedText" Text="••••••••••••••••" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Name="RoomIdRevealedText" Text="{Binding RoomId}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="150" VerticalAlignment="Center" Visibility="Collapsed" />
+                        </StackPanel>
+
+                        <Button Grid.Column="1" x:Name="ToggleRoomIdVisibilityButton" Click="OnToggleRoomIdVisibilityClick"
+                                Cursor="Hand" Background="Transparent" BorderThickness="0" Padding="4,2" Margin="4,0,0,0" ToolTip="ルームIDの表示切り替え">
+                            <Path x:Name="RoomIdVisibilityIcon"
+                                  Data="{DynamicResource {x:Static icons:GeometryKeys.EyeOff}}"
+                                  Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}" Width="13" Height="13" Stretch="Uniform" />
+                        </Button>
+                    </Grid>
 
                     <!-- 切断ボタン -->
                     <Button Command="{Binding DisconnectCommand}" Cursor="Hand" Height="28" Content="切断する" />

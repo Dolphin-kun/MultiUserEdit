@@ -67,7 +67,45 @@ namespace MultiUserEdit.Commons
             }
         }
 
+        // 拡張子ブロック・送信確認ダイアログのみを行う（実際の転送は行わない）。
+        // 呼び出し側がイベント送信前に「この転送は実際に行われるか」を判定するために使う。
+        public bool ConfirmSend(string filePath)
+        {
+            if (!File.Exists(filePath)) return false;
+
+            if (!MultiUserEditSettings.Default.IsExtensionAllowed(filePath))
+            {
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    System.Windows.MessageBox.Show($"拡張子 [{Path.GetExtension(filePath)}] のファイルは共有設定で許可されていないため送信できません。\n(設定画面から共有可能な拡張子を変更できます)", "送信ブロック", System.Windows.MessageBoxButton.OK);
+                });
+                return false;
+            }
+
+            if (MultiUserEditSettings.Default.ConfirmBeforeFileSend)
+            {
+                bool confirmed = false;
+                var fileName = Path.GetFileName(filePath);
+                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+                {
+                    var result = System.Windows.MessageBox.Show($"素材ファイル「{fileName}」を他メンバーに送信してもよろしいですか？", "ファイル送信の確認", System.Windows.MessageBoxButton.YesNo);
+                    confirmed = (result == System.Windows.MessageBoxResult.Yes);
+                });
+                if (!confirmed) return false;
+            }
+
+            return true;
+        }
+
         public async Task SendFileAsync(string filePath, SessionClient sessionClient, Guid executorId)
+        {
+            if (!ConfirmSend(filePath)) return;
+            await TransferAsync(filePath, sessionClient, executorId);
+        }
+
+        // 送信確認済みのファイルをチャンク転送する。ConfirmSend を事前に済ませている呼び出し側は
+        // ダイアログを再表示させないためこちらを直接使う。
+        internal async Task TransferAsync(string filePath, SessionClient sessionClient, Guid executorId)
         {
             var fileName = Path.GetFileName(filePath);
             if (string.IsNullOrEmpty(fileName)) return;
@@ -138,8 +176,16 @@ namespace MultiUserEdit.Commons
 
         public void HandleTransferStart(FileTransferStartEvent evt, Guid localUserId)
         {
+            if (!MultiUserEditSettings.Default.IsExtensionAllowed(evt.FileName))
+            {
+                Debug.WriteLine($"[MultiUserEdit] Security Block: Rejected file transfer with disallowed extension: {evt.FileName}");
+                return;
+            }
+
             var finalPath = Path.Combine(GetSaveDirectory(), evt.FileName);
-            var tempPath = finalPath + ".tmp";
+            // tempPathはTransferId基準にして、同名ファイルの転送が同時に走っても書き込み中のバッファが
+            // 衝突しないようにする（同じ動画を複数アイテムへ同時に送った場合等）
+            var tempPath = Path.Combine(GetSaveDirectory(), $"{evt.TransferId}.tmp");
 
             incomingTransfers[evt.TransferId] = new IncomingTransfer(evt.FileName, finalPath, tempPath, evt.TotalChunks);
             activeDownloads[evt.TransferId] = new FileTask
@@ -190,11 +236,11 @@ namespace MultiUserEdit.Commons
                     }
                 }
 
-                if (File.Exists(transfer.SavePath))
-                {
-                    try { File.Delete(transfer.SavePath); } catch { }
-                }
-                File.Move(transfer.TempPath, transfer.SavePath);
+                // Delete→Moveの2段階だと、その間だけSavePathにファイルが存在しない瞬間ができてしまい、
+                // ちょうどそのタイミングでYMM4がサムネイル再読み込みを行うとFileNotFoundExceptionになる
+                // （アイテムを連続して動かしているとサムネイル再読み込みの頻度が上がり発生しやすくなる）。
+                // overwrite:trueで置き換えれば、この隙間なくアトミックに入れ替えられる。
+                File.Move(transfer.TempPath, transfer.SavePath, overwrite: true);
 
                 TransferCompleted?.Invoke(evt.TransferId.ToString(), transfer.SavePath);
             }

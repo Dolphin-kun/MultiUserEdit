@@ -11,6 +11,10 @@ namespace MultiUserEdit.Networking
         private ClientWebSocket? webSocket;
         private CancellationTokenSource? cts;
         private Task? receiveTask;
+        // ClientWebSocket.SendAsyncは同一インスタンスへの同時呼び出しを許容していない
+        // （複数の動画を同時に送信する等でチャンク送信が重なると1つ以上のタスクが例外になりうる）ため、
+        // 送信だけを直列化する
+        private readonly SemaphoreSlim sendLock = new(1, 1);
 
         private readonly string userId;
         private string? roomId;
@@ -20,6 +24,8 @@ namespace MultiUserEdit.Networking
 
         public event EventHandler<EditEvent>? EventReceived;
         public event Action? Disconnected;
+        public event Action? RoomNotFound;
+        public event Action<Guid, bool>? PeerDisconnected;
 
         public WebsocketProvider()
         {
@@ -90,7 +96,16 @@ namespace MultiUserEdit.Networking
             var json = JsonSerializer.Serialize(payload);
             var bytes = Encoding.UTF8.GetBytes(json);
 
-            await webSocket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None);
+            await sendLock.WaitAsync();
+            try
+            {
+                if (webSocket?.State != WebSocketState.Open) return;
+                await webSocket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None);
+            }
+            finally
+            {
+                sendLock.Release();
+            }
         }
 
         private async Task ReceiveLoopAsync()
@@ -102,6 +117,7 @@ namespace MultiUserEdit.Networking
             var token = source.Token;
             var buffer = new byte[4 * 1024];
             bool serverDisconnected = false;
+            bool roomNotFound = false;
 
             try
             {
@@ -148,11 +164,22 @@ namespace MultiUserEdit.Networking
                             dataProp.TryGetProperty("type", out var typeProp))
                         {
                             var typeStr = typeProp.GetString();
-                            if (senderId == "server" && (typeStr == "player_disconnected" || typeStr == "room_closed"))
+                            if (senderId == "server" && typeStr == "room_not_found")
                             {
-                                // ルーム解散通知またはホスト切断通知が届いた場合は全メンバー自動切断
-                                serverDisconnected = true;
+                                // 指定されたルームにホストが一度も接続していない（存在しない）ことをサーバーが通知
+                                roomNotFound = true;
                                 return;
+                            }
+                            if (senderId == "server" && typeStr == "peer_disconnected")
+                            {
+                                // 他ユーザーがアプリ側の離脱通知を送れないまま切断した場合に、サーバーが代わりに通知する
+                                if (dataProp.TryGetProperty("userId", out var userIdProp) &&
+                                    Guid.TryParse(userIdProp.GetString(), out var peerUserId))
+                                {
+                                    var peerIsHost = dataProp.TryGetProperty("isHost", out var isHostProp) && isHostProp.GetBoolean();
+                                    PeerDisconnected?.Invoke(peerUserId, peerIsHost);
+                                }
+                                continue;
                             }
                         }
 
@@ -192,7 +219,11 @@ namespace MultiUserEdit.Networking
             }
             finally
             {
-                if (serverDisconnected)
+                if (roomNotFound)
+                {
+                    RoomNotFound?.Invoke();
+                }
+                else if (serverDisconnected)
                 {
                     Disconnected?.Invoke();
                 }

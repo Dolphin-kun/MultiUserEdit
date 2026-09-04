@@ -19,7 +19,7 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <TextBox Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" Height="28" Padding="6,4" FontSize="12" VerticalContentAlignment="Center" />
+                        <TextBox Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" PreviewMouseWheel="OnInputPreviewMouseWheel" Height="28" Padding="6,4" FontSize="12" VerticalContentAlignment="Center" />
                     </Grid>
                 </StackPanel>
             </Border>
@@ -41,7 +41,20 @@
                                      IsChecked="{Binding Source={x:Static settings:MultiUserEditSettings.Default}, Path=StorageMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static models:FileStorageMode.Storage}}"
                                      Cursor="Hand"
                                      FontSize="12" Margin="0,4" />
-                        <TextBlock Text="Tempフォルダに保存し、次回以降も高速読み込みします。" FontSize="10" Opacity="0.65" Margin="20,0,0,0" />
+                        <TextBlock Text="Tempフォルダに保存し、次回以降も高速読み込みします。" FontSize="10" Opacity="0.65" Margin="20,0,0,8" />
+
+                        <Separator Margin="0,8,0,8" />
+
+                        <CheckBox Content="素材ファイルを送信する前に確認メッセージを表示する" 
+                                  IsChecked="{Binding Source={x:Static settings:MultiUserEditSettings.Default}, Path=ConfirmBeforeFileSend}"
+                                  Cursor="Hand" FontSize="12" Margin="0,4" />
+                        <TextBlock Text="他のユーザーに動画・画像・音声等のファイルが自動送信される前に確認ダイアログを表示します。" FontSize="10" Opacity="0.65" Margin="20,0,0,8" TextWrapping="Wrap" />
+
+                        <TextBlock Text="共有可能なファイル拡張子 (カンマ区切り):" FontSize="12" FontWeight="SemiBold" Margin="0,6,0,4" />
+                        <TextBox Text="{Binding Source={x:Static settings:MultiUserEditSettings.Default}, Path=AllowedExtensions, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewMouseWheel="OnInputPreviewMouseWheel"
+                                 Height="28" Padding="6,4" FontSize="12" VerticalContentAlignment="Center" />
+                        <TextBlock Text="※未許可の拡張子 (.exe, .bat など) のファイルは転送されず自動ブロックされます。" FontSize="10" Opacity="0.65" Margin="0,4,0,0" TextWrapping="Wrap" />
                     </StackPanel>
                 </StackPanel>
             </Border>

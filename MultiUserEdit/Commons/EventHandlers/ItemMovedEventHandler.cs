@@ -19,7 +19,6 @@ namespace MultiUserEdit.Commons.EventHandlers
 
             timeline.ResolveItemCollision(item);
             timeline.RefreshTimelineLengthAndMaxLayer();
-            viewModel.UpdateItemJsonCache(item);
         }
     }
 }

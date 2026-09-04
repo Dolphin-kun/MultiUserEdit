@@ -30,39 +30,50 @@ namespace MultiUserEdit.Commons.EventHandlers
                     return;
                 }
 
-                var originalFilePath = MediaFileResolver.GetFilePath(item);
-
-                if (!string.IsNullOrEmpty(originalFilePath))
+                // 送信側でファイル名のみに差し替えられた参照を、受信側のローカル保存先パスへ差し替える。
+                // 画像系はプレースホルダーを即時生成して差し替えるが、動画・音声はMedia Foundationが
+                // プレースホルダーを拒否して未処理例外になるため、転送完了まで参照を空のままにする。
+                if (editEvent.MediaFileNames is { Count: > 0 })
                 {
-                    var targetSavePath = MediaFileResolver.ResolveLocalTempPath(originalFilePath);
+                    var requiresRealContainer = MediaFileResolver.RequiresRealMediaContainer(item);
 
-                    if (!File.Exists(targetSavePath))
+                    foreach (var mediaFileName in editEvent.MediaFileNames)
                     {
-                        var fileName = Path.GetFileName(targetSavePath);
+                        var targetSavePath = MediaFileResolver.ResolveLocalTempPath(mediaFileName);
 
-                        void onCompleted(string transferId, string savedPath)
+                        if (requiresRealContainer)
                         {
-                            if (Path.GetFileName(savedPath).Equals(fileName, StringComparison.OrdinalIgnoreCase))
-                            {
-                                viewModel.FileTransferCompleted -= onCompleted;
-
-                                System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
-                                {
-                                    viewModel.ExecuteRemoteAction(() =>
-                                    {
-                                        MediaFileResolver.SetFilePath(item, savedPath);
-                                        ItemIdManager.RegisterId(item, editEvent.ItemId);
-                                        timeline.TryAddItems([item], editEvent.Frame, editEvent.Layer, false);
-                                    });
-                                });
-                            }
+                            MediaFileResolver.ClearRealMediaFilePath(item);
+                        }
+                        else
+                        {
+                            MediaFileResolver.EnsurePlaceholderFile(targetSavePath);
+                            MediaFileResolver.ReplaceFilePath(item, mediaFileName, targetSavePath);
                         }
 
-                        viewModel.FileTransferCompleted += onCompleted;
-                        return;
-                    }
+                        // 動画・音声以外は既にReplaceFilePathで正しい最終パスになっている
+                        // （転送完了時は中身が差し替わるだけでパス自体は変わらない）ため、
+                        // 動画・音声（転送完了まで参照をnullにしている）の場合だけ完了を待つ
+                        if (requiresRealContainer)
+                        {
+                            var fileName = Path.GetFileName(targetSavePath);
 
-                    MediaFileResolver.SetFilePath(item, targetSavePath);
+                            void onCompleted(string transferId, string savedPath)
+                            {
+                                if (Path.GetFileName(savedPath).Equals(fileName, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    viewModel.FileTransferCompleted -= onCompleted;
+
+                                    System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+                                    {
+                                        viewModel.ExecuteRemoteAction(() => MediaFileResolver.SetFilePath(item, savedPath));
+                                    });
+                                }
+                            }
+
+                            viewModel.FileTransferCompleted += onCompleted;
+                        }
+                    }
                 }
 
                 ItemIdManager.RegisterId(item, editEvent.ItemId);

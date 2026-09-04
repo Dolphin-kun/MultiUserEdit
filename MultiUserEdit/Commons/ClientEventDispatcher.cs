@@ -28,6 +28,7 @@ namespace MultiUserEdit.Commons
             Register(new VideoInfoUpdatedEventHandler());
             Register(new PermissionUpdatedEventHandler());
             Register(new UserLeftEventHandler());
+            Register(new UserKickedEventHandler());
         }
 
         private void Register<TEvent>(IClientEventHandler<TEvent> handler)

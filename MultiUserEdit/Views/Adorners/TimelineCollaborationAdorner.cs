@@ -1,5 +1,5 @@
+using MultiUserEdit.Commons;
 using MultiUserEdit.Commons.Models;
-using MultiUserEdit.ViewModels;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
@@ -11,24 +11,24 @@ namespace MultiUserEdit.Views.Adorners
 {
     public class TimelineCollaborationAdorner : Adorner
     {
-        private readonly MultiUserEditViewModel _viewModel;
+        private readonly CollaborationSession _session;
         private readonly DispatcherTimer _refreshTimer;
 
-        public TimelineCollaborationAdorner(UIElement adornedElement, MultiUserEditViewModel viewModel)
+        public TimelineCollaborationAdorner(UIElement adornedElement, CollaborationSession session)
             : base(adornedElement)
         {
-            _viewModel = viewModel;
+            _session = session;
             IsHitTestVisible = false;
 
-            _viewModel.Participants.CollectionChanged += Participants_CollectionChanged;
+            _session.Participants.CollectionChanged += Participants_CollectionChanged;
 
-            foreach (var p in _viewModel.Participants)
+            foreach (var p in _session.Participants)
             {
                 p.PropertyChanged -= Participant_PropertyChanged;
                 p.PropertyChanged += Participant_PropertyChanged;
             }
 
-            _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+            _refreshTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
             _refreshTimer.Tick += (s, e) => InvalidateVisual();
             _refreshTimer.Start();
         }
@@ -66,8 +66,8 @@ namespace MultiUserEdit.Views.Adorners
         public void Detach()
         {
             _refreshTimer.Stop();
-            _viewModel.Participants.CollectionChanged -= Participants_CollectionChanged;
-            foreach (var p in _viewModel.Participants)
+            _session.Participants.CollectionChanged -= Participants_CollectionChanged;
+            foreach (var p in _session.Participants)
                 p.PropertyChanged -= Participant_PropertyChanged;
         }
 
@@ -75,22 +75,26 @@ namespace MultiUserEdit.Views.Adorners
         {
             base.OnRender(drawingContext);
 
-            if (_viewModel.FirstOrDefaultTimeline == null) return;
+            if (_session.FirstOrDefaultTimeline == null) return;
 
             double zoom = SettingsBase<YMMSettings>.Default.TimelineZoom;
             double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
             var typeface = new Typeface("Yu Gothic UI");
-            var localUserId = _viewModel.LocalUserId;
+            var localUserId = _session.LocalUserId;
 
-            var localTimelineIndex = _viewModel.Scenes?.Timelines.IndexOf(_viewModel.FirstOrDefaultTimeline) ?? 0;
+            var localTimelineIndex = _session.Scenes?.Timelines.IndexOf(_session.FirstOrDefaultTimeline) ?? 0;
 
-            foreach (var participant in _viewModel.Participants)
+            // フレーム位置はタイムライン内容の座標なので、横スクロール量を引いて画面上の座標へ変換する
+            double scrollX = GetTimelineHorizontalOffset();
+
+            foreach (var participant in _session.Participants)
             {
                 if (participant.UserId == localUserId) continue;
                 if (participant.Status == UserStatus.Away) continue;
                 if (participant.CurrentTimelineIndex != localTimelineIndex) continue;
 
-                double x = participant.CurrentFrame * zoom / 100.0;
+                double x = participant.CurrentFrame * zoom / 100.0 - scrollX;
+                if (x < 0 || x > RenderSize.Width) continue;
 
                 var brush = new SolidColorBrush(participant.ThemeColor);
                 brush.Freeze();
@@ -111,5 +115,33 @@ namespace MultiUserEdit.Views.Adorners
                 drawingContext.DrawText(text, new Point(x + 4, 4));
             }
         }
+
+        // YMM4のTimelineViewModelは横スクロール量を Viewport(Rect).X として公開しているが、
+        // その型はプラグインから参照できないアセンブリにあるためリフレクションで読み取る。
+        // ViewModelはシーンの切り替えで差し替わるため、インスタンスは保持せず毎回たどり直す
+        private double GetTimelineHorizontalOffset()
+        {
+            try
+            {
+                // 装飾対象からその祖先へ向かって、Viewportを持つDataContext（TimelineViewModel）を探す
+                DependencyObject? current = AdornedElement;
+                while (current != null)
+                {
+                    if (current is FrameworkElement { DataContext: { } dataContext })
+                    {
+                        var reactive = dataContext.GetType().GetProperty("Viewport")?.GetValue(dataContext);
+                        // ReactiveProperty<Rect> の実体型からValueを取る（インターフェース経由では見つからない）
+                        var valueProperty = reactive?.GetType().GetProperty("Value");
+                        if (valueProperty?.PropertyType == typeof(Rect))
+                            return valueProperty.GetValue(reactive) is Rect rect ? rect.X : 0;
+                    }
+
+                    current = VisualTreeHelper.GetParent(current);
+                }
+            }
+            catch { }
+
+            return 0;
+        }
     }
-}          
+}

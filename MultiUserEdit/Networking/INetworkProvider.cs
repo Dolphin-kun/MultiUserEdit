@@ -10,6 +10,8 @@ namespace MultiUserEdit.Networking
 
         event EventHandler<EditEvent> EventReceived;
         event Action Disconnected;
+        event Action RoomNotFound;
+        event Action<Guid, bool> PeerDisconnected;
 
         string LocalUserId { get; }
         string? RoomId { get; }

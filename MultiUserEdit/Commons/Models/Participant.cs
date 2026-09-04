@@ -8,8 +8,20 @@ namespace MultiUserEdit.Commons.Models
         private Guid userId;
         public Guid UserId { get => userId; set => Set(ref userId, value); }
 
+        // 接続ごとに変わるUserIdと違い、インストール単位で不変のID。
+        // プロジェクトへ保存する合計参加時間の集計キーとして使う。
+        private Guid profileId;
+        public Guid ProfileId { get => profileId; set => Set(ref profileId, value); }
+
         private string userName = string.Empty;
         public string UserName { get => userName; set => Set(ref userName, value); }
+
+        private string description = string.Empty;
+        public string Description { get => description; set => Set(ref description, value); }
+
+        // このセッションで参加した時刻。「編集時間」はここからの経過時間。
+        private DateTime joinedAt = DateTime.Now;
+        public DateTime JoinedAt { get => joinedAt; set => Set(ref joinedAt, value); }
 
         private UserRole role;
         public UserRole Role { get => role; set => Set(ref role, value); }

@@ -14,20 +14,35 @@ namespace MultiUserEdit.Commons
         private readonly Dictionary<IItem, ItemSubscription> itemSubscription = [];
         private readonly Dictionary<Timeline, HashSet<IItem>> timelineItemSnapshot = [];
         private readonly Dictionary<Timeline, HashSet<IItem>> timelineSelectedItemsSnapshot = [];
-        private readonly Dictionary<Guid, string> itemJsonCache = [];
+        private readonly Dictionary<Timeline, TimelineSubscription> timelineSubscriptions = [];
 
         public void RegisterTimeline(Timeline timeline, MultiUserEditViewModel viewModel)
         {
             if (timeline == null) return;
 
-            timeline.PropertyChanged -= (s, e) => OnTimelinePropertyChanged(timeline, e, viewModel);
-            timeline.PropertyChanged += (s, e) => OnTimelinePropertyChanged(timeline, e, viewModel);
+            // ラムダ式を都度生成して -= / += すると、生成のたびに別デリゲートになるため -= が空振りし、
+            // RegisterTimelineを呼ぶたび（パネルの表示切り替えやシーン切り替えのたび）に購読が
+            // 際限なく積み上がっていた。実際に登録したデリゲートを保持し、確実に解除してから登録し直す。
+            if (timelineSubscriptions.TryGetValue(timeline, out var existingSub))
+            {
+                timeline.PropertyChanged -= existingSub.TimelineHandler;
+                if (existingSub.VideoInfoHandler != null && timeline.VideoInfo != null)
+                {
+                    timeline.VideoInfo.PropertyChanged -= existingSub.VideoInfoHandler;
+                }
+            }
 
+            void timelineHandler(object? s, PropertyChangedEventArgs e) => OnTimelinePropertyChanged(timeline, e, viewModel);
+            timeline.PropertyChanged += timelineHandler;
+
+            PropertyChangedEventHandler? videoInfoHandler = null;
             if (timeline.VideoInfo != null)
             {
-                timeline.VideoInfo.PropertyChanged -= (s, e) => OnVideoInfoPropertyChanged(timeline, e, viewModel);
-                timeline.VideoInfo.PropertyChanged += (s, e) => OnVideoInfoPropertyChanged(timeline, e, viewModel);
+                videoInfoHandler = (s, e) => OnVideoInfoPropertyChanged(timeline, e, viewModel);
+                timeline.VideoInfo.PropertyChanged += videoInfoHandler;
             }
+
+            timelineSubscriptions[timeline] = new TimelineSubscription(timelineHandler, videoInfoHandler);
 
             if (!timelineItemSnapshot.ContainsKey(timeline))
             {
@@ -49,6 +64,16 @@ namespace MultiUserEdit.Commons
         {
             if (timeline == null) return;
 
+            if (timelineSubscriptions.TryGetValue(timeline, out var sub))
+            {
+                timeline.PropertyChanged -= sub.TimelineHandler;
+                if (sub.VideoInfoHandler != null && timeline.VideoInfo != null)
+                {
+                    timeline.VideoInfo.PropertyChanged -= sub.VideoInfoHandler;
+                }
+                timelineSubscriptions.Remove(timeline);
+            }
+
             foreach (var item in timeline.Items)
             {
                 UnsubscribeItem(item);
@@ -56,17 +81,6 @@ namespace MultiUserEdit.Commons
 
             timelineItemSnapshot.Remove(timeline);
             timelineSelectedItemsSnapshot.Remove(timeline);
-        }
-
-        public void UpdateItemJsonCache(IItem item)
-        {
-            try
-            {
-                var itemId = ItemIdManager.GetOrCreateId(item);
-                var json = Newtonsoft.Json.JsonConvert.SerializeObject(item, ItemSerializerOptions.Default);
-                itemJsonCache[itemId] = json;
-            }
-            catch { }
         }
 
         private void OnTimelinePropertyChanged(Timeline timeline, PropertyChangedEventArgs e, MultiUserEditViewModel viewModel)
@@ -120,6 +134,9 @@ namespace MultiUserEdit.Commons
             {
                 UnsubscribeItem(removed);
                 var itemId = ItemIdManager.GetOrCreateId(removed);
+                // スロットル状態はGuid基準で保持しているため、アイテム削除時に明示的に破棄しないと
+                // セッションを使い続けるほど際限なく蓄積してしまう
+                eventSender.ClearItemThrottleState(itemId);
                 _ = eventSender.SendItemRemovedAsync(itemId, timelineIndex);
             }
 
@@ -163,25 +180,20 @@ namespace MultiUserEdit.Commons
 
                 if (e.PropertyName == nameof(IItem.Frame) || e.PropertyName == nameof(IItem.Layer) || e.PropertyName == nameof(IItem.Length))
                 {
-                    _ = eventSender.SendItemMovedAsync(itemId, timelineIndex, item.Frame, item.Length, item.Layer);
+                    _ = eventSender.SendItemMovedThrottledAsync(itemId, timelineIndex, item.Frame, item.Length, item.Layer);
                 }
                 else
                 {
-                    var currentJson = Newtonsoft.Json.JsonConvert.SerializeObject(item, ItemSerializerOptions.Default);
-                    if (itemJsonCache.TryGetValue(itemId, out var cachedJson) && cachedJson == currentJson)
-                    {
-                        return;
-                    }
-
-                    itemJsonCache[itemId] = currentJson;
-                    _ = eventSender.SendItemUpdatedAsync(item, timelineIndex);
+                    // 変更前後でJSON全体を比較して同一なら送信を省く、という重複排除は
+                    // プロパティ変更のたびにフルシリアライズが走りUIスレッドを圧迫していた
+                    // （ドラッグ中は1秒間に何十回も発火しうる）。送信自体はスロットリング済みのため、
+                    // ここでは比較せず素通しする。
+                    _ = eventSender.SendItemUpdatedThrottledAsync(item, timelineIndex);
                 }
             }
 
             item.PropertyChanged += handler;
             itemSubscription[item] = new ItemSubscription(item, handler);
-
-            UpdateItemJsonCache(item);
         }
 
         private void UnsubscribeItem(IItem item)

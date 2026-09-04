@@ -15,32 +15,40 @@ namespace MultiUserEdit.Commons
         private Grid? timelineViewboxGrid;
         private CancellationTokenSource? attachCts;
         private DispatcherTimer? monitorTimer;
-        private MultiUserEditViewModel? currentViewModel;
+        private CollaborationSession? currentSession;
         private TimelineView? timelineViewReference;
         private Window? ownerWindowReference;
 
         public void SetTimelineViewReference(TimelineView timelineView)
         {
             timelineViewReference = timelineView;
-            if (currentViewModel != null)
-                AttachAdorner(currentViewModel, ownerWindowReference);
+            if (currentSession != null)
+                AttachAdorner(currentSession, ownerWindowReference);
         }
 
         public void AttachAdorner(MultiUserEditViewModel viewModel, Window? ownerWindow = null)
         {
-            currentViewModel = viewModel;
+            if (viewModel.CurrentSession != null)
+            {
+                AttachAdorner(viewModel.CurrentSession, ownerWindow);
+            }
+        }
+
+        public void AttachAdorner(CollaborationSession session, Window? ownerWindow = null)
+        {
+            currentSession = session;
             if (ownerWindow != null)
             {
                 ownerWindowReference = ownerWindow;
             }
 
-            Application.Current.Dispatcher.InvokeAsync(() =>
+            Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 attachCts?.Cancel();
                 DetachAdornerInternal();
 
                 attachCts = new CancellationTokenSource();
-                _ = TryAttachAsync(viewModel, attachCts.Token);
+                _ = TryAttachAsync(session, attachCts.Token);
 
                 StartMonitor();
             }, DispatcherPriority.Loaded);
@@ -48,10 +56,10 @@ namespace MultiUserEdit.Commons
 
         public void DetachAdorner()
         {
-            Application.Current.Dispatcher.InvokeAsync(() =>
+            Application.Current?.Dispatcher.InvokeAsync(() =>
             {
                 StopMonitor();
-                currentViewModel = null;
+                currentSession = null;
                 attachCts?.Cancel();
                 attachCts = null;
                 DetachAdornerInternal();
@@ -91,7 +99,7 @@ namespace MultiUserEdit.Commons
 
         private void MonitorTick(object? sender, EventArgs e)
         {
-            if (currentViewModel == null) { StopMonitor(); return; }
+            if (currentSession == null) { StopMonitor(); return; }
 
             if (collaborationAdorner != null && timelineViewboxGrid != null)
             {
@@ -101,7 +109,7 @@ namespace MultiUserEdit.Commons
                     DetachAdornerInternal();
                     attachCts?.Cancel();
                     attachCts = new CancellationTokenSource();
-                    _ = TryAttachAsync(currentViewModel, attachCts.Token);
+                    _ = TryAttachAsync(currentSession, attachCts.Token);
                 }
             }
 
@@ -109,11 +117,11 @@ namespace MultiUserEdit.Commons
             {
                 attachCts?.Cancel();
                 attachCts = new CancellationTokenSource();
-                _ = TryAttachAsync(currentViewModel, attachCts.Token);
+                _ = TryAttachAsync(currentSession, attachCts.Token);
             }
         }
 
-        private async Task TryAttachAsync(MultiUserEditViewModel viewModel, CancellationToken token)
+        private async Task TryAttachAsync(CollaborationSession session, CancellationToken token)
         {
             for (int i = 0; i < 30 && !token.IsCancellationRequested; i++)
             {
@@ -123,7 +131,7 @@ namespace MultiUserEdit.Commons
                     adornerLayer = AdornerLayer.GetAdornerLayer(timelineViewboxGrid);
                     if (adornerLayer != null)
                     {
-                        collaborationAdorner = new TimelineCollaborationAdorner(timelineViewboxGrid, viewModel);
+                        collaborationAdorner = new TimelineCollaborationAdorner(timelineViewboxGrid, session);
                         adornerLayer.Add(collaborationAdorner);
                         return;
                     }
@@ -151,7 +159,17 @@ namespace MultiUserEdit.Commons
 
             if (ownerWindowReference != null)
             {
-                var timelineView = VisualTreeHelperExtensions.FindVisualChildByTypeName(ownerWindowReference, "YukkuriMovieMaker.Views.TimelineView");
+                var timelineView = VisualTreeHelperExtensions.FindVisualChild<TimelineView>(ownerWindowReference);
+                if (timelineView != null)
+                {
+                    return VisualTreeHelperExtensions.FindElementByName<Grid>(timelineView, "viewboxGrid")
+                           ?? (timelineView as ContentControl)?.Content as Grid;
+                }
+            }
+
+            if (Application.Current?.MainWindow != null)
+            {
+                var timelineView = VisualTreeHelperExtensions.FindVisualChild<TimelineView>(Application.Current.MainWindow);
                 if (timelineView != null)
                 {
                     return VisualTreeHelperExtensions.FindElementByName<Grid>(timelineView, "viewboxGrid")
@@ -162,4 +180,4 @@ namespace MultiUserEdit.Commons
             return null;
         }
     }
-}       
+}

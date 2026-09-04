@@ -5,7 +5,8 @@
     },
     "プロファイル 1": {
       "commandName": "Executable",
-      "executablePath": "C:\\ドキュメント\\YukkuriMovieMaker_v4_Lite_Plugin\\YukkuriMovieMaker.exe"
+      "executablePath": "C:\\ドキュメント\\YukkuriMovieMaker_v4_Lite_Plugin\\YukkuriMovieMaker.exe",
+      "workingDirectory": "C:\\ドキュメント\\YukkuriMovieMaker_v4_Lite_Plugin"
     }
   }
 }

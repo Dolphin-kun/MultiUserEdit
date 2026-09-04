@@ -1,0 +1,117 @@
+<Window x:Class="MultiUserEdit.Views.UserProfileDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:icons="clr-namespace:YukkuriMovieMaker.Resources.Icons;assembly=YukkuriMovieMaker.Plugin"
+        Title="ユーザー情報" Height="440" Width="380"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        ShowInTaskbar="False">
+
+    <Window.Resources>
+        <!-- キックボタン以外のタブは幅を揃える -->
+        <Style x:Key="EqualWidthTabItemStyle" TargetType="TabItem">
+            <Setter Property="MinWidth" Value="92" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />  
+            <Setter Property="Cursor" Value="Hand" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ヘッダー: 名前・自己紹介・時間 -->
+        <StackPanel Grid.Row="0" Margin="14,12,14,10">
+            <StackPanel Orientation="Horizontal">
+                <Ellipse x:Name="ColorSwatch" Width="12" Height="12" VerticalAlignment="Center" Margin="0,0,8,0" />
+                <TextBlock x:Name="UserNameText" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis" MaxWidth="230" />
+                <Border x:Name="RoleBadge" Margin="8,0,0,0" Padding="6,1" CornerRadius="3" VerticalAlignment="Center"
+                        BorderThickness="1" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}">
+                    <TextBlock x:Name="RoleText" FontSize="10" Opacity="0.85" />
+                </Border>
+            </StackPanel>
+
+            <TextBlock x:Name="DescriptionText" FontSize="11" Opacity="0.8" TextWrapping="Wrap" Margin="20,4,0,0" />
+
+            <StackPanel Margin="20,10,0,0">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
+                    <Ellipse x:Name="StatusDot" Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,5,0" />
+                    <TextBlock x:Name="StatusLabel" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="編集時間: " FontSize="12" Opacity="0.75" />
+                    <TextBlock x:Name="EditDurationText" FontSize="12" FontWeight="SemiBold" />
+                </StackPanel>
+                <StackPanel x:Name="TotalDurationPanel" Orientation="Horizontal" Margin="0,3,0,0">
+                    <TextBlock Text="合計参加時間: " FontSize="12" Opacity="0.75" />
+                    <TextBlock x:Name="TotalDurationText" FontSize="12" FontWeight="SemiBold" />
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+
+        <Separator Grid.Row="1" Margin="0" />
+
+        <!-- タブ + キックボタン -->
+        <Grid Grid.Row="2" Margin="10,8,10,0">
+            <TabControl x:Name="Tabs" BorderThickness="1">
+                <TabItem x:Name="ProfileTab" Header="プロフィール" Style="{StaticResource EqualWidthTabItemStyle}"
+                         HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                    <StackPanel Margin="10,8,10,8">
+                        <TextBlock Text="表示名" FontSize="11" Opacity="0.75" Margin="0,0,0,3" />
+                        <TextBox x:Name="UserNameBox" Height="26" Padding="6,3" VerticalContentAlignment="Center" MaxLength="32" />
+
+                        <TextBlock Text="自己紹介" FontSize="11" Opacity="0.75" Margin="0,10,0,3" />
+                        <TextBox x:Name="DescriptionBox" Height="86" Padding="6,4" TextWrapping="Wrap"
+                                 AcceptsReturn="True" VerticalScrollBarVisibility="Auto" MaxLength="200" />
+
+                        <TextBlock x:Name="ReadOnlyNote" Text="他の参加者のプロフィールは編集できません。"
+                                   FontSize="10" Opacity="0.65" Margin="0,8,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+                </TabItem>
+
+                <TabItem x:Name="PermissionTab" Header="権限" Style="{StaticResource EqualWidthTabItemStyle}"
+                         HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel x:Name="PermissionPanel" Margin="10,8,10,8">
+                            <TextBlock Text="権限プリセット" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
+                            <RadioButton x:Name="FullRadio" Content="フル編集 (全操作を許可)" GroupName="PresetGroup" Checked="OnPresetChecked" Cursor="Hand" Margin="0,2" />
+                            <RadioButton x:Name="StandardRadio" Content="標準編集 (シーン削除等の操作制限)" GroupName="PresetGroup" Checked="OnPresetChecked" Cursor="Hand" Margin="0,2" />
+                            <RadioButton x:Name="ReadOnlyRadio" Content="閲覧専用 (編集不可・閲覧のみ)" GroupName="PresetGroup" Checked="OnPresetChecked" Cursor="Hand" Margin="0,2" />
+                            <RadioButton x:Name="LiveMirrorRadio" Content="ライブミラーリング (ホスト画面・再生完全同期)" GroupName="PresetGroup" Checked="OnPresetChecked" Cursor="Hand" Margin="0,2" />
+
+                            <Separator Margin="0,10" />
+
+                            <TextBlock Text="詳細ルールのカスタマイズ" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
+                            <CheckBox x:Name="AddItemsCheck" Content="アイテムの追加を許可" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="MoveItemsCheck" Content="アイテムの移動・サイズ変更を許可" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="DeleteItemsCheck" Content="アイテムの削除を許可" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="EditPropsCheck" Content="プロパティの編集を許可" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="ManageScenesCheck" Content="シーン（タイムライン）の作成・削除を許可" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="SyncSeekCheck" Content="ホストのシーク位置・画面に自動追従する" Cursor="Hand" Margin="0,3" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+
+            <!-- タブ行の右端に配置するキックボタン -->
+            <Button x:Name="KickButton" Click="OnKickClick" Cursor="Hand"
+                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,2,0"
+                    Padding="6,3" Background="Transparent" BorderThickness="0" ToolTip="キック">
+                <Path Data="{DynamicResource {x:Static icons:GeometryKeys.AccountRemove}}" Fill="#FF5252"
+                      Width="14" Height="14" Stretch="Uniform" />
+            </Button>
+        </Grid>
+
+        <!-- 決定ボタン -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0">
+            <Button Content="適用" Click="OnApplyClick" Cursor="Hand" Width="90" Height="26" Margin="0" IsDefault="True" />
+            <Button Content="キャンセル" Click="OnCancelClick" Cursor="Hand" Width="90" Height="26" Margin="0" IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</Window>
