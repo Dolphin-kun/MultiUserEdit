@@ -115,7 +115,8 @@ namespace MultiUserEdit.Networking
             if (socket == null || source == null) return;
 
             var token = source.Token;
-            var buffer = new byte[4 * 1024];
+            // チャンクが大きい（Base64で約10MB）ため、4KBずつ読むと受信ループの回転数が跳ね上がる
+            var buffer = new byte[64 * 1024];
             bool serverDisconnected = false;
             bool roomNotFound = false;
 

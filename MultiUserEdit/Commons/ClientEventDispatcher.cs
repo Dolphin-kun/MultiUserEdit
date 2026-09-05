@@ -20,6 +20,8 @@ namespace MultiUserEdit.Commons
             Register(new ItemLockedEventHandler());
             Register(new ItemUnlockedEventHandler());
             Register(new CursorMovedEventHandler());
+            Register(new FileAvailableEventHandler());
+            Register(new FileRequestEventHandler());
             Register(new FileTransferStartEventHandler());
             Register(new FileChunkEventHandler());
             Register(new SceneAddedEventHandler());

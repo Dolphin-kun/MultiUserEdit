@@ -37,7 +37,9 @@
                 </Border>
             </StackPanel>
 
-            <TextBlock x:Name="DescriptionText" FontSize="11" Opacity="0.8" TextWrapping="Wrap" Margin="20,4,0,0" />
+            <!-- 改行は空白へ置換したうえで高さを2行分に制限する（ヘッダーが伸びないように） -->
+            <TextBlock x:Name="DescriptionText" FontSize="11" Opacity="0.8" TextWrapping="Wrap"
+                       MaxHeight="32" TextTrimming="CharacterEllipsis" Margin="20,4,0,0" />
 
             <StackPanel Margin="20,10,0,0">
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,3">
@@ -67,8 +69,9 @@
                         <TextBox x:Name="UserNameBox" Height="26" Padding="6,3" VerticalContentAlignment="Center" MaxLength="32" />
 
                         <TextBlock Text="自己紹介" FontSize="11" Opacity="0.75" Margin="0,10,0,3" />
-                        <TextBox x:Name="DescriptionBox" Height="86" Padding="6,4" TextWrapping="Wrap"
-                                 AcceptsReturn="True" VerticalScrollBarVisibility="Auto" MaxLength="200" />
+                        <TextBox x:Name="DescriptionBox" Height="72" Padding="6,4" TextWrapping="Wrap"
+                                 AcceptsReturn="True" VerticalScrollBarVisibility="Auto" />
+                        <TextBlock x:Name="DescriptionHint" FontSize="10" Opacity="0.6" Margin="0,3,0,0" TextWrapping="Wrap" />
 
                         <TextBlock x:Name="ReadOnlyNote" Text="他の参加者のプロフィールは編集できません。"
                                    FontSize="10" Opacity="0.65" Margin="0,8,0,0" TextWrapping="Wrap" />

@@ -12,6 +12,10 @@ namespace MultiUserEdit.Commons.EventHandlers
             var timeline = viewModel.Scenes?.Timelines.ElementAtOrDefault(editEvent.TimelineIndex);
             if (timeline == null) return;
 
+            // 同じIDのアイテムが既にあるなら追加しない。
+            // 何らかの理由で追加イベントが二重に届いても、ゴーストアイテムが生まれないようにする。
+            if (timeline.Items.Any(existing => ItemIdManager.GetOrCreateId(existing) == editEvent.ItemId)) return;
+
             try
             {
                 var itemType = Type.GetType(editEvent.ItemTypeName);

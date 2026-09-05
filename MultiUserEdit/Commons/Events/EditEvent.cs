@@ -22,6 +22,8 @@ namespace MultiUserEdit.Commons.Events
     [JsonDerivedType(typeof(UserKickedEvent), 26)]
     [JsonDerivedType(typeof(SceneRenamedEvent), 27)]
     [JsonDerivedType(typeof(VideoInfoUpdatedEvent), 28)]
+    [JsonDerivedType(typeof(FileAvailableEvent), 29)]
+    [JsonDerivedType(typeof(FileRequestEvent), 30)]
     public abstract record EditEvent
     {
         public DateTime DateTime { get; init; }

@@ -63,7 +63,7 @@ namespace MultiUserEdit.Views
             ColorSwatch.Fill = new SolidColorBrush(participant.ThemeColor);
             RoleText.Text = participant.Role == UserRole.Host ? "ホスト" : "ゲスト";
 
-            DescriptionText.Text = participant.Description;
+            DescriptionText.Text = ProfileText.ToSingleLine(participant.Description);
             DescriptionText.Visibility = string.IsNullOrWhiteSpace(participant.Description)
                 ? Visibility.Collapsed
                 : Visibility.Visible;
@@ -73,9 +73,12 @@ namespace MultiUserEdit.Views
         {
             UserNameBox.Text = participant.UserName;
             DescriptionBox.Text = participant.Description;
+            DescriptionBox.MaxLength = ProfileText.MaxDescriptionLength;
+            DescriptionHint.Text = ProfileText.DescriptionHint;
 
             UserNameBox.IsEnabled = isSelf;
             DescriptionBox.IsEnabled = isSelf;
+            DescriptionHint.Visibility = isSelf ? Visibility.Visible : Visibility.Collapsed;
             ReadOnlyNote.Visibility = isSelf ? Visibility.Collapsed : Visibility.Visible;
         }
 
@@ -167,7 +170,7 @@ namespace MultiUserEdit.Views
             {
                 var name = UserNameBox.Text.Trim();
                 ResultUserName = string.IsNullOrEmpty(name) ? participant.UserName : name;
-                ResultDescription = DescriptionBox.Text.Trim();
+                ResultDescription = ProfileText.NormalizeDescription(DescriptionBox.Text);
             }
 
             if (canManage)

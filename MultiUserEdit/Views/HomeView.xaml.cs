@@ -2,26 +2,14 @@ using MultiUserEdit.Commons.Models;
 using MultiUserEdit.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
-using YukkuriMovieMaker.Resources.Icons;
 
 namespace MultiUserEdit.Views
 {
     public partial class HomeView : UserControl
     {
-        private bool isRoomIdVisible;
-
         public HomeView()
         {
             InitializeComponent();
-        }
-
-        private void OnToggleRoomIdVisibilityClick(object sender, RoutedEventArgs e)
-        {
-            isRoomIdVisible = !isRoomIdVisible;
-
-            RoomIdMaskedText.Visibility = isRoomIdVisible ? Visibility.Collapsed : Visibility.Visible;
-            RoomIdRevealedText.Visibility = isRoomIdVisible ? Visibility.Visible : Visibility.Collapsed;
-            RoomIdVisibilityIcon.SetResourceReference(System.Windows.Shapes.Path.DataProperty, isRoomIdVisible ? GeometryKeys.Eye : GeometryKeys.EyeOff);
         }
 
         // 入力欄がホイールを吸ってしまい、カード全体のスクロールが止まるのを防ぐ

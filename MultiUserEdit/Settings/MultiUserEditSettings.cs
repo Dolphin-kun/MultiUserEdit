@@ -49,7 +49,7 @@ namespace MultiUserEdit.Settings
             set => Set(ref confirmBeforeFileSend, value);
         }
 
-        private string allowedExtensions = ".png, .jpg, .jpeg, .gif, .bmp, .webp, .mp4, .avi, .wmv, .mov, .mkv, .mp3, .wav, .ogg, .aac, .m4a, .flac";
+        private string allowedExtensions = Commons.Models.FileExtensionCatalog.DefaultCsv;
         public string AllowedExtensions
         {
             get => allowedExtensions;
@@ -80,7 +80,7 @@ namespace MultiUserEdit.Settings
                 ProfileId = Guid.NewGuid().ToString();
 
             if (string.IsNullOrWhiteSpace(AllowedExtensions))
-                AllowedExtensions = ".png, .jpg, .jpeg, .gif, .bmp, .webp, .mp4, .avi, .wmv, .mov, .mkv, .mp3, .wav, .ogg, .aac, .m4a, .flac, .ymmp";
+                AllowedExtensions = Commons.Models.FileExtensionCatalog.DefaultCsv;
         }
     }
 }

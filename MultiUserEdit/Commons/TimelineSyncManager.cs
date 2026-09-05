@@ -85,15 +85,21 @@ namespace MultiUserEdit.Commons
 
         private void OnTimelinePropertyChanged(Timeline timeline, PropertyChangedEventArgs e, MultiUserEditViewModel viewModel)
         {
-            if (getIsApplyingRemoteEventFunc()) return;
-
+            var isApplyingRemoteEvent = getIsApplyingRemoteEventFunc();
             var timelineIndex = viewModel.Scenes?.Timelines.IndexOf(timeline) ?? 0;
 
             if (e.PropertyName == nameof(Timeline.Items))
             {
-                OnItemsCollectionChanged(timeline, timelineIndex, viewModel);
+                // リモート適用中はイベントを送り返さないが、スナップショットと購読は必ず追従させる。
+                // 追従させないと、次にローカルで何か追加・削除したときの差分に「相手が追加したアイテム」が
+                // 紛れ込み、追加イベントとして送り返してしまう（相手側でアイテムが二重になる）。
+                OnItemsCollectionChanged(timeline, timelineIndex, viewModel, suppressEvents: isApplyingRemoteEvent);
+                return;
             }
-            else if (e.PropertyName == nameof(Timeline.SelectedItems))
+
+            if (isApplyingRemoteEvent) return;
+
+            if (e.PropertyName == nameof(Timeline.SelectedItems))
             {
                 OnSelectedItemsCollectionChanged(timeline, viewModel);
             }
@@ -115,7 +121,7 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        private void OnItemsCollectionChanged(Timeline timeline, int timelineIndex, MultiUserEditViewModel viewModel)
+        private void OnItemsCollectionChanged(Timeline timeline, int timelineIndex, MultiUserEditViewModel viewModel, bool suppressEvents)
         {
             if (!timelineItemSnapshot.TryGetValue(timeline, out var oldItems))
             {
@@ -127,7 +133,8 @@ namespace MultiUserEdit.Commons
             foreach (var added in currentItems.Except(oldItems))
             {
                 SubscribeItem(added, timeline, viewModel);
-                _ = eventSender.SendItemAddedAsync(added, added.Frame, added.Layer, timelineIndex);
+                if (!suppressEvents)
+                    _ = eventSender.SendItemAddedAsync(added, added.Frame, added.Layer, timelineIndex);
             }
 
             foreach (var removed in oldItems.Except(currentItems))
@@ -137,7 +144,8 @@ namespace MultiUserEdit.Commons
                 // スロットル状態はGuid基準で保持しているため、アイテム削除時に明示的に破棄しないと
                 // セッションを使い続けるほど際限なく蓄積してしまう
                 eventSender.ClearItemThrottleState(itemId);
-                _ = eventSender.SendItemRemovedAsync(itemId, timelineIndex);
+                if (!suppressEvents)
+                    _ = eventSender.SendItemRemovedAsync(itemId, timelineIndex);
             }
 
             timelineItemSnapshot[timeline] = currentItems;

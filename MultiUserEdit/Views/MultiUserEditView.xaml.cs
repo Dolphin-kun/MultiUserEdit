@@ -1,5 +1,6 @@
 using MultiUserEdit.Commons;
 using MultiUserEdit.ViewModels;
+using MultiUserEdit.Views.Controls;
 using System.Windows;
 using System.Windows.Controls;
 using YukkuriMovieMaker.Settings;
@@ -11,9 +12,17 @@ namespace MultiUserEdit.Views
     {
         private HomeView? homeView;
         private RulesView? rulesView;
-        private SettingsView? settingsView;
         private FilesView? filesView;
         private FilesViewModel? filesViewModel;
+
+        private SettingsPages.ProfileSettingsView? profileSettingsView;
+        private SettingsPages.FileSettingsView? fileSettingsView;
+        private SettingsPages.LinkSettingsView? linkSettingsView;
+        private SettingsPages.AboutSettingsView? aboutSettingsView;
+
+        // 設定を開く前に表示していたページ。「戻る」で復帰させる。
+        private object? lastMainContent;
+        private SidebarButton? lastMainNavButton;
 
         public MultiUserEditView()
         {
@@ -27,7 +36,11 @@ namespace MultiUserEdit.Views
         {
             homeView = new HomeView { DataContext = DataContext };
             rulesView = new RulesView { DataContext = DataContext };
-            settingsView = new SettingsView { DataContext = DataContext };
+
+            profileSettingsView = new SettingsPages.ProfileSettingsView { DataContext = DataContext };
+            fileSettingsView = new SettingsPages.FileSettingsView { DataContext = DataContext };
+            linkSettingsView = new SettingsPages.LinkSettingsView { DataContext = DataContext };
+            aboutSettingsView = new SettingsPages.AboutSettingsView { DataContext = DataContext };
 
             filesViewModel = new FilesViewModel();
             filesView = new FilesView { DataContext = filesViewModel };
@@ -118,12 +131,6 @@ namespace MultiUserEdit.Views
                 MainContentControl.Content = rulesView;
         }
 
-        private void OnNavSettingsClick(object sender, RoutedEventArgs e)
-        {
-            if (settingsView != null)
-                MainContentControl.Content = settingsView;
-        }
-
         private void OnNavFilesClick(object sender, RoutedEventArgs e)
         {
             if (filesView != null)
@@ -131,6 +138,58 @@ namespace MultiUserEdit.Views
                 filesViewModel?.ExecuteRefresh(null);
                 MainContentControl.Content = filesView;
             }
+        }
+
+        // 設定を開くとサイドバーの内容そのものが設定項目に切り替わる（項目が増えても縦に伸ばせるため）
+        private void OnNavSettingsClick(object sender, RoutedEventArgs e)
+        {
+            lastMainContent = MainContentControl.Content;
+            lastMainNavButton = new[] { HomeNavButton, RulesNavButton, FilesNavButton }
+                .FirstOrDefault(button => button.IsChecked == true);
+
+            MainNavPanel.Visibility = Visibility.Collapsed;
+            MainNavFooter.Visibility = Visibility.Collapsed;
+            SettingsNavPanel.Visibility = Visibility.Visible;
+            SettingsNavFooter.Visibility = Visibility.Visible;
+
+            ProfileSettingsNavButton.IsChecked = true;
+            MainContentControl.Content = profileSettingsView;
+        }
+
+        private void OnNavSettingsBackClick(object sender, RoutedEventArgs e)
+        {
+            SettingsNavPanel.Visibility = Visibility.Collapsed;
+            SettingsNavFooter.Visibility = Visibility.Collapsed;
+            MainNavPanel.Visibility = Visibility.Visible;
+            MainNavFooter.Visibility = Visibility.Visible;
+
+            // 「戻る」自体はRadioButtonなので選択状態を残さない
+            SettingsBackButton.IsChecked = false;
+
+            if (lastMainNavButton != null) lastMainNavButton.IsChecked = true;
+            else HomeNavButton.IsChecked = true;
+
+            MainContentControl.Content = lastMainContent ?? homeView;
+        }
+
+        private void OnNavProfileSettingsClick(object sender, RoutedEventArgs e)
+        {
+            MainContentControl.Content = profileSettingsView;
+        }
+
+        private void OnNavFileSettingsClick(object sender, RoutedEventArgs e)
+        {
+            MainContentControl.Content = fileSettingsView;
+        }
+
+        private void OnNavLinkSettingsClick(object sender, RoutedEventArgs e)
+        {
+            MainContentControl.Content = linkSettingsView;
+        }
+
+        private void OnNavAboutSettingsClick(object sender, RoutedEventArgs e)
+        {
+            MainContentControl.Content = aboutSettingsView;
         }
     }
 }

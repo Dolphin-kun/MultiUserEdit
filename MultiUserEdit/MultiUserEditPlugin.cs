@@ -6,7 +6,7 @@ namespace MultiUserEdit
 {
     public class MultiUserEditPlugin : IToolPlugin
     {
-        public const string PluginName = "共同編集";
+        public const string PluginName = "共同編集Pre";
 
         public string Name => PluginName;
         public Type ViewModelType => typeof(MultiUserEditViewModel);

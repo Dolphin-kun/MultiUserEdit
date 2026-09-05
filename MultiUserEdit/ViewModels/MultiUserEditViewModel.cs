@@ -108,13 +108,22 @@ namespace MultiUserEdit.ViewModels
         public string UserName
         {
             get => CurrentSession?.UserName ?? Settings.MultiUserEditSettings.Default.UserName;
-            set { if (CurrentSession != null) CurrentSession.UserName = value; }
+            set
+            {
+                // セッション生成前でも設定画面から編集できるようにフォールバックする
+                if (CurrentSession != null) CurrentSession.UserName = value;
+                else Settings.MultiUserEditSettings.Default.UserName = value;
+            }
         }
 
         public string UserDescription
         {
             get => CurrentSession?.UserDescription ?? Settings.MultiUserEditSettings.Default.UserDescription;
-            set { if (CurrentSession != null) CurrentSession.UserDescription = value; }
+            set
+            {
+                if (CurrentSession != null) CurrentSession.UserDescription = value;
+                else Settings.MultiUserEditSettings.Default.UserDescription = ProfileText.NormalizeDescription(value);
+            }
         }
 
         // 参加者の合計参加時間（秒）。プロジェクトに記録が無い場合はnull。
@@ -289,6 +298,16 @@ namespace MultiUserEdit.ViewModels
         internal void HandleCursorMovedEvent(CursorMovedEvent evt)
         {
             CurrentSession?.HandleCursorMovedEvent(evt);
+        }
+
+        internal void HandleFileAvailable(FileAvailableEvent evt)
+        {
+            CurrentSession?.HandleFileAvailable(evt);
+        }
+
+        internal void HandleFileRequest(FileRequestEvent evt)
+        {
+            CurrentSession?.HandleFileRequest(evt);
         }
 
         internal void HandleFileTransferStart(FileTransferStartEvent evt)

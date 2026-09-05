@@ -200,13 +200,15 @@ namespace MultiUserEdit.Commons
             get => Settings.MultiUserEditSettings.Default.UserDescription;
             set
             {
-                if (Settings.MultiUserEditSettings.Default.UserDescription != value)
+                // 文字数・行数の制限はここで一度だけ適用する
+                var normalized = ProfileText.NormalizeDescription(value);
+                if (Settings.MultiUserEditSettings.Default.UserDescription != normalized)
                 {
-                    Settings.MultiUserEditSettings.Default.UserDescription = value;
+                    Settings.MultiUserEditSettings.Default.UserDescription = normalized;
                     OnPropertyChanged(nameof(UserDescription));
 
                     var localParticipant = Participants.FirstOrDefault(p => p.UserId == LocalUserId);
-                    localParticipant?.Description = value;
+                    localParticipant?.Description = normalized;
 
                     BroadcastLocalPresence();
                 }
@@ -277,7 +279,11 @@ namespace MultiUserEdit.Commons
             sessionClient = new SessionClient(new WebsocketProvider());
             eventDispatcher = new ClientEventDispatcher();
             adornerManager = new AdornerManager();
-            fileTransferManager = new FileTransferManager();
+            fileTransferManager = new FileTransferManager
+            {
+                // ファイル告知の返事を待つ相手の人数（自分以外の参加者）
+                GetPeerCount = () => Participants.Count(p => p.UserId != LocalUserId)
+            };
             eventSender = new EditEventSender(sessionClient, fileTransferManager, () => LocalUserId);
             timelineSyncManager = new TimelineSyncManager(eventSender, () => isApplyingRemoteEvent);
 
@@ -1085,7 +1091,8 @@ namespace MultiUserEdit.Commons
                     UserId = evt.UserId,
                     ProfileId = evt.ProfileId,
                     UserName = evt.UserName,
-                    Description = evt.Description,
+                    // 相手が古い版・改造版でも表示崩れを起こさないよう受信側でも制限する
+                    Description = ProfileText.NormalizeDescription(evt.Description),
                     Role = evt.Role,
                     LastActivity = DateTime.Now,
                     JoinedAt = DateTime.Now,
@@ -1097,7 +1104,7 @@ namespace MultiUserEdit.Commons
             else
             {
                 p.UserName = evt.UserName;
-                p.Description = evt.Description;
+                p.Description = ProfileText.NormalizeDescription(evt.Description);
                 p.Role = evt.Role;
                 p.LastActivity = DateTime.Now;
                 p.Status = UserStatus.Active;
@@ -1354,6 +1361,37 @@ namespace MultiUserEdit.Commons
             {
                 isApplyingRemoteEvent = false;
             }
+        }
+
+        // ハッシュ計算はファイルサイズ次第で時間がかかるため、UIスレッドを止めないよう裏で走らせる
+        internal void HandleFileAvailable(FileAvailableEvent evt)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var needsTransfer = await fileTransferManager.NeedsTransferAsync(evt);
+
+                    // 持っていても返事はする（送信側が全員の返事を待たずに済むように）
+                    var requestEvt = new FileRequestEvent(evt.TransferId, LocalUserId, needsTransfer)
+                    {
+                        DateTime = DateTime.UtcNow,
+                        ExecutorId = LocalUserId
+                    };
+
+                    // 告知した本人にだけ返す（他の参加者には関係のないやり取りのため）
+                    await sessionClient.SendAsync(evt.ExecutorId.ToString(), requestEvt);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[MultiUserEdit] HandleFileAvailable failed: {ex.Message}");
+                }
+            });
+        }
+
+        internal void HandleFileRequest(FileRequestEvent evt)
+        {
+            _ = fileTransferManager.HandleFileRequestAsync(evt, sessionClient, LocalUserId);
         }
 
         internal void HandleFileTransferStart(FileTransferStartEvent evt)
