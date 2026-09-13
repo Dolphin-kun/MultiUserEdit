@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons;
+﻿using MultiUserEdit.Commons;
 using MultiUserEdit.Commons.Models;
 using System.Windows;
 using System.Windows.Media;
@@ -19,8 +19,6 @@ namespace MultiUserEdit.Views
         public string ResultDescription { get; private set; }
         public bool KickRequested { get; private set; }
 
-        /// <param name="isSelf">対象が自分自身か（プロフィールを編集できる）</param>
-        /// <param name="canManage">自分がホストで対象がゲストか（権限の変更とキックができる）</param>
         public UserProfileDialog(Participant participant, bool isSelf, bool canManage, Func<double?> getTotalSeconds)
         {
             InitializeComponent();
@@ -49,7 +47,6 @@ namespace MultiUserEdit.Views
             UpdateDurations();
             UpdateStatus();
 
-            // 表示中は在席状態・編集時間・合計参加時間を毎秒更新する
             durationTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             durationTimer.Tick += (s, e) => { UpdateDurations(); UpdateStatus(); };
             durationTimer.Start();
@@ -84,7 +81,6 @@ namespace MultiUserEdit.Views
 
         private void InitializePermissionTab()
         {
-            // 権限タブとキックボタンは、自分がホストで相手がゲストのときだけ操作できる
             PermissionTab.Visibility = canManage ? Visibility.Visible : Visibility.Collapsed;
             KickButton.Visibility = canManage ? Visibility.Visible : Visibility.Collapsed;
 
@@ -93,7 +89,6 @@ namespace MultiUserEdit.Views
             LoadPermissionToUi(ResultPermission);
         }
 
-        // オンライン／離席中／オフラインを参加者一覧と同じ色・文言で表示する
         private void UpdateStatus()
         {
             StatusDot.Fill = participant.StatusBrush;

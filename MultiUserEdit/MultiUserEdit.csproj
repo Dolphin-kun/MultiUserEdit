@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
@@ -13,26 +13,26 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
+	<!-- 参照は対応最古バージョンのYMM4から取る（理由はDirectory.Build.propsのコメントを参照） -->
 	<ItemGroup>
 		<Reference Include="Newtonsoft.Json">
-		  <HintPath>$(YMM4DirPath)Newtonsoft.Json.dll</HintPath>
+		  <HintPath>$(YMM4RefDirPath)Newtonsoft.Json.dll</HintPath>
 		</Reference>
 		<Reference Include="YukkuriMovieMaker">
-			<HintPath>$(YMM4DirPath)YukkuriMovieMaker.dll</HintPath>
+			<HintPath>$(YMM4RefDirPath)YukkuriMovieMaker.dll</HintPath>
 		</Reference>
 		<Reference Include="YukkuriMovieMaker.Controls">
-			<HintPath>$(YMM4DirPath)YukkuriMovieMaker.Controls.dll</HintPath>
+			<HintPath>$(YMM4RefDirPath)YukkuriMovieMaker.Controls.dll</HintPath>
 		</Reference>
 		<Reference Include="YukkuriMovieMaker.Plugin">
-			<HintPath>$(YMM4DirPath)YukkuriMovieMaker.Plugin.dll</HintPath>
+			<HintPath>$(YMM4RefDirPath)YukkuriMovieMaker.Plugin.dll</HintPath>
 		</Reference>
 		<Reference Include="ReactiveProperty">
-			<HintPath>$(YMM4DirPath)ReactiveProperty.dll</HintPath>
+			<HintPath>$(YMM4RefDirPath)ReactiveProperty.dll</HintPath>
 		</Reference>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+		<Reference Include="ReactiveProperty.Core">
+			<HintPath>$(YMM4RefDirPath)ReactiveProperty.Core.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">

@@ -18,10 +18,7 @@ namespace MultiUserEdit.Views
 
         private void RulesView_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            if (viewModel != null)
-            {
-                viewModel.PropertyChanged -= ViewModel_PropertyChanged;
-            }
+            viewModel?.PropertyChanged -= ViewModel_PropertyChanged;
 
             viewModel = DataContext as MultiUserEditViewModel;
             if (viewModel != null)

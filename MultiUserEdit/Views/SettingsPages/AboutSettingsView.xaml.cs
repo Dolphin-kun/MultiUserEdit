@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons;
+﻿using MultiUserEdit.Commons;
 using System.Windows.Controls;
 
 namespace MultiUserEdit.Views.SettingsPages
@@ -9,7 +9,6 @@ namespace MultiUserEdit.Views.SettingsPages
         {
             InitializeComponent();
 
-            // バージョン欄だけはUpdateCheckerを見る（ページ全体のDataContextはViewModelのまま）
             VersionCard.DataContext = UpdateChecker.Instance;
             UpdateChecker.Instance.EnsureChecked();
         }

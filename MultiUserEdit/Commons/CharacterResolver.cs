@@ -1,4 +1,4 @@
-using Reactive.Bindings;
+﻿using Reactive.Bindings;
 using System.Windows;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
@@ -9,6 +9,26 @@ namespace MultiUserEdit.Commons
 {
     internal static class CharacterResolver
     {
+        private static readonly Dictionary<string, string> nameMapping = new(StringComparer.Ordinal);
+
+        public static void SetMapping(string remoteName, string localName)
+        {
+            lock (nameMapping) nameMapping[remoteName] = localName;
+        }
+
+        public static bool TryGetMapping(string remoteName, out string localName)
+        {
+            lock (nameMapping) return nameMapping.TryGetValue(remoteName, out localName!);
+        }
+
+        public static void ClearMappings()
+        {
+            lock (nameMapping) nameMapping.Clear();
+        }
+
+        private static string MapName(string name) =>
+            TryGetMapping(name, out var localName) ? localName : name;
+
         public static void TryResolveCharacter(IItem item, IEnumerable<Character>? characters = null)
         {
             string? targetName = null;
@@ -39,24 +59,36 @@ namespace MultiUserEdit.Commons
             }
         }
 
+        public static Character? GetCharacter(IItem item) => item switch
+        {
+            VoiceItem voiceItem => voiceItem.Character,
+            TachieItem tachieItem => tachieItem.Character,
+            TachieFaceItem tachieFaceItem => tachieFaceItem.Character,
+            _ => null
+        };
+
         public static Character? FindCharacter(string name, IEnumerable<Character>? characters = null)
         {
             if (string.IsNullOrEmpty(name)) return null;
 
+            var localName = MapName(name);
+
             if (characters != null)
             {
-                var found = characters.FirstOrDefault(c => c.Name == name);
+                var found = characters.FirstOrDefault(c => c.Name == localName);
                 if (found != null) return found;
             }
+
+            return GetLocalCharacters().FirstOrDefault(c => c.Name == localName);
+        }
+
+        public static IReadOnlyList<Character> GetLocalCharacters()
+        {
+            var settingsCharacters = CharacterSettingsAccessor.GetCharacters();
+            if (settingsCharacters != null) return [.. settingsCharacters];
 
             var uiCharacters = GetCharactersFromActiveTimelineView();
-            if (uiCharacters != null)
-            {
-                var found = uiCharacters.FirstOrDefault(c => c.Name == name);
-                if (found != null) return found;
-            }
-
-            return null;
+            return uiCharacters == null ? [] : [.. uiCharacters];
         }
 
         private static ReadOnlyReactiveCollection<Character>? GetCharactersFromActiveTimelineView()

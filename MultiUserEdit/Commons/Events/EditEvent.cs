@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace MultiUserEdit.Commons.Events
 {
@@ -24,9 +24,12 @@ namespace MultiUserEdit.Commons.Events
     [JsonDerivedType(typeof(VideoInfoUpdatedEvent), 28)]
     [JsonDerivedType(typeof(FileAvailableEvent), 29)]
     [JsonDerivedType(typeof(FileRequestEvent), 30)]
+    [JsonDerivedType(typeof(CharacterRequestEvent), 31)]
+    [JsonDerivedType(typeof(CharacterSharedEvent), 32)]
+    [JsonDerivedType(typeof(ItemStateRequestEvent), 33)]
     public abstract record EditEvent
     {
         public DateTime DateTime { get; init; }
-        public Guid ExecutorId  { get; init; }
+        public Guid ExecutorId { get; init; }
     }
 }

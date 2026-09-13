@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons;
+﻿using MultiUserEdit.Commons;
 using MultiUserEdit.Commons.Models;
 using System.Windows;
 using System.Windows.Documents;
@@ -6,6 +6,7 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using YukkuriMovieMaker.Plugin;
 using YukkuriMovieMaker.Settings;
+using YukkuriMovieMaker.ViewModels;
 
 namespace MultiUserEdit.Views.Adorners
 {
@@ -84,7 +85,6 @@ namespace MultiUserEdit.Views.Adorners
 
             var localTimelineIndex = _session.Scenes?.Timelines.IndexOf(_session.FirstOrDefaultTimeline) ?? 0;
 
-            // フレーム位置はタイムライン内容の座標なので、横スクロール量を引いて画面上の座標へ変換する
             double scrollX = GetTimelineHorizontalOffset();
 
             foreach (var participant in _session.Participants)
@@ -116,24 +116,16 @@ namespace MultiUserEdit.Views.Adorners
             }
         }
 
-        // YMM4のTimelineViewModelは横スクロール量を Viewport(Rect).X として公開しているが、
-        // その型はプラグインから参照できないアセンブリにあるためリフレクションで読み取る。
-        // ViewModelはシーンの切り替えで差し替わるため、インスタンスは保持せず毎回たどり直す
         private double GetTimelineHorizontalOffset()
         {
             try
             {
-                // 装飾対象からその祖先へ向かって、Viewportを持つDataContext（TimelineViewModel）を探す
                 DependencyObject? current = AdornedElement;
                 while (current != null)
                 {
-                    if (current is FrameworkElement { DataContext: { } dataContext })
+                    if (current is FrameworkElement { DataContext: TimelineViewModel timelineViewModel })
                     {
-                        var reactive = dataContext.GetType().GetProperty("Viewport")?.GetValue(dataContext);
-                        // ReactiveProperty<Rect> の実体型からValueを取る（インターフェース経由では見つからない）
-                        var valueProperty = reactive?.GetType().GetProperty("Value");
-                        if (valueProperty?.PropertyType == typeof(Rect))
-                            return valueProperty.GetValue(reactive) is Rect rect ? rect.X : 0;
+                        return timelineViewModel.Viewport.Value.X;
                     }
 
                     current = VisualTreeHelper.GetParent(current);

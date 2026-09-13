@@ -1,6 +1,7 @@
-using MultiUserEdit.Commons;
+﻿using MultiUserEdit.Commons;
 using MultiUserEdit.Commons.Models;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Input;
@@ -10,21 +11,51 @@ namespace MultiUserEdit.ViewModels
 {
     public class FilesViewModel : Bindable
     {
+        private readonly MultiUserEditViewModel? owner;
+
         public ObservableCollection<MediaFileInfo> Files { get; } = [];
+
+        public ObservableCollection<TransferItemInfo> ActiveTransfers => owner?.ActiveTransfers ?? [];
+
+        public bool HasActiveTransfers => ActiveTransfers.Count > 0;
+
+        public string TransferHeaderText
+        {
+            get
+            {
+                var uploads = ActiveTransfers.Count(t => t.IsUpload);
+                var downloads = ActiveTransfers.Count - uploads;
+
+                if (uploads > 0 && downloads > 0) return $"送受信中 (送信 {uploads}件 / 受信 {downloads}件)";
+                if (uploads > 0) return $"送信中 ({uploads}件)";
+                if (downloads > 0) return $"受信中 ({downloads}件)";
+                return "送受信はありません";
+            }
+        }
 
         public ICommand RefreshCommand { get; }
         public ICommand DeleteFileCommand { get; }
         public ICommand CleanFolderCommand { get; }
         public ICommand OpenFolderCommand { get; }
 
-        public FilesViewModel()
+        public FilesViewModel(MultiUserEditViewModel? owner = null)
         {
+            this.owner = owner;
+
+            owner?.ActiveTransfers.CollectionChanged += OnActiveTransfersChanged;
+
             RefreshCommand = new ActionCommand((_) => true, ExecuteRefresh);
             DeleteFileCommand = new ActionCommand((_) => true, ExecuteDeleteFile);
             CleanFolderCommand = new ActionCommand((_) => true, ExecuteCleanFolder);
             OpenFolderCommand = new ActionCommand((_) => true, ExecuteOpenFolder);
 
             ExecuteRefresh(null);
+        }
+
+        private void OnActiveTransfersChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            OnPropertyChanged(nameof(HasActiveTransfers));
+            OnPropertyChanged(nameof(TransferHeaderText));
         }
 
         public void ExecuteRefresh(object? param)
@@ -35,7 +66,7 @@ namespace MultiUserEdit.ViewModels
                 var dir = FileTransferManager.GetSaveDirectory();
                 if (!Directory.Exists(dir)) return;
 
-                var filePaths = Directory.GetFiles(dir);
+                var filePaths = Directory.GetFiles(dir, "*", SearchOption.AllDirectories);
                 foreach (var path in filePaths)
                 {
                     if (path.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase)) continue;
@@ -43,7 +74,7 @@ namespace MultiUserEdit.ViewModels
                     var info = new FileInfo(path);
                     Files.Add(new MediaFileInfo
                     {
-                        FileName = info.Name,
+                        FileName = Path.GetRelativePath(dir, info.FullName),
                         FilePath = info.FullName,
                         SizeBytes = info.Length,
                         LastModified = info.LastWriteTime
@@ -75,7 +106,14 @@ namespace MultiUserEdit.ViewModels
 
         private void ExecuteCleanFolder(object? param)
         {
-            FileTransferManager.CleanUpTempFiles();
+            var confirmed = System.Windows.MessageBox.Show(
+                "受信した素材ファイルをすべて削除します。\nよろしいですか？",
+                "全消去の確認",
+                System.Windows.MessageBoxButton.OKCancel) == System.Windows.MessageBoxResult.OK;
+
+            if (!confirmed) return;
+
+            FileTransferManager.DeleteAllFiles();
             ExecuteRefresh(null);
         }
 

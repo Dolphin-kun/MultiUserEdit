@@ -1,6 +1,5 @@
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using System.IO;
 using System.Reflection;
 
 namespace MultiUserEdit.Commons
@@ -10,12 +9,18 @@ namespace MultiUserEdit.Commons
         public static JsonSerializerSettings Default { get; } = CreateOptions(nullPath: false);
         public static JsonSerializerSettings NullPath { get; } = CreateOptions(nullPath: true);
 
-        private static JsonSerializerSettings CreateOptions(bool nullPath)
+        public static JsonSerializerSettings Character { get; } = CreateCharacterOptions(nullPath: false);
+        public static JsonSerializerSettings CharacterNullPath { get; } = CreateCharacterOptions(nullPath: true);
+
+        private static JsonSerializerSettings CreateCharacterOptions(bool nullPath)
         {
             var settings = new JsonSerializerSettings
             {
-                TypeNameHandling = TypeNameHandling.All,
-                Formatting = Formatting.None
+                TypeNameHandling = TypeNameHandling.Auto,
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                Formatting = Formatting.None,
+                Converters = { new Newtonsoft.Json.Converters.StringEnumConverter() },
+                Error = (_, args) => args.ErrorContext.Handled = true
             };
 
             if (nullPath)
@@ -26,7 +31,37 @@ namespace MultiUserEdit.Commons
             return settings;
         }
 
-        private class NullFilePathContractResolver : DefaultContractResolver
+        private static JsonSerializerSettings CreateOptions(bool nullPath)
+        {
+            var settings = new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.All,
+                Formatting = Formatting.None,
+                ContractResolver = nullPath ? new NullFilePathContractResolver() : new CollectionReplaceContractResolver()
+            };
+
+            return settings;
+        }
+
+        private class CollectionReplaceContractResolver : DefaultContractResolver
+        {
+            protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
+            {
+                var property = base.CreateProperty(member, memberSerialization);
+
+                var propertyType = property.PropertyType;
+                if (propertyType != null
+                    && propertyType != typeof(string)
+                    && typeof(System.Collections.IEnumerable).IsAssignableFrom(propertyType))
+                {
+                    property.ObjectCreationHandling = ObjectCreationHandling.Replace;
+                }
+
+                return property;
+            }
+        }
+
+        private class NullFilePathContractResolver : CollectionReplaceContractResolver
         {
             private static readonly HashSet<string> PathPropertyNames = new(MediaFileResolver.PropertyNames, StringComparer.OrdinalIgnoreCase);
 
@@ -34,15 +69,12 @@ namespace MultiUserEdit.Commons
             {
                 var property = base.CreateProperty(member, memberSerialization);
 
-                if (PathPropertyNames.Contains(property.PropertyName ?? string.Empty))
+                if (property.PropertyType == typeof(string) &&
+                    PathPropertyNames.Contains(property.PropertyName ?? string.Empty))
                 {
                     var originalProvider = property.ValueProvider;
                     property.ValueProvider = new FileNameValueProvider(originalProvider);
 
-                    // ローカルにまだ値がない（動画・音声が初回転送中でnull等）場合はプロパティ自体を出力しない。
-                    // 空文字列を送ってしまうと、更新イベントを受け取った他の参加者側で既に解決済みの
-                    // 正しいパスまで空文字列で上書きしてしまう（PopulateObjectはJSONに存在するプロパティしか
-                    // 触らないため、出力自体を省けば相手の既存の値はそのまま保たれる）。
                     property.ShouldSerialize = instance =>
                         !string.IsNullOrWhiteSpace(originalProvider?.GetValue(instance) as string);
                 }
@@ -54,12 +86,11 @@ namespace MultiUserEdit.Commons
             {
                 public object? GetValue(object target)
                 {
-                    // 値がない場合はShouldSerializeで出力自体がスキップされるためここには来ない
                     var val = (string)originalProvider?.GetValue(target)!;
                     try
                     {
-                        var fileName = Path.GetFileName(val);
-                        return string.IsNullOrEmpty(fileName) ? val : fileName;
+                        var portableName = MediaFileResolver.ToPortableName(val);
+                        return string.IsNullOrEmpty(portableName) ? val : portableName;
                     }
                     catch
                     {

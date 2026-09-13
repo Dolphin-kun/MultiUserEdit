@@ -7,7 +7,7 @@ namespace MultiUserEdit.Commons.EventHandlers
     {
         public void Handle(SyncRequestEvent editEvent, MultiUserEditViewModel viewModel)
         {
-            viewModel.HandleSyncRequestEvent(editEvent);
+            viewModel.HandleSyncRequestEvent();
         }
     }
 }

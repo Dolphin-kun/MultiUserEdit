@@ -1,4 +1,5 @@
-﻿using MultiUserEdit.Commons.Events;
+﻿using MultiUserEdit.Commons.EventHandlers;
+using MultiUserEdit.Commons.Events;
 using MultiUserEdit.Commons.Models;
 using MultiUserEdit.Networking;
 using MultiUserEdit.ViewModels;
@@ -34,6 +35,8 @@ namespace MultiUserEdit.Commons
 
         private readonly EditEventSender eventSender;
         internal EditEventSender EventSender => eventSender;
+
+        private readonly CharacterShareManager characterShareManager;
 
         private readonly TimelineSyncManager timelineSyncManager;
         internal TimelineSyncManager TimelineSyncManager => timelineSyncManager;
@@ -78,14 +81,14 @@ namespace MultiUserEdit.Commons
         public ObservableCollection<string> ReceivedMessages { get; } = [];
         public ObservableCollection<Participant> Participants { get; } = [];
 
-        // プロジェクトへ保存された、プロファイルIDごとの合計参加時間
         private ProjectParticipationState participationState = new();
 
-        // ホストが常に一覧の先頭へ来るように挿入する
         private void AddParticipantSorted(Participant participant)
         {
             var index = participant.Role == UserRole.Host ? 0 : Participants.Count;
             Participants.Insert(index, participant);
+
+            fileTransferManager.ForgetAnnouncedFiles();
         }
 
         private void MoveHostToTopIfNeeded(Participant participant)
@@ -96,7 +99,6 @@ namespace MultiUserEdit.Commons
             if (index > 0) Participants.Move(index, 0);
         }
 
-        // 経過時間を合計へ確定し、計測の起点を現在時刻へ戻す（複数回保存しても二重加算されない）
         private void CommitParticipationTime(Participant participant)
         {
             if (participant.ProfileId == Guid.Empty) return;
@@ -116,7 +118,6 @@ namespace MultiUserEdit.Commons
             participant.JoinedAt = DateTime.Now;
         }
 
-        // 保存済みの合計に、現在のセッションでの経過時間を加えた値
         public double? GetTotalParticipationSeconds(Participant participant)
         {
             if (participant.ProfileId == Guid.Empty) return null;
@@ -150,7 +151,33 @@ namespace MultiUserEdit.Commons
         public ICommand RegisterProtocolCommand { get; }
         public ICommand UnregisterProtocolCommand { get; }
         public ICommand DisconnectCommand { get; }
+        public ICommand SyncNowCommand { get; }
         public ICommand KickUserCommand { get; }
+
+        private void SyncNow()
+        {
+            if (!IsConnected) return;
+
+            if (IsHost)
+            {
+                var confirmed = MessageBox.Show(
+                    "参加者全員のタイムラインを、自分のタイムラインの状態で上書きします。\n実行してもよろしいですか？",
+                    "データの同期",
+                    MessageBoxButton.OKCancel) == MessageBoxResult.OK;
+
+                if (!confirmed) return;
+
+                HandleSyncRequestEvent();
+                return;
+            }
+
+            var request = new SyncRequestEvent
+            {
+                DateTime = DateTime.UtcNow,
+                ExecutorId = LocalUserId
+            };
+            _ = sessionClient.SendAsync(null, request);
+        }
 
         private bool isProtocolRegistered = ProtocolRegister.IsRegistered();
         public bool IsProtocolRegistered
@@ -200,7 +227,6 @@ namespace MultiUserEdit.Commons
             get => Settings.MultiUserEditSettings.Default.UserDescription;
             set
             {
-                // 文字数・行数の制限はここで一度だけ適用する
                 var normalized = ProfileText.NormalizeDescription(value);
                 if (Settings.MultiUserEditSettings.Default.UserDescription != normalized)
                 {
@@ -215,7 +241,6 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        // インストール単位で不変のID。合計参加時間を同一人物として積算するためのキー。
         public static Guid LocalProfileId =>
             Guid.TryParse(Settings.MultiUserEditSettings.Default.ProfileId, out var id) ? id : Guid.Empty;
 
@@ -281,11 +306,17 @@ namespace MultiUserEdit.Commons
             adornerManager = new AdornerManager();
             fileTransferManager = new FileTransferManager
             {
-                // ファイル告知の返事を待つ相手の人数（自分以外の参加者）
                 GetPeerCount = () => Participants.Count(p => p.UserId != LocalUserId)
             };
             eventSender = new EditEventSender(sessionClient, fileTransferManager, () => LocalUserId);
-            timelineSyncManager = new TimelineSyncManager(eventSender, () => isApplyingRemoteEvent);
+            timelineSyncManager = new TimelineSyncManager(eventSender, () => isApplyingRemoteEvent, IsItemEditableLocally);
+            characterShareManager = new CharacterShareManager(
+                sessionClient,
+                fileTransferManager,
+                () => LocalUserId,
+                userId => Participants.FirstOrDefault(p => p.UserId == userId)?.UserName ?? string.Empty,
+                () => activeViewModel,
+                ExecuteRemoteAction);
 
             fileTransferManager.TransferCompleted += (transferId, path) => FileTransferCompleted?.Invoke(transferId, path);
             fileTransferManager.TransferSummaryChanged += OnTransferSummaryChanged;
@@ -328,10 +359,11 @@ namespace MultiUserEdit.Commons
                 if (ProtocolRegister.UnregisterCustomProtocol())
                 {
                     IsProtocolRegistered = false;
-                    MessageBox.Show($"Webディープリンク (ymm4-multi-user-edit://) の登録を削除・解除しました。", "解除完了", MessageBoxButton.OK);
+                    MessageBox.Show($"Webディープリンク (ymm4-multi-user-edit://) の登録を解除しました。", "解除完了", MessageBoxButton.OK);
                 }
             });
-            DisconnectCommand = new ActionCommand(_ => IsConnected, async _ => await StopNetworkAsync());
+            DisconnectCommand = new ActionCommand(_ => IsConnected || isJoining, async _ => await StopNetworkAsync());
+            SyncNowCommand = new ActionCommand(_ => IsConnected && !isJoining, _ => SyncNow());
             KickUserCommand = new ActionCommand(
                 param => IsHost && param is Guid targetId && targetId != LocalUserId,
                 async param =>
@@ -349,10 +381,7 @@ namespace MultiUserEdit.Commons
                 });
 
             AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
-            if (Application.Current != null)
-            {
-                Application.Current.Exit += Application_Exit;
-            }
+            Application.Current?.Exit += Application_Exit;
 
             ProtocolRegister.RegisterCustomProtocol();
             IsProtocolRegistered = ProtocolRegister.IsRegistered();
@@ -376,6 +405,10 @@ namespace MultiUserEdit.Commons
             OnApplicationTerminating();
         }
 
+        private static readonly TimeSpan TerminationSendTimeout = TimeSpan.FromSeconds(2);
+
+        private Task SendCloseRoomAsync() => sessionClient.SendAsync(null, new { type = "close_room" });
+
         private void OnApplicationTerminating()
         {
             if (IsConnected && !disposed)
@@ -387,7 +420,8 @@ namespace MultiUserEdit.Commons
                         DateTime = DateTime.UtcNow,
                         ExecutorId = LocalUserId
                     };
-                    _ = sessionClient.SendAsync(null, evt);
+                    sessionClient.SendAsync(null, evt).Wait(TerminationSendTimeout);
+                    if (IsHost) SendCloseRoomAsync().Wait(TerminationSendTimeout);
                     _ = sessionClient.StopAsync();
                 }
                 catch { }
@@ -433,9 +467,6 @@ namespace MultiUserEdit.Commons
                 }
             }
 
-            // YMM4は多重起動できないため、既に起動中の状態でリンクを開いた場合はランチャー(MultiUserEditLauncher.exe)が
-            // 一時ファイルにディープリンクを書き出した上でYMM4を無引数起動する（詳細はProtocolRegister参照）。
-            // その場合、コマンドライン引数ではなくこちらから拾う。
             var tempPath = Path.Combine(Path.GetTempPath(), "deeplink.txt");
             if (File.Exists(tempPath))
             {
@@ -454,34 +485,45 @@ namespace MultiUserEdit.Commons
             return null;
         }
 
+        private int transferDisplayGeneration;
+
+        public ObservableCollection<TransferItemInfo> ActiveTransfers { get; } = [];
+
+        private void UpdateActiveTransfers(TransferSummary summary)
+        {
+            ActiveTransfers.Clear();
+            foreach (var item in summary.Items) ActiveTransfers.Add(item);
+            OnPropertyChanged(nameof(ActiveTransfers));
+        }
+
         private void OnTransferSummaryChanged(TransferSummary summary)
         {
             Application.Current?.Dispatcher.InvokeAsync(async () =>
             {
+                UpdateActiveTransfers(summary);
+
                 if (!summary.IsActive)
                 {
-                    if (IsTransferring)
-                    {
-                        TransferProgress = 100.0;
-                        await Task.Delay(1000);
-                        IsTransferring = false;
-                        TransferProgress = 0;
-                        TransferStatusText = string.Empty;
-                    }
+                    if (!IsTransferring) return;
+
+                    var myGeneration = Volatile.Read(ref transferDisplayGeneration);
+                    TransferProgress = 100.0;
+                    await Task.Delay(1000);
+                    if (Volatile.Read(ref transferDisplayGeneration) != myGeneration) return;
+
+                    IsTransferring = false;
+                    TransferProgress = 0;
+                    TransferStatusText = string.Empty;
                     return;
                 }
 
+                Interlocked.Increment(ref transferDisplayGeneration);
                 IsTransferring = true;
                 TransferStatusText = summary.DisplayText;
-
-                if (summary.OverallProgress > TransferProgress || summary.OverallProgress >= 100.0)
-                {
-                    TransferProgress = summary.OverallProgress;
-                }
+                TransferProgress = summary.OverallProgress;
             });
         }
 
-        // この時間だけ操作（イベントの送受信）が無ければ離席中とみなす
         private static readonly TimeSpan AwayThreshold = TimeSpan.FromMinutes(3);
 
         private void PresenceTimer_Tick(object? sender, EventArgs e)
@@ -491,13 +533,12 @@ namespace MultiUserEdit.Commons
             {
                 if (p.UserId == LocalUserId)
                 {
-                    // 自分自身も他の参加者から見えている状態と同じ基準（イベント送信の有無）で判定する
                     p.LastActivity = sessionClient.LastSentAt;
                     p.Status = now - p.LastActivity > AwayThreshold ? UserStatus.Away : UserStatus.Active;
                     continue;
                 }
 
-                if (now - p.LastActivity > AwayThreshold)
+                if (p.Status != UserStatus.Disconnected && now - p.LastActivity > AwayThreshold)
                     p.Status = UserStatus.Away;
             }
 
@@ -557,6 +598,11 @@ namespace MultiUserEdit.Commons
 
         private void SubscribeScenesEvents(MultiUserEditViewModel viewModel)
         {
+            if (activeViewModel != null && !ReferenceEquals(activeViewModel, viewModel))
+            {
+                activeViewModel.DetachFromSession();
+            }
+
             activeViewModel = viewModel;
             if (Scenes is INotifyPropertyChanged npc)
             {
@@ -585,6 +631,7 @@ namespace MultiUserEdit.Commons
             if (!CurrentUserPermission.CanManageScenes && currentTimelines.Count > scenesSnapshot.Count)
             {
                 var newlyAdded = currentTimelines.Except(scenesSnapshot).ToList();
+                var previous = isApplyingRemoteEvent;
                 isApplyingRemoteEvent = true;
                 try
                 {
@@ -593,7 +640,7 @@ namespace MultiUserEdit.Commons
                         Scenes.DeleteScene(t);
                     }
                 }
-                finally { isApplyingRemoteEvent = false; }
+                finally { isApplyingRemoteEvent = previous; }
                 return;
             }
 
@@ -625,14 +672,16 @@ namespace MultiUserEdit.Commons
 
         public void ExecuteRemoteAction(Action action)
         {
+            var previous = isApplyingRemoteEvent;
             isApplyingRemoteEvent = true;
+            using var undoScope = UndoRecordSuppressor.Suppress(undoRedoManager);
             try
             {
                 action();
             }
             finally
             {
-                isApplyingRemoteEvent = false;
+                isApplyingRemoteEvent = previous;
             }
         }
 
@@ -753,6 +802,13 @@ namespace MultiUserEdit.Commons
 
         public void RefreshCommandStates()
         {
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher != null && !dispatcher.CheckAccess())
+            {
+                dispatcher.InvokeAsync(RefreshCommandStates);
+                return;
+            }
+
             OnPropertyChanged(nameof(IsConnected));
             OnPropertyChanged(nameof(IsHost));
             OnPropertyChanged(nameof(RoomId));
@@ -763,10 +819,11 @@ namespace MultiUserEdit.Commons
             (CopyInviteLinkCommand as ActionCommand)?.RaiseCanExecuteChanged();
             (JoinFromClipboardCommand as ActionCommand)?.RaiseCanExecuteChanged();
             (DisconnectCommand as ActionCommand)?.RaiseCanExecuteChanged();
+            (SyncNowCommand as ActionCommand)?.RaiseCanExecuteChanged();
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
         }
 
-        public void ApplySyncScenes(OnlineScenes onlineScenes)
+        public void ApplySyncScenes(OnlineScenes onlineScenes, Guid ownerId)
         {
             if (onlineScenes == null || Scenes == null) return;
 
@@ -784,7 +841,9 @@ namespace MultiUserEdit.Commons
                 }
             }
 
+            var previousApplying = isApplyingRemoteEvent;
             isApplyingRemoteEvent = true;
+            using var undoScope = UndoRecordSuppressor.Suppress(undoRedoManager);
             try
             {
                 for (int i = 0; i < onlineScenes.Timelines.Count; i++)
@@ -812,70 +871,18 @@ namespace MultiUserEdit.Commons
 
                     timeline.Name = onlineTimeline.Name;
 
+                    if (timeline.VideoInfo != null)
+                    {
+                        VideoInfoSerializer.Apply(timeline.VideoInfo, onlineTimeline.Width, onlineTimeline.Height,
+                            onlineTimeline.FPS, onlineTimeline.Hz, onlineTimeline.BackgroundColor);
+                    }
+
                     if (timeline.Items.Count > 0)
                         timeline.DeleteItems([.. timeline.Items]);
 
                     foreach (var onlineItem in onlineTimeline.Items)
                     {
-                        var itemType = Type.GetType(onlineItem.ItemTypeName);
-                        if (itemType == null) continue;
-
-                        try
-                        {
-                            if (JsonConvert.DeserializeObject(onlineItem.ItemJson, itemType, ItemSerializerOptions.Default) is IItem item)
-                            {
-                                CharacterResolver.TryResolveCharacter(item);
-
-                                if (onlineItem.MediaFileNames is { Count: > 0 })
-                                {
-                                    var requiresRealContainer = MediaFileResolver.RequiresRealMediaContainer(item);
-
-                                    foreach (var mediaFileName in onlineItem.MediaFileNames)
-                                    {
-                                        var targetSavePath = MediaFileResolver.ResolveLocalTempPath(mediaFileName);
-
-                                        if (requiresRealContainer)
-                                        {
-                                            MediaFileResolver.ClearRealMediaFilePath(item);
-                                        }
-                                        else
-                                        {
-                                            MediaFileResolver.EnsurePlaceholderFile(targetSavePath);
-                                            MediaFileResolver.ReplaceFilePath(item, mediaFileName, targetSavePath);
-                                        }
-
-                                        // 動画・音声以外は初回のReplaceFilePathで既に正しい最終パスになっている
-                                        // （転送完了時は中身が差し替わるだけでパス自体は変わらない）ため、
-                                        // 動画・音声（転送完了まで参照をnullにしている）の場合だけ完了を待つ
-                                        if (requiresRealContainer)
-                                        {
-                                            var fileName = Path.GetFileName(targetSavePath);
-
-                                            void onCompleted(string transferId, string savedPath)
-                                            {
-                                                if (Path.GetFileName(savedPath).Equals(fileName, StringComparison.OrdinalIgnoreCase))
-                                                {
-                                                    FileTransferCompleted -= onCompleted;
-                                                    Application.Current?.Dispatcher.InvokeAsync(() =>
-                                                    {
-                                                        ExecuteRemoteAction(() => MediaFileResolver.SetFilePath(item, savedPath));
-                                                    });
-                                                }
-                                            }
-
-                                            FileTransferCompleted += onCompleted;
-                                        }
-                                    }
-                                }
-
-                                ItemIdManager.RegisterId(item, onlineItem.ItemId);
-                                timeline.TryAddItems([item], onlineItem.Frame, onlineItem.Layer, false);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show($"[Sync Error]\n{ex.Message}\nType: {onlineItem.ItemTypeName}");
-                        }
+                        AddSyncedItem(timeline, onlineItem, ownerId);
                     }
                 }
 
@@ -883,11 +890,52 @@ namespace MultiUserEdit.Commons
             }
             finally
             {
-                isApplyingRemoteEvent = false;
+                isApplyingRemoteEvent = previousApplying;
                 if (activeViewModel != null)
                 {
                     adornerManager.AttachAdorner(activeViewModel);
                 }
+            }
+        }
+
+        private void AddSyncedItem(Timeline timeline, OnlineItem onlineItem, Guid ownerId)
+        {
+            var itemType = ItemTypeResolver.Resolve(onlineItem.ItemTypeName);
+            if (itemType == null) return;
+
+            try
+            {
+                var characterName = MediaFileResolver.GetCharacterNameFromJson(onlineItem.ItemJson);
+                if (!string.IsNullOrEmpty(characterName) && !CharacterShareManager.IsDecided(characterName))
+                {
+                    RequestCharacter(characterName, ownerId, () => AddSyncedItem(timeline, onlineItem, ownerId));
+                    return;
+                }
+
+                var itemJson = MediaFileResolver.ResolveJsonFileReferences(onlineItem.ItemJson, itemType, onlineItem.MediaFileNames);
+
+                if (JsonConvert.DeserializeObject(itemJson, itemType, ItemSerializerOptions.Default) is not IItem item) return;
+
+                CharacterResolver.TryResolveCharacter(item);
+
+                ItemIdManager.RegisterId(item, onlineItem.ItemId);
+                timeline.TryAddItems([item], onlineItem.Frame, onlineItem.Layer, false);
+
+                var missingFiles = MediaFileResolver.GetMissingFileNames(
+                    onlineItem.MediaFileNames, TachieFileResolver.GetBaseDirectory(item));
+                if (missingFiles.Count > 0 && activeViewModel != null)
+                {
+                    TransferWaiter.WhenFilesReady(activeViewModel, missingFiles, () =>
+                        JsonConvert.PopulateObject(
+                            MediaFileResolver.ResolveJsonFileReferences(onlineItem.ItemJson, itemType, onlineItem.MediaFileNames),
+                            item,
+                            ItemSerializerOptions.Default),
+                        TransferWaiter.DefaultTimeout);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] Sync item failed ({onlineItem.ItemTypeName}): {ex.Message}");
             }
         }
 
@@ -908,14 +956,16 @@ namespace MultiUserEdit.Commons
             await ConnectNetworkAsync(RoomId);
         }
 
-        // Guest接続時、サーバーからの room_not_found 通知（HandleRoomNotFound）を
-        // 一定時間待ってから「参加済み」のUI状態（Participants・IsConnected等）を反映する。
-        // これにより、実際には参加できていないルームが一瞬でも「接続済み」に見えてしまうのを防ぐ。
         private TaskCompletionSource<bool>? guestRoomValidation;
         private bool isJoining;
 
+        private int connectGeneration;
+
         private async Task ConnectNetworkAsync(string targetRoomId)
         {
+            var myGeneration = Interlocked.Increment(ref connectGeneration);
+            bool IsCurrent() => Volatile.Read(ref connectGeneration) == myGeneration;
+
             isJoining = true;
             RefreshCommandStates();
             try
@@ -927,6 +977,8 @@ namespace MultiUserEdit.Commons
 
                 await sessionClient.StartAsync(targetRoomId, localUserRole == UserRole.Host);
 
+                if (!IsCurrent()) return;
+
                 if (localUserRole == UserRole.Guest)
                 {
                     var validation = guestRoomValidation!;
@@ -934,13 +986,14 @@ namespace MultiUserEdit.Commons
                     var roomIsValid = winner != validation.Task || validation.Task.Result;
                     guestRoomValidation = null;
 
-                    if (!roomIsValid || !sessionClient.IsConnected) return;
+                    if (!IsCurrent() || !roomIsValid || !sessionClient.IsConnected) return;
 
                     IsConnected = true;
                     RefreshCommandStates();
                 }
 
                 Participants.Clear();
+                eventSender.ClearAllBaselines();
                 AddParticipantSorted(new Participant
                 {
                     UserId = LocalUserId,
@@ -962,6 +1015,8 @@ namespace MultiUserEdit.Commons
                 };
                 await sessionClient.SendAsync(null, presenceEvt);
 
+                if (!IsCurrent()) return;
+
                 if (localUserRole == UserRole.Guest)
                 {
                     var syncRequest = new SyncRequestEvent
@@ -978,8 +1033,11 @@ namespace MultiUserEdit.Commons
             }
             finally
             {
-                isJoining = false;
-                RefreshCommandStates();
+                if (IsCurrent())
+                {
+                    isJoining = false;
+                    RefreshCommandStates();
+                }
             }
         }
 
@@ -994,6 +1052,8 @@ namespace MultiUserEdit.Commons
                         DateTime = DateTime.UtcNow,
                         ExecutorId = LocalUserId
                     });
+
+                    if (IsHost) await SendCloseRoomAsync();
                 }
                 await sessionClient.StopAsync();
             }
@@ -1009,9 +1069,13 @@ namespace MultiUserEdit.Commons
 
         private void ResetNetworkState()
         {
+            Interlocked.Increment(ref connectGeneration);
+
             void ClearState()
             {
                 IsConnected = false;
+                isJoining = false;
+                watchedHostId = Guid.Empty;
                 IsHost = false;
                 RoomId = string.Empty;
                 InputRoomId = string.Empty;
@@ -1020,6 +1084,7 @@ namespace MultiUserEdit.Commons
                 lockedItemsReceivedAt.Clear();
                 LockedItems.Clear();
                 fileTransferManager.CancelAll();
+                characterShareManager.Reset();
                 RefreshCommandStates();
             }
 
@@ -1038,6 +1103,7 @@ namespace MultiUserEdit.Commons
             void Process()
             {
                 if (editEvent.ExecutorId == LocalUserId) return;
+
                 UpdateParticipantActivity(editEvent.ExecutorId);
                 DispatchEvent(editEvent);
             }
@@ -1051,6 +1117,9 @@ namespace MultiUserEdit.Commons
         private void UpdateParticipantActivity(Guid executorId)
         {
             if (executorId == Guid.Empty || executorId == LocalUserId) return;
+
+            NotePeerAlive(executorId);
+
             var p = EnsureParticipant(executorId);
             p.Status = UserStatus.Active;
             p.LastActivity = DateTime.Now;
@@ -1091,7 +1160,6 @@ namespace MultiUserEdit.Commons
                     UserId = evt.UserId,
                     ProfileId = evt.ProfileId,
                     UserName = evt.UserName,
-                    // 相手が古い版・改造版でも表示崩れを起こさないよう受信側でも制限する
                     Description = ProfileText.NormalizeDescription(evt.Description),
                     Role = evt.Role,
                     LastActivity = DateTime.Now,
@@ -1126,19 +1194,24 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        internal void HandleSyncRequestEvent(SyncRequestEvent evt)
+        internal void HandleSyncRequestEvent()
         {
             if (localUserRole != UserRole.Host || Scenes == null) return;
 
             var onlineScenes = new OnlineScenes();
-            var filesToTransfer = new List<string>();
+            var filesToTransfer = new List<(SharedFile File, string? CharacterName)>();
             foreach (var timeline in Scenes.Timelines)
             {
                 var onlineTimeline = new OnlineTimeline
                 {
                     Id = timeline.ID,
                     Name = timeline.Name,
-                    Length = timeline.Length
+                    Length = timeline.Length,
+                    Width = timeline.VideoInfo?.Width ?? 0,
+                    Height = timeline.VideoInfo?.Height ?? 0,
+                    FPS = timeline.VideoInfo?.FPS ?? 0,
+                    Hz = timeline.VideoInfo?.Hz ?? 0,
+                    BackgroundColor = timeline.VideoInfo is { } info ? VideoInfoSerializer.ToText(info.BackgroundColor) : null
                 };
                 foreach (var item in timeline.Items)
                 {
@@ -1147,13 +1220,15 @@ namespace MultiUserEdit.Commons
                     onlineTimeline.Items.Add(new OnlineItem
                     {
                         ItemId = ItemIdManager.GetOrCreateId(item),
-                        ItemTypeName = itemType.AssemblyQualifiedName ?? itemType.FullName ?? "",
+                        ItemTypeName = ItemTypeResolver.GetTypeName(itemType),
                         ItemJson = itemJson,
-                        MediaFileNames = files.Count > 0 ? files.Select(fp => Path.GetFileName(fp)!).ToList() : null,
+                        MediaFileNames = files.Count > 0 ? [.. files.Where(file => file.ShouldTransfer).Select(file => file.Name)] : null,
                         Frame = item.Frame,
                         Layer = item.Layer
                     });
-                    filesToTransfer.AddRange(files);
+
+                    var characterName = CharacterResolver.GetCharacter(item)?.Name;
+                    filesToTransfer.AddRange(files.Where(file => file.ShouldTransfer).Select(file => (file, characterName)));
                 }
                 onlineScenes.Timelines.Add(onlineTimeline);
             }
@@ -1165,46 +1240,108 @@ namespace MultiUserEdit.Commons
             };
             _ = sessionClient.SendAsync(null, syncEvent);
 
-            // 参加時点で既にタイムライン上にある素材の実データを新規参加者へ転送する
-            // （SyncScenesEventはプレースホルダーの参照情報のみを含み、実バイト列は別途送る必要がある）
-            foreach (var filePath in filesToTransfer.Distinct(StringComparer.OrdinalIgnoreCase))
+            foreach (var (file, characterName) in filesToTransfer.DistinctBy(entry => entry.File.FullPath, StringComparer.OrdinalIgnoreCase))
             {
-                _ = fileTransferManager.TransferAsync(filePath, sessionClient, LocalUserId);
+                _ = fileTransferManager.TransferAsync(file, characterName, sessionClient, LocalUserId);
             }
         }
 
         private void DispatchEvent(EditEvent editEvent)
         {
             if (activeViewModel == null) return;
+
+            var previous = isApplyingRemoteEvent;
             isApplyingRemoteEvent = true;
+            using var undoScope = UndoRecordSuppressor.Suppress(undoRedoManager);
             try
             {
                 eventDispatcher.Dispatch(editEvent, activeViewModel);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MultiUserEdit] dispatch failed: {ex.Message}");
+                Debug.WriteLine($"[MultiUserEdit] Dispatch failed: {ex.Message}");
             }
             finally
             {
-                isApplyingRemoteEvent = false;
+                isApplyingRemoteEvent = previous;
             }
         }
+
+        private static readonly TimeSpan[] ReconnectDelays =
+        [
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(20),
+            TimeSpan.FromSeconds(30),
+        ];
+
+        private bool isReconnecting;
 
         private void HandleDisconnected()
         {
             Debug.WriteLine("[MultiUserEdit] Disconnected by server");
-            ResetNetworkState();
+
+            if (disposed || isReconnecting || string.IsNullOrEmpty(RoomId))
+            {
+                ResetNetworkState();
+                return;
+            }
+
+            _ = ReconnectAsync(RoomId, localUserRole);
         }
 
-        private void HandleRoomNotFound()
+        private async Task ReconnectAsync(string targetRoomId, UserRole role)
+        {
+            isReconnecting = true;
+            try
+            {
+                for (var attempt = 0; attempt < ReconnectDelays.Length; attempt++)
+                {
+                    await Task.Delay(ReconnectDelays[attempt]);
+
+                    if (disposed || sessionClient.IsConnected || RoomId != targetRoomId) return;
+
+                    try
+                    {
+                        await sessionClient.StartAsync(targetRoomId, role == UserRole.Host);
+                    }
+                    catch
+                    {
+                        continue;
+                    }
+
+                    if (!sessionClient.IsConnected) continue;
+
+                    BroadcastLocalPresence();
+                    Debug.WriteLine($"[MultiUserEdit] Reconnected (attempt {attempt + 1})");
+                    return;
+                }
+
+                ErrorNotifier.NotifyOnce(
+                    "接続が切断されました",
+                    "共同編集サーバーとの接続が切れ、繋ぎ直せませんでした。\n" +
+                    "通信環境を確認して、もう一度ルームに参加してください。");
+                ResetNetworkState();
+            }
+            finally
+            {
+                isReconnecting = false;
+            }
+        }
+
+        private void HandleRoomNotFound(string? reason)
         {
             guestRoomValidation?.TrySetResult(false);
             ResetNetworkState();
 
+            var message = reason == "expired"
+                ? "このルームは一定時間やり取りが無かったため、自動的に閉じられました。\nホストに新しいルームを作り直してもらってください。"
+                : "ルームが存在しません。ルームIDを確認してください。";
+
             Application.Current?.Dispatcher.InvokeAsync(() =>
             {
-                MessageBox.Show("ルームが存在しません。ルームIDを確認してください。", "参加エラー", MessageBoxButton.OK);
+                MessageBox.Show(message, "参加エラー", MessageBoxButton.OK);
             });
         }
 
@@ -1216,8 +1353,6 @@ namespace MultiUserEdit.Commons
                 return;
             }
 
-            // Guestの場合、room_not_found の判定が終わるまでは ConnectNetworkAsync 側で
-            // IsConnected を立てる（参加者一覧・切断ボタン等をそれまで「未接続」に見せるため）。
             if (localUserRole == UserRole.Host)
             {
                 IsConnected = true;
@@ -1266,15 +1401,81 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        // アプリ側の離脱通知（UserLeftEvent）を送れないまま切断された（YMM4終了・クラッシュ・回線切断等）場合に
-        // サーバーが代わりに通知してくる peer_disconnected を、通常の離脱処理にそのまま合流させる。
         private void HandlePeerDisconnected(Guid userId, bool isHost)
         {
+            if (isHost)
+            {
+                Application.Current?.Dispatcher.InvokeAsync(() => BeginHostWatch(userId));
+                return;
+            }
+
             HandleUserLeftEvent(new UserLeftEvent(userId, isHost)
             {
                 DateTime = DateTime.UtcNow,
                 ExecutorId = userId
             });
+        }
+
+        private static readonly TimeSpan HostProbeInterval = TimeSpan.FromSeconds(15);
+        private const int HostProbeCount = 4;
+
+        private Guid watchedHostId;
+
+        private void BeginHostWatch(Guid hostUserId)
+        {
+            if (hostUserId == LocalUserId || watchedHostId == hostUserId) return;
+
+            watchedHostId = hostUserId;
+
+            var host = Participants.FirstOrDefault(p => p.UserId == hostUserId);
+            host?.Status = UserStatus.Disconnected;
+
+            _ = WatchHostAsync(hostUserId);
+        }
+
+        private void NotePeerAlive(Guid userId)
+        {
+            if (watchedHostId == userId) watchedHostId = Guid.Empty;
+        }
+
+        private async Task WatchHostAsync(Guid hostUserId)
+        {
+            while (true)
+            {
+                for (var i = 0; i < HostProbeCount; i++)
+                {
+                    await Task.Delay(HostProbeInterval);
+
+                    if (disposed || !IsConnected || watchedHostId != hostUserId) return;
+
+                    var probe = new PresenceEvent(LocalUserId, UserName, localUserRole, false, LocalProfileId, UserDescription)
+                    {
+                        DateTime = DateTime.UtcNow,
+                        ExecutorId = LocalUserId
+                    };
+                    await sessionClient.SendAsync(null, probe);
+                }
+
+                if (disposed || !IsConnected || watchedHostId != hostUserId) return;
+
+                var hostName = Participants.FirstOrDefault(p => p.UserId == hostUserId)?.UserName ?? "ホスト";
+                var keepWaiting = MessageBox.Show(
+                    $"{hostName} との接続が切れたまま約1分が経過し、応答がありません。\n" +
+                    "YMM4が落ちたか、通信が途切れている可能性があります。\n\n" +
+                    "ルーム自体はまだ開いているため、復帰を待つこともできます。\n" +
+                    "待機を続けますか？（いいえ を選ぶと切断します）",
+                    "ホストの応答がありません",
+                    MessageBoxButton.YesNo) == MessageBoxResult.Yes;
+
+                if (disposed || !IsConnected || watchedHostId != hostUserId) return;
+
+                if (!keepWaiting)
+                {
+                    watchedHostId = Guid.Empty;
+                    await StopNetworkAsync();
+                    return;
+                }
+            }
         }
 
         internal void HandleUserLeftEvent(UserLeftEvent evt)
@@ -1314,6 +1515,7 @@ namespace MultiUserEdit.Commons
                     LockedItems[evt.ItemId] = evt.UserId;
                     lockedItemsReceivedAt[evt.ItemId] = DateTime.UtcNow;
                     ForceDeselectItem(evt.ItemId);
+                    RequestItemState(evt.ItemId, evt.UserId);
                 }
                 return;
             }
@@ -1343,27 +1545,39 @@ namespace MultiUserEdit.Commons
 
         private async Task SyncPlaybackStateAsync(int frame, bool isPlaying)
         {
-            isApplyingRemoteEvent = true;
-            try
+            if (!isPlaying && FirstOrDefaultTimeline != null)
             {
-                if (!isPlaying && FirstOrDefaultTimeline != null)
+                var previous = isApplyingRemoteEvent;
+                isApplyingRemoteEvent = true;
+                try
                 {
                     FirstOrDefaultTimeline.UnlockCurrentFrame();
                     FirstOrDefaultTimeline.CurrentFrame = frame;
                 }
-
-                if (previewSeekAction != null)
+                finally
                 {
-                    await previewSeekAction(frame, isPlaying);
+                    isApplyingRemoteEvent = previous;
                 }
             }
-            finally
+
+            if (previewSeekAction != null)
             {
-                isApplyingRemoteEvent = false;
+                await previewSeekAction(frame, isPlaying);
             }
         }
 
-        // ハッシュ計算はファイルサイズ次第で時間がかかるため、UIスレッドを止めないよう裏で走らせる
+        internal void HandleCharacterRequest(CharacterRequestEvent evt) => characterShareManager.HandleRequest(evt);
+
+        internal void HandleCharacterShared(CharacterSharedEvent evt) => characterShareManager.HandleShared(evt);
+
+        internal static bool IsCharacterDecided(string characterName) => CharacterShareManager.IsDecided(characterName);
+
+        internal void RequestCharacter(string characterName, Guid ownerId, Action resume)
+        {
+            characterShareManager.WhenDecided(characterName, resume);
+            characterShareManager.RequestIfNeeded(characterName, ownerId);
+        }
+
         internal void HandleFileAvailable(FileAvailableEvent evt)
         {
             _ = Task.Run(async () =>
@@ -1372,14 +1586,12 @@ namespace MultiUserEdit.Commons
                 {
                     var needsTransfer = await fileTransferManager.NeedsTransferAsync(evt);
 
-                    // 持っていても返事はする（送信側が全員の返事を待たずに済むように）
                     var requestEvt = new FileRequestEvent(evt.TransferId, LocalUserId, needsTransfer)
                     {
                         DateTime = DateTime.UtcNow,
                         ExecutorId = LocalUserId
                     };
 
-                    // 告知した本人にだけ返す（他の参加者には関係のないやり取りのため）
                     await sessionClient.SendAsync(evt.ExecutorId.ToString(), requestEvt);
                 }
                 catch (Exception ex)
@@ -1396,12 +1608,12 @@ namespace MultiUserEdit.Commons
 
         internal void HandleFileTransferStart(FileTransferStartEvent evt)
         {
-            fileTransferManager.HandleTransferStart(evt, LocalUserId);
+            fileTransferManager.HandleTransferStart(evt);
         }
 
         internal void HandleFileChunk(FileChunkEvent evt)
         {
-            fileTransferManager.HandleChunk(evt, LocalUserId);
+            fileTransferManager.HandleChunk(evt);
         }
 
         public Task SendFileAsync(string filePath) =>
@@ -1411,6 +1623,7 @@ namespace MultiUserEdit.Commons
         {
             if (Scenes == null) return;
 
+            var previous = isApplyingRemoteEvent;
             isApplyingRemoteEvent = true;
             try
             {
@@ -1435,7 +1648,7 @@ namespace MultiUserEdit.Commons
             }
             finally
             {
-                isApplyingRemoteEvent = false;
+                isApplyingRemoteEvent = previous;
             }
         }
 
@@ -1485,16 +1698,43 @@ namespace MultiUserEdit.Commons
             _ = eventSender.SendItemUnlockAsync(itemId);
         }
 
+        internal bool IsItemEditableLocally(Guid itemId) =>
+            locallyLockedItems.ContainsKey(itemId) || !LockedItems.ContainsKey(itemId);
+
+        internal void HandleItemStateRequest(ItemStateRequestEvent evt)
+        {
+            if (!IsConnected || Scenes == null) return;
+
+            foreach (var timeline in Scenes.Timelines)
+            {
+                var item = timeline.Items.FirstOrDefault(i => ItemIdManager.GetOrCreateId(i) == evt.ItemId);
+                if (item == null) continue;
+
+                eventSender.ClearBaseline(evt.ItemId);
+                _ = eventSender.SendItemUpdatedAsync(item, Scenes.Timelines.IndexOf(timeline));
+                return;
+            }
+        }
+
+        private void RequestItemState(Guid itemId, Guid ownerId)
+        {
+            if (!IsConnected) return;
+
+            var request = new ItemStateRequestEvent(itemId, LocalUserId)
+            {
+                DateTime = DateTime.UtcNow,
+                ExecutorId = LocalUserId
+            };
+            _ = sessionClient.SendAsync(ownerId.ToString(), request);
+        }
+
         public void Dispose()
         {
             if (disposed) return;
             disposed = true;
 
             AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
-            if (Application.Current != null)
-            {
-                Application.Current.Exit -= Application_Exit;
-            }
+            Application.Current?.Exit -= Application_Exit;
 
             presenceTimer.Stop();
             presenceTimer.Tick -= PresenceTimer_Tick;

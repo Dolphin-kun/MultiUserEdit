@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons.Models;
+﻿using MultiUserEdit.Commons.Models;
 using MultiUserEdit.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
@@ -12,7 +12,6 @@ namespace MultiUserEdit.Views
             InitializeComponent();
         }
 
-        // 入力欄がホイールを吸ってしまい、カード全体のスクロールが止まるのを防ぐ
         private void OnInputPreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
         {
             Behaviors.MouseWheelRedirector.Redirect(sender, e);
@@ -28,8 +27,6 @@ namespace MultiUserEdit.Views
 
         private void OnJoinRoomClick(object sender, RoutedEventArgs e)
         {
-            // Click は Command の実行より先に発火するため、InputRoomId の読み取りを妨げないよう
-            // クリア処理はディスパッチャーキューに積んで実行を後回しにする。
             Dispatcher.BeginInvoke(() => InputRoomIdPasswordBox.Password = string.Empty,
                 System.Windows.Threading.DispatcherPriority.Background);
         }
@@ -40,7 +37,6 @@ namespace MultiUserEdit.Views
             if (DataContext is not MultiUserEditViewModel viewModel) return;
 
             var isSelf = participant.UserId == viewModel.LocalUserId;
-            // 権限の変更とキックは、自分がホストで相手がゲストのときのみ
             var canManage = viewModel.IsHost && participant.Role == UserRole.Guest;
 
             var dialog = new UserProfileDialog(participant, isSelf, canManage,

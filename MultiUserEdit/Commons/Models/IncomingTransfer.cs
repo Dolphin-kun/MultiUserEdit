@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 
 namespace MultiUserEdit.Commons.Models
 {
@@ -12,8 +12,6 @@ namespace MultiUserEdit.Commons.Models
         public int ReceivedChunks { get; set; }
         public DateTime StartedAt { get; } = DateTime.UtcNow;
 
-        // 受信したチャンクはメモリに溜めず、そのまま一時ファイルへ書き出す
-        // （チャンクが大きいため、全チャンクを保持するとファイルサイズ分のメモリを消費してしまう）。
         private FileStream? stream;
 
         public FileStream OpenStream()

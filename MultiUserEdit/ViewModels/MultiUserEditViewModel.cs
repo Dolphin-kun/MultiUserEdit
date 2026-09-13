@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons;
+﻿using MultiUserEdit.Commons;
 using MultiUserEdit.Commons.Events;
 using MultiUserEdit.Commons.Models;
 using MultiUserEdit.Networking;
@@ -8,7 +8,6 @@ using System.Windows.Input;
 using YukkuriMovieMaker.Commons;
 using YukkuriMovieMaker.Plugin;
 using YukkuriMovieMaker.Project;
-using YukkuriMovieMaker.Project.Items;
 
 namespace MultiUserEdit.ViewModels
 {
@@ -17,18 +16,14 @@ namespace MultiUserEdit.ViewModels
         private bool disposed;
         private ToolState toolState = new();
 
-        // ツールのタイトルはプラグイン既定のものを使うため空を返す
         public string Title => string.Empty;
 
-        // パネルを非表示にしてもViewModelを破棄させない（共同編集のセッションを維持するため）
-        public bool CanSuspend => false;
+        public bool CanSuspend => true;
 
-        // IToolViewModelの実装に必要だが、このプラグインはビューを複数作らないため発火しない
 #pragma warning disable CS0067
         public event EventHandler<CreateNewToolViewRequestedEventArgs>? CreateNewToolViewRequested;
 #pragma warning restore CS0067
 
-        // プロジェクト保存時にYMM4から呼ばれる。合計参加時間をプロジェクトファイルへ書き出す。
         public ToolState SaveState()
         {
             var state = CurrentSession?.CaptureParticipationState();
@@ -36,8 +31,6 @@ namespace MultiUserEdit.ViewModels
             return toolState;
         }
 
-        // プロジェクト読み込み時にYMM4から呼ばれる。
-        // セッション生成前に呼ばれることもあるため、保持しておいて生成時に反映する。
         public void LoadState(ToolState stateData)
         {
             toolState = stateData;
@@ -78,6 +71,7 @@ namespace MultiUserEdit.ViewModels
 
         public ObservableCollection<string> ReceivedMessages => CurrentSession?.ReceivedMessages ?? [];
         public ObservableCollection<Participant> Participants => CurrentSession?.Participants ?? [];
+        public ObservableCollection<TransferItemInfo> ActiveTransfers => CurrentSession?.ActiveTransfers ?? [];
 
         public ICommand? CreateRoomCommand => CurrentSession?.CreateRoomCommand;
         public ICommand? JoinRoomCommand => CurrentSession?.JoinRoomCommand;
@@ -87,6 +81,7 @@ namespace MultiUserEdit.ViewModels
         public ICommand? RegisterProtocolCommand => CurrentSession?.RegisterProtocolCommand;
         public ICommand? UnregisterProtocolCommand => CurrentSession?.UnregisterProtocolCommand;
         public ICommand? DisconnectCommand => CurrentSession?.DisconnectCommand;
+        public ICommand? SyncNowCommand => CurrentSession?.SyncNowCommand;
         public ICommand? KickUserCommand => CurrentSession?.KickUserCommand;
 
         public bool IsProtocolRegistered => CurrentSession?.IsProtocolRegistered ?? ProtocolRegister.IsRegistered();
@@ -96,13 +91,13 @@ namespace MultiUserEdit.ViewModels
         public string RoomId
         {
             get => CurrentSession?.RoomId ?? string.Empty;
-            set { if (CurrentSession != null) CurrentSession.RoomId = value; }
+            set => CurrentSession?.RoomId = value;
         }
 
         public string InputRoomId
         {
             get => CurrentSession?.InputRoomId ?? string.Empty;
-            set { if (CurrentSession != null) CurrentSession.InputRoomId = value; }
+            set => CurrentSession?.InputRoomId = value;
         }
 
         public string UserName
@@ -110,7 +105,6 @@ namespace MultiUserEdit.ViewModels
             get => CurrentSession?.UserName ?? Settings.MultiUserEditSettings.Default.UserName;
             set
             {
-                // セッション生成前でも設定画面から編集できるようにフォールバックする
                 if (CurrentSession != null) CurrentSession.UserName = value;
                 else Settings.MultiUserEditSettings.Default.UserName = value;
             }
@@ -126,7 +120,6 @@ namespace MultiUserEdit.ViewModels
             }
         }
 
-        // 参加者の合計参加時間（秒）。プロジェクトに記録が無い場合はnull。
         public double? GetTotalParticipationSeconds(Participant participant) =>
             CurrentSession?.GetTotalParticipationSeconds(participant);
 
@@ -135,19 +128,19 @@ namespace MultiUserEdit.ViewModels
         public bool IsTransferring
         {
             get => CurrentSession?.IsTransferring ?? false;
-            set { if (CurrentSession != null) CurrentSession.IsTransferring = value; }
+            set => CurrentSession?.IsTransferring = value;
         }
 
         public string TransferStatusText
         {
             get => CurrentSession?.TransferStatusText ?? string.Empty;
-            set { if (CurrentSession != null) CurrentSession.TransferStatusText = value; }
+            set => CurrentSession?.TransferStatusText = value;
         }
 
         public double TransferProgress
         {
             get => CurrentSession?.TransferProgress ?? 0;
-            set { if (CurrentSession != null) CurrentSession.TransferProgress = value; }
+            set => CurrentSession?.TransferProgress = value;
         }
 
         public UserPermission GlobalDefaultPermission => CurrentSession?.GlobalDefaultPermission ?? new();
@@ -155,7 +148,7 @@ namespace MultiUserEdit.ViewModels
         public UserPermission CurrentUserPermission
         {
             get => CurrentSession?.CurrentUserPermission ?? new();
-            set { if (CurrentSession != null) CurrentSession.CurrentUserPermission = value; }
+            set => CurrentSession?.CurrentUserPermission = value;
         }
 
         public bool IsConnected => CurrentSession?.IsConnected ?? false;
@@ -260,9 +253,9 @@ namespace MultiUserEdit.ViewModels
             return input;
         }
 
-        public void ApplySyncScenes(OnlineScenes onlineScenes)
+        public void ApplySyncScenes(OnlineScenes onlineScenes, Guid ownerId)
         {
-            CurrentSession?.ApplySyncScenes(onlineScenes);
+            CurrentSession?.ApplySyncScenes(onlineScenes, ownerId);
         }
 
         internal void HandlePresenceEvent(PresenceEvent evt)
@@ -270,9 +263,9 @@ namespace MultiUserEdit.ViewModels
             CurrentSession?.HandlePresenceEvent(evt);
         }
 
-        internal void HandleSyncRequestEvent(SyncRequestEvent evt)
+        internal void HandleSyncRequestEvent()
         {
-            CurrentSession?.HandleSyncRequestEvent(evt);
+            CurrentSession?.HandleSyncRequestEvent();
         }
 
         internal void HandleUserLeftEvent(UserLeftEvent evt)
@@ -298,6 +291,32 @@ namespace MultiUserEdit.ViewModels
         internal void HandleCursorMovedEvent(CursorMovedEvent evt)
         {
             CurrentSession?.HandleCursorMovedEvent(evt);
+        }
+
+        internal void HandleCharacterRequest(CharacterRequestEvent evt)
+        {
+            CurrentSession?.HandleCharacterRequest(evt);
+        }
+
+        internal void HandleCharacterShared(CharacterSharedEvent evt)
+        {
+            CurrentSession?.HandleCharacterShared(evt);
+        }
+
+        internal void HandleItemStateRequest(Commons.Events.ItemStateRequestEvent evt)
+        {
+            CurrentSession?.HandleItemStateRequest(evt);
+        }
+
+        internal string GetUserName(Guid userId) =>
+            Participants.FirstOrDefault(p => p.UserId == userId)?.UserName ?? string.Empty;
+
+        internal bool IsCharacterDecided(string characterName) =>
+            CurrentSession == null || CollaborationSession.IsCharacterDecided(characterName);
+
+        internal void RequestCharacter(string characterName, Guid ownerId, Action resume)
+        {
+            CurrentSession?.RequestCharacter(characterName, ownerId, resume);
         }
 
         internal void HandleFileAvailable(FileAvailableEvent evt)
@@ -333,17 +352,19 @@ namespace MultiUserEdit.ViewModels
             CurrentSession?.UnlockItemLocally(itemId);
         }
 
+        internal void DetachFromSession()
+        {
+            if (CurrentSession == null) return;
+
+            CurrentSession.PropertyChanged -= OnSessionPropertyChanged;
+            CurrentSession.FileTransferCompleted -= OnSessionFileTransferCompleted;
+            CurrentSession = null;
+        }
+
         public void Dispose()
         {
             if (disposed) return;
             disposed = true;
-
-            if (CurrentSession != null)
-            {
-                CurrentSession.PropertyChanged -= OnSessionPropertyChanged;
-                CurrentSession.FileTransferCompleted -= OnSessionFileTransferCompleted;
-                CurrentSession = null;
-            }
 
             GC.SuppressFinalize(this);
         }

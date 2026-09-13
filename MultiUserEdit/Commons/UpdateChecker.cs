@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Net.Http;
 using System.Reflection;
 using System.Text.Json;
@@ -7,14 +7,8 @@ using YukkuriMovieMaker.Commons;
 
 namespace MultiUserEdit.Commons
 {
-    /// <summary>
-    /// ymm4-info.net のプラグイン情報APIから最新バージョンを取得する。
-    /// YMM4起動中に何度も問い合わせないよう、セッション内で1回だけ実行する。
-    /// </summary>
     internal sealed class UpdateChecker : Bindable
     {
-        // TODO: ymm4-info.net にプラグインを掲載したら、その投稿IDをここに設定する。
-        // 空のままだと問い合わせを行わず「未公開」と表示する。
         private const string PostId = "";
 
         private const string FallbackUrl = "https://ymm4-info.net/";
@@ -25,7 +19,6 @@ namespace MultiUserEdit.Commons
 
         private Task? checkTask;
 
-        // 静的プロパティはDataContext経由でバインドできないためインスタンスプロパティにする
         public string CurrentVersion { get; } =
             Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
 
@@ -58,7 +51,6 @@ namespace MultiUserEdit.Commons
                 }));
         }
 
-        /// <summary>初回のみ問い合わせを行う。2回目以降は取得済みの結果をそのまま使う。</summary>
         public void EnsureChecked()
         {
             checkTask ??= CheckAsync();

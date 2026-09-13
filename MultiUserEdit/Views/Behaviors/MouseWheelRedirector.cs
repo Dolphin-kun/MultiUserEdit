@@ -1,21 +1,12 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 
 namespace MultiUserEdit.Views.Behaviors
 {
-    /// <summary>
-    /// TextBox や PasswordBox は自前でスクロール可能なため、ScrollViewer 内に置くと
-    /// マウスホイールを吸ってしまい外側のスクロールが動かなくなる。
-    /// PreviewMouseWheel からこれを呼び、親要素へイベントを転送して外側をスクロールさせる。
-    /// </summary>
     internal static class MouseWheelRedirector
     {
-        /// <summary>
-        /// 入れ子のScrollViewer用。これ以上スクロールできない向きのホイールだけ親へ渡す。
-        /// （渡さないと、内側が端に達した後もホイールが吸われて外側が動かない）
-        /// </summary>
         public static void RedirectAtEdge(object sender, MouseWheelEventArgs e)
         {
             if (sender is not ScrollViewer scrollViewer) return;

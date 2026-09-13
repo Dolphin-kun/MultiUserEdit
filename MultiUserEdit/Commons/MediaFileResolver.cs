@@ -1,145 +1,216 @@
+﻿using Newtonsoft.Json.Linq;
 using System.IO;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
 
 namespace MultiUserEdit.Commons
 {
+    internal readonly record struct SharedFile(string FullPath, string Name, bool ShouldTransfer = true);
+
     internal static class MediaFileResolver
     {
-        // IFileItem を実装しない旧来のアイテム向けフォールバック（VideoItem/AudioItem/ImageItem/TachieItem等は
-        // すべてIFileItemを実装しているため、通常はこちらのリフレクション経路には入らない）
-        internal static readonly string[] PropertyNames = ["FilePath", "PsdPath", "ImagePath", "TachiEPath", "PsdFilePath", "ImageFilePath", "SourcePath", "File", "Path"];
+        internal static readonly string[] PropertyNames = ["FilePath", "PsdPath", "ImagePath", "TachiEPath", "PsdFilePath", "ImageFilePath", "SourcePath", "EnableLayersFilePath", "Directory", "File", "Path"];
 
-        // 1x1 透明PNGバイト列（WICデコーダー・Direct2D等のコンポーネント未検出エラー0x88982F50を回避）
-        private static readonly byte[] TransparentPngBytes =
-        [
-            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
-            0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-            0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00,
-            0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
-            0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49,
-            0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
-        ];
+        private static readonly HashSet<string> PathPropertyNames = new(PropertyNames, StringComparer.OrdinalIgnoreCase);
 
-        public static string ResolveLocalTempPath(string originalFilePath)
+        [ThreadStatic]
+        private static string? serializationBaseDirectory;
+        [ThreadStatic]
+        private static string? serializationCharacterName;
+
+        public static string ToPortableName(string filePath)
         {
-            if (string.IsNullOrEmpty(originalFilePath)) return string.Empty;
-            var fileName = Path.GetFileName(originalFilePath);
-            var saveDir = FileTransferManager.GetSaveDirectory();
-            return Path.Combine(saveDir, fileName);
+            if (string.IsNullOrEmpty(filePath)) return filePath;
+
+            return TachieFileResolver.ToPortableName(serializationBaseDirectory, serializationCharacterName, filePath)
+                ?? Path.GetFileName(filePath);
         }
 
-        // VideoItem/AudioItemはMedia Foundationで実データをデコードするため、透明PNGのプレースホルダーを
-        // 渡すと「指定されたURLのバイトストリームタイプはサポートされていません」等の例外を投げる
-        // （画像系はWICが内容ベースで判定するためプレースホルダーでも問題なく動くが、動画・音声はコンテナ
-        // 形式が一致しないと即座に拒否され、しかもYMM4側で捕捉されず未処理例外としてアプリが落ちる）。
-        // そのため動画・音声は転送完了までプレースホルダーを使わず、参照そのものを空にしておく。
+        public static string ResolveLocalTempPath(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return string.Empty;
+
+            var relative = TachieFileResolver.IsSafeRelativePath(name)
+                ? TachieFileResolver.ToLocalSeparators(name)
+                : Path.GetFileName(name);
+
+            return Path.Combine(FileTransferManager.GetSaveDirectory(), relative);
+        }
+
         public static bool RequiresRealMediaContainer(IItem item) => item is VideoItem or AudioItem;
 
-        public static void ClearRealMediaFilePath(IItem item)
+        public static bool RequiresRealMediaContainer(Type itemType) =>
+            typeof(VideoItem).IsAssignableFrom(itemType) || typeof(AudioItem).IsAssignableFrom(itemType);
+
+        public static IReadOnlyList<string> GetMissingFileNames(IReadOnlyList<string>? mediaFileNames, string? tachieBaseDirectory = null)
         {
-            if (item is VideoItem videoItem) videoItem.FilePath = null;
-            else if (item is AudioItem audioItem) audioItem.FilePath = null;
+            if (mediaFileNames == null || mediaFileNames.Count == 0) return [];
+
+            return [.. mediaFileNames
+                .Where(name => !string.IsNullOrEmpty(name)
+                            && TachieFileResolver.ResolveLocalPath(tachieBaseDirectory, name) == null
+                            && !File.Exists(ResolveLocalTempPath(name))
+                            && IsReceivable(name))
+                .Distinct(StringComparer.OrdinalIgnoreCase)];
         }
 
-        public static void EnsurePlaceholderFile(string targetSavePath)
+        private static bool IsReceivable(string name)
         {
-            if (string.IsNullOrEmpty(targetSavePath)) return;
-            if (File.Exists(targetSavePath)) return;
+            if (Settings.MultiUserEditSettings.Default.IsExtensionAllowed(name)) return true;
 
-            try
-            {
-                var dir = Path.GetDirectoryName(targetSavePath);
-                if (!string.IsNullOrEmpty(dir))
-                {
-                    Directory.CreateDirectory(dir);
-                }
+            var extension = Path.GetExtension(name);
+            ErrorNotifier.NotifyOnce(
+                "素材を受け取れませんでした",
+                $"拡張子 [{extension}] のファイルは共有設定で許可されていないため受け取れません。\n" +
+                "設定 → ファイル → 共有可能なファイル形式 から許可してください。");
 
-                // すべての画像・素材デコーダーが正常に読み込めるダミーPNGプレースホルダーを事前生成
-                File.WriteAllBytes(targetSavePath, TransparentPngBytes);
-            }
-            catch { }
+            return false;
         }
 
-        // アイテムが参照するファイルパスをすべて列挙する（ローカルに存在するかは問わない）。
-        // VideoItem/AudioItem/ImageItem/TachieItem等はすべてSDKのIFileItemを実装しているため、
-        // 立ち絵の表情差分（ネストしたCharacterパラメーター内のファイル）もトップレベルのプロパティ名に
-        // 依存せず正しく検出できる。
+        public static IReadOnlyList<string> GetMissingFileNames(IReadOnlyList<string>? mediaFileNames, Type itemType, string? tachieBaseDirectory = null) =>
+            RequiresRealMediaContainer(itemType) ? [] : GetMissingFileNames(mediaFileNames, tachieBaseDirectory);
+
         public static IReadOnlyList<string> GetReferencedPaths(IItem item)
         {
-            if (item is IFileItem fileItem)
-            {
-                return fileItem.GetFiles()
-                    .Where(f => !string.IsNullOrEmpty(f))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-            }
+            var paths = new List<string>();
 
-            var legacyPath = GetFilePath(item);
-            return string.IsNullOrEmpty(legacyPath) ? [] : [legacyPath];
+            if (item is IFileItem fileItem)
+                paths.AddRange(fileItem.GetFiles().Where(f => !string.IsNullOrEmpty(f)));
+            else if (GetFilePath(item) is { Length: > 0 } legacyPath)
+                paths.Add(legacyPath);
+
+            return [.. paths.Distinct(StringComparer.OrdinalIgnoreCase)];
         }
 
-        // アイテムが参照するファイルのうち、ローカルに実在するもの（＝送信可能なもの）だけを列挙する。
         public static IReadOnlyList<string> GetFilePaths(IItem item)
         {
-            return GetReferencedPaths(item).Where(File.Exists).ToList();
+            return [.. GetReferencedPaths(item).Where(File.Exists)];
         }
 
-        // 更新イベント受信時、JsonConvert.PopulateObjectで「表示中の生きたアイテム」に直接反映する前に、
-        // JSON文字列の時点でファイル名を解決しておく。PopulateObject後にファイルパスを直す方式だと、
-        // その一瞬だけ壊れた値がWPFにバインドされたプロパティへ反映されてしまい、ちょうどそのタイミングで
-        // 再描画が走ると存在しないファイルを読みに行ってクラッシュする。
-        //
-        // mediaFileNamesは送信側がSerializeForSync時点で実際にファイル名へ差し替えた対象そのもの
-        // （ItemAddedEvent.MediaFileNames同様、送信側から渡される正の情報）。受信側アイテムの「現在の
-        // FilePath」から逆算する方式だと、動画・音声がまだ初回転送中でFilePathがnullのままの場合に
-        // 対象を見失い、素のファイル名がそのままPopulateObjectで生きたVideoItem等に入ってしまい、
-        // Media Foundationが未処理例外を投げていた。
-        public static string ResolveJsonFileReferences(string itemJson, IItem item, IReadOnlyList<string>? mediaFileNames)
+        public static IReadOnlyList<string> GetTransferableFilePaths(IItem item)
         {
-            if (mediaFileNames == null || mediaFileNames.Count == 0) return itemJson;
+            return [.. GetFilePaths(item).Where(fp => ShouldTransfer(item, fp))];
+        }
 
-            var requiresRealContainer = RequiresRealMediaContainer(item);
+        private static bool ShouldTransfer(IItem item, string filePath) =>
+            CharacterResolver.GetCharacter(item) == null ||
+            !Path.GetExtension(filePath).Equals(".psd", StringComparison.OrdinalIgnoreCase);
 
-            foreach (var fileName in mediaFileNames)
+        public static string ResolveJsonFileReferences(string itemJson, IItem item, IReadOnlyList<string>? mediaFileNames) =>
+            ResolveJsonFileReferences(itemJson, RequiresRealMediaContainer(item), mediaFileNames, TachieFileResolver.GetBaseDirectory(item));
+
+        public static string ResolveJsonFileReferences(string itemJson, Type itemType, IReadOnlyList<string>? mediaFileNames) =>
+            ResolveJsonFileReferences(itemJson, itemType, mediaFileNames, GetTachieBaseDirectoryFromJson(itemJson));
+
+        public static string ResolveJsonFileReferences(string itemJson, Type itemType, IReadOnlyList<string>? mediaFileNames, string? tachieBaseDirectory) =>
+            ResolveJsonFileReferences(itemJson, RequiresRealMediaContainer(itemType), mediaFileNames, tachieBaseDirectory);
+
+        private static string ResolveJsonFileReferences(string itemJson, bool requiresRealContainer, IReadOnlyList<string>? mediaFileNames, string? tachieBaseDirectory)
+        {
+            var targets = new HashSet<string>(
+                mediaFileNames?.Where(name => !string.IsNullOrEmpty(name)) ?? [],
+                StringComparer.OrdinalIgnoreCase);
+            if (targets.Count == 0 && tachieBaseDirectory == null) return itemJson;
+
+            return EditFilePathProperties(itemJson, property =>
             {
-                if (string.IsNullOrEmpty(fileName)) continue;
+                if (property.Value.Type != JTokenType.String) return false;
+
+                var fileName = (string?)property.Value;
+                if (string.IsNullOrEmpty(fileName)) return false;
+
+                if (Path.IsPathRooted(fileName)) return false;
+
+                if (TachieFileResolver.ResolveLocalPath(tachieBaseDirectory, fileName) is { } characterPath)
+                {
+                    property.Value = characterPath;
+                    return false;
+                }
+
+                if (!targets.Contains(fileName)) return tachieBaseDirectory != null;
 
                 var resolvedPath = ResolveLocalTempPath(fileName);
 
                 if (File.Exists(resolvedPath))
                 {
-                    // 初回転送が完了済みで実データが既にローカルにある場合はそのまま差し替える
-                    itemJson = itemJson.Replace($"\"{fileName}\"", $"\"{EscapeForJson(resolvedPath)}\"");
+                    property.Value = resolvedPath;
+                    return false;
                 }
-                else if (requiresRealContainer)
-                {
-                    // 動画・音声はまだ実データが届いていない。プレースホルダーを渡すとMedia Foundationが
-                    // 例外を投げるため触らずnullにしておく（初回転送完了時に正しいパスが設定される）
-                    itemJson = itemJson.Replace($"\"{fileName}\"", "null");
-                }
-                else
-                {
-                    // 画像系はプレースホルダーで問題なく動くため即時生成して差し替える
-                    EnsurePlaceholderFile(resolvedPath);
-                    itemJson = itemJson.Replace($"\"{fileName}\"", $"\"{EscapeForJson(resolvedPath)}\"");
-                }
-            }
 
-            return itemJson;
+                if (requiresRealContainer)
+                {
+                    property.Value = JValue.CreateNull();
+                    return false;
+                }
+
+                return true;
+            });
         }
 
-        // アイテムが保持するファイル参照を置き換える。IFileItemを実装していれば、ネストしたパラメーター内の
-        // 参照も含めてSDK側のロジックで正しく置換される。
-        public static bool ReplaceFilePath(IItem item, string from, string to)
+        public static string? GetCharacterNameFromJson(string itemJson)
         {
-            if (item is IFileItem fileItem)
+            try
             {
-                fileItem.ReplaceFile(from, to);
-                return true;
+                return (string?)JObject.Parse(itemJson)["CharacterName"];
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public static string? GetTachieBaseDirectoryFromJson(string itemJson) =>
+            TachieFileResolver.GetBaseDirectory(GetCharacterNameFromJson(itemJson));
+
+        private static string EditFilePathProperties(string itemJson, Func<JProperty, bool> edit)
+        {
+            JObject root;
+            try
+            {
+                root = JObject.Parse(itemJson);
+            }
+            catch
+            {
+                return itemJson;
             }
 
-            return SetFilePath(item, to);
+            var removals = new List<JProperty>();
+            foreach (var property in EnumerateFilePathProperties(root).ToList())
+            {
+                if (edit(property)) removals.Add(property);
+            }
+
+            if (removals.Count == 0 && !root.HasValues) return itemJson;
+
+            foreach (var property in removals) property.Remove();
+
+            return root.ToString(Newtonsoft.Json.Formatting.None);
+        }
+
+        private static IEnumerable<JProperty> EnumerateFilePathProperties(JToken token)
+        {
+            switch (token)
+            {
+                case JObject obj:
+                    foreach (var property in obj.Properties())
+                    {
+                        if (PathPropertyNames.Contains(property.Name))
+                        {
+                            yield return property;
+                            continue;
+                        }
+
+                        foreach (var nested in EnumerateFilePathProperties(property.Value)) yield return nested;
+                    }
+                    break;
+
+                case JArray array:
+                    foreach (var element in array)
+                    {
+                        foreach (var nested in EnumerateFilePathProperties(element)) yield return nested;
+                    }
+                    break;
+            }
         }
 
         public static string? GetFilePath(IItem item)
@@ -158,12 +229,6 @@ namespace MultiUserEdit.Commons
             return null;
         }
 
-        public static string? GetFileName(IItem item)
-        {
-            var path = GetFilePath(item);
-            return string.IsNullOrEmpty(path) ? null : Path.GetFileName(path);
-        }
-
         public static string SerializeWithNullPath(IItem item, Type? itemType = null)
         {
             return itemType != null
@@ -171,69 +236,122 @@ namespace MultiUserEdit.Commons
                 : Newtonsoft.Json.JsonConvert.SerializeObject(item, ItemSerializerOptions.NullPath);
         }
 
-        // ローカル環境のフルパス（ユーザー名等を含む）をそのまま相手に送らないようにするための処理。
-        // 戻り値の files は実際にローカルへ存在し転送が必要なファイルの絶対パス一覧（filter適用後）。
-        //
-        // VideoItem/AudioItem/ImageItem等のトップレベルのプロパティは、既存の名前ベースの置換
-        // （ItemSerializerOptions.NullPath、非破壊）だけで十分にファイル名のみへ変換できる。
-        // 立ち絵の表情差分のようにネストしたプロパティ名が予測できないケースだけ、シリアライズ直前の
-        // 一瞬だけライブオブジェクトの参照をファイル名へ差し替えて再シリアライズし、直後に元へ戻す
-        // （FilePath等はWPFにバインドされているため、不要にこれを行うとUIが壊れたパスを読みに行ってしまう）。
-        public static (string itemJson, IReadOnlyList<string> files) SerializeForSync(IItem item, Type? itemType = null, Func<string, bool>? filter = null)
+        public static (string itemJson, IReadOnlyList<SharedFile> files) SerializeForSync(IItem item, Type? itemType = null, Func<string, bool>? filter = null)
         {
-            var files = GetFilePaths(item).Where(fp => filter == null || filter(fp)).ToList();
+            var character = CharacterResolver.GetCharacter(item);
+            serializationBaseDirectory = TachieFileResolver.GetBaseDirectory(character);
+            serializationCharacterName = character?.Name;
+            try
+            {
+                return SerializeForSyncCore(item, itemType, filter);
+            }
+            finally
+            {
+                serializationBaseDirectory = null;
+                serializationCharacterName = null;
+            }
+        }
 
-            if (files.Count == 0)
-                return (SerializeWithNullPath(item, itemType), files);
+        public static (string characterJson, IReadOnlyList<SharedFile> files) SerializeCharacterForSync(Character character)
+        {
+            var baseDirectory = TachieFileResolver.GetBaseDirectory(character);
+            serializationBaseDirectory = baseDirectory;
+            serializationCharacterName = character.Name;
+            try
+            {
+                var characterJson = Newtonsoft.Json.JsonConvert.SerializeObject(character, ItemSerializerOptions.CharacterNullPath);
+
+                var files = character.TachieCharacterParameter is IFileItem fileItem
+                    ? fileItem.GetFiles()
+                        .Where(path => !string.IsNullOrEmpty(path) && File.Exists(path))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .Select(path => new SharedFile(path, ToPortableName(path)))
+                        .ToList()
+                    : [];
+
+                return (characterJson, files);
+            }
+            finally
+            {
+                serializationBaseDirectory = null;
+                serializationCharacterName = null;
+            }
+        }
+
+        public static string ResolveCharacterJson(string characterJson, IReadOnlyList<string>? mediaFileNames, string baseDirectory) =>
+            ResolveJsonFileReferences(characterJson, requiresRealContainer: false, mediaFileNames, baseDirectory);
+
+        private static (string itemJson, IReadOnlyList<SharedFile> files) SerializeForSyncCore(IItem item, Type? itemType, Func<string, bool>? filter)
+        {
+            var referenced = GetReferencedPaths(item);
+            var shared = referenced
+                .Where(fp => File.Exists(fp) && (!ShouldTransfer(item, fp) || filter == null || filter(fp)))
+                .Select(fp => new SharedFile(fp, ToPortableName(fp), ShouldTransfer(item, fp)))
+                .ToList();
 
             var itemJson = SerializeWithNullPath(item, itemType);
+            itemJson = ReplaceFullPathsInJson(itemJson, shared);
 
-            var unresolved = files.Where(fp => itemJson.Contains(EscapeForJson(fp))).ToList();
-            if (unresolved.Count > 0)
-            {
-                foreach (var fp in unresolved)
-                    ReplaceFilePath(item, fp, Path.GetFileName(fp));
+            var skipped = referenced
+                .Except(shared.Select(file => file.FullPath), StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (skipped.Count > 0) itemJson = ClearFileReferences(itemJson, skipped);
 
-                itemJson = SerializeWithNullPath(item, itemType);
-
-                foreach (var fp in unresolved)
-                    ReplaceFilePath(item, Path.GetFileName(fp), fp);
-            }
-
-            return (itemJson, files);
+            return (itemJson, shared);
         }
 
-        private static string EscapeForJson(string path) => path.Replace("\\", "\\\\");
-
-        public static bool SetFilePath(IItem item, string newFilePath)
+        private static string ReplaceFullPathsInJson(string itemJson, List<SharedFile> files)
         {
-            if (item is VideoItem videoItem)
+            if (files.Count == 0) return itemJson;
+
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var file in files)
             {
-                videoItem.FilePath = newFilePath;
-                return true;
-            }
-            if (item is AudioItem audioItem)
-            {
-                audioItem.FilePath = newFilePath;
-                return true;
-            }
-            if (item is ImageItem imageItem)
-            {
-                imageItem.FilePath = newFilePath;
-                return true;
+                if (!string.IsNullOrEmpty(file.FullPath) && !string.IsNullOrEmpty(file.Name))
+                    map[file.FullPath] = file.Name;
             }
 
-            var type = item.GetType();
-            foreach (var propName in PropertyNames)
+            if (map.Count == 0) return itemJson;
+
+            try
             {
-                var prop = type.GetProperty(propName);
-                if (prop != null && prop.CanWrite)
+                var root = JObject.Parse(itemJson);
+                var changed = false;
+
+                foreach (var token in root.DescendantsAndSelf().OfType<JValue>())
                 {
-                    prop.SetValue(item, newFilePath);
-                    return true;
+                    if (token.Type != JTokenType.String) continue;
+                    if (token.Value is not string text || text.Length == 0) continue;
+                    if (!map.TryGetValue(text, out var portableName)) continue;
+
+                    token.Value = portableName;
+                    changed = true;
                 }
+
+                return changed ? root.ToString(Newtonsoft.Json.Formatting.None) : itemJson;
             }
-            return false;
+            catch
+            {
+                return itemJson;
+            }
         }
+
+        private static string ClearFileReferences(string itemJson, List<string> filePaths)
+        {
+            if (filePaths.Count == 0) return itemJson;
+
+            var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var filePath in filePaths)
+            {
+                targets.Add(filePath);
+                targets.Add(ToPortableName(filePath));
+            }
+
+            return EditFilePathProperties(itemJson, property =>
+                property.Value.Type == JTokenType.String &&
+                (string?)property.Value is { Length: > 0 } value &&
+                targets.Contains(value));
+        }
+
     }
 }

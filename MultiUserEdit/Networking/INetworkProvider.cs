@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons.Events;
+﻿using MultiUserEdit.Commons.Events;
 
 namespace MultiUserEdit.Networking
 {
@@ -10,7 +10,7 @@ namespace MultiUserEdit.Networking
 
         event EventHandler<EditEvent> EventReceived;
         event Action Disconnected;
-        event Action RoomNotFound;
+        event Action<string?> RoomNotFound;
         event Action<Guid, bool> PeerDisconnected;
 
         string LocalUserId { get; }

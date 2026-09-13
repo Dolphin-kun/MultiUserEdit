@@ -7,7 +7,7 @@ namespace MultiUserEdit.Commons.EventHandlers
     {
         public void Handle(SyncScenesEvent editEvent, MultiUserEditViewModel viewModel)
         {
-            viewModel.ApplySyncScenes(editEvent.Scenes);
+            viewModel.ApplySyncScenes(editEvent.Scenes, editEvent.ExecutorId);
         }
     }
 }

@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -8,13 +8,16 @@ namespace MultiUserEdit.Networking
 {
     internal class WebsocketProvider : INetworkProvider
     {
+        private static readonly TimeSpan KeepAliveInterval = TimeSpan.FromSeconds(20);
+        private static readonly TimeSpan KeepAliveTimeout = TimeSpan.FromSeconds(20);
+
         private ClientWebSocket? webSocket;
         private CancellationTokenSource? cts;
         private Task? receiveTask;
-        // ClientWebSocket.SendAsyncは同一インスタンスへの同時呼び出しを許容していない
-        // （複数の動画を同時に送信する等でチャンク送信が重なると1つ以上のタスクが例外になりうる）ため、
-        // 送信だけを直列化する
         private readonly SemaphoreSlim sendLock = new(1, 1);
+        private readonly SemaphoreSlim connectionLock = new(1, 1);
+
+        private int generation;
 
         private readonly string userId;
         private string? roomId;
@@ -24,7 +27,7 @@ namespace MultiUserEdit.Networking
 
         public event EventHandler<EditEvent>? EventReceived;
         public event Action? Disconnected;
-        public event Action? RoomNotFound;
+        public event Action<string?>? RoomNotFound;
         public event Action<Guid, bool>? PeerDisconnected;
 
         public WebsocketProvider()
@@ -34,24 +37,63 @@ namespace MultiUserEdit.Networking
 
         public async Task ConnectAsync(string url)
         {
-            if (webSocket != null)
+            await connectionLock.WaitAsync();
+            try
             {
-                await DisconnectAsync();
+                await DisconnectCoreAsync();
+
+                var myGeneration = Interlocked.Increment(ref generation);
+
+                var socket = new ClientWebSocket();
+                socket.Options.KeepAliveInterval = KeepAliveInterval;
+                socket.Options.KeepAliveTimeout = KeepAliveTimeout;
+
+                var source = new CancellationTokenSource();
+                webSocket = socket;
+                cts = source;
+
+                var uri = new Uri(url);
+                var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                roomId = query["roomId"];
+
+                try
+                {
+                    await socket.ConnectAsync(uri, CancellationToken.None);
+                }
+                catch
+                {
+                    webSocket = null;
+                    cts = null;
+                    socket.Dispose();
+                    source.Dispose();
+                    throw;
+                }
+
+                receiveTask = ReceiveLoopAsync(socket, source, myGeneration);
             }
-
-            webSocket = new ClientWebSocket();
-            cts = new CancellationTokenSource();
-
-            var uri = new Uri(url);
-            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-            roomId = query["roomId"];
-
-            await webSocket.ConnectAsync(uri, CancellationToken.None);
-            receiveTask = ReceiveLoopAsync();
+            finally
+            {
+                connectionLock.Release();
+            }
         }
 
         public async Task DisconnectAsync()
         {
+            await connectionLock.WaitAsync();
+            try
+            {
+                await DisconnectCoreAsync();
+            }
+            finally
+            {
+                connectionLock.Release();
+            }
+        }
+
+        private async Task DisconnectCoreAsync()
+        {
+            Interlocked.Increment(ref generation);
+
             cts?.Cancel();
 
             if (receiveTask != null)
@@ -99,26 +141,27 @@ namespace MultiUserEdit.Networking
             await sendLock.WaitAsync();
             try
             {
-                if (webSocket?.State != WebSocketState.Open) return;
-                await webSocket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None);
+                var socket = webSocket;
+                if (socket?.State != WebSocketState.Open) return;
+                await socket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None);
             }
+            catch (WebSocketException) { }
+            catch (ObjectDisposedException) { }
             finally
             {
                 sendLock.Release();
             }
         }
 
-        private async Task ReceiveLoopAsync()
+        private async Task ReceiveLoopAsync(ClientWebSocket socket, CancellationTokenSource source, int myGeneration)
         {
-            var socket = webSocket;
-            var source = cts;
-            if (socket == null || source == null) return;
-
             var token = source.Token;
-            // チャンクが大きい（Base64で約10MB）ため、4KBずつ読むと受信ループの回転数が跳ね上がる
             var buffer = new byte[64 * 1024];
             bool serverDisconnected = false;
             bool roomNotFound = false;
+            string? roomNotFoundReason = null;
+
+            bool IsCurrent() => Volatile.Read(ref generation) == myGeneration;
 
             try
             {
@@ -144,6 +187,8 @@ namespace MultiUserEdit.Networking
 
                     } while (!result.EndOfMessage);
 
+                    if (!IsCurrent()) return;
+
                     var json = Encoding.UTF8.GetString(ms.ToArray());
 
                     try
@@ -156,7 +201,6 @@ namespace MultiUserEdit.Networking
 
                         var senderId = senderIdProp.GetString() ?? "unknown";
 
-                        // 自分自身が送信したパケット（エコーバック）はネットワーク受領直後に完全カット
                         if (senderId == userId) continue;
 
                         var dataJson = dataProp.GetRawText();
@@ -167,13 +211,14 @@ namespace MultiUserEdit.Networking
                             var typeStr = typeProp.GetString();
                             if (senderId == "server" && typeStr == "room_not_found")
                             {
-                                // 指定されたルームにホストが一度も接続していない（存在しない）ことをサーバーが通知
                                 roomNotFound = true;
+                                roomNotFoundReason = dataProp.TryGetProperty("reason", out var reasonProp)
+                                    ? reasonProp.GetString()
+                                    : null;
                                 return;
                             }
                             if (senderId == "server" && typeStr == "peer_disconnected")
                             {
-                                // 他ユーザーがアプリ側の離脱通知を送れないまま切断した場合に、サーバーが代わりに通知する
                                 if (dataProp.TryGetProperty("userId", out var userIdProp) &&
                                     Guid.TryParse(userIdProp.GetString(), out var peerUserId))
                                 {
@@ -184,7 +229,6 @@ namespace MultiUserEdit.Networking
                             }
                         }
 
-                        // $type プロパティが存在する正規の EditEvent のみデシリアライズを実行（Missing discriminator 例外を回避）
                         if (dataProp.ValueKind == JsonValueKind.Object && dataProp.TryGetProperty("$type", out _))
                         {
                             try
@@ -220,13 +264,16 @@ namespace MultiUserEdit.Networking
             }
             finally
             {
-                if (roomNotFound)
+                if (IsCurrent())
                 {
-                    RoomNotFound?.Invoke();
-                }
-                else if (serverDisconnected)
-                {
-                    Disconnected?.Invoke();
+                    if (roomNotFound)
+                    {
+                        RoomNotFound?.Invoke(roomNotFoundReason);
+                    }
+                    else if (serverDisconnected)
+                    {
+                        Disconnected?.Invoke();
+                    }
                 }
             }
         }

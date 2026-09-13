@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons.Events;
+﻿using MultiUserEdit.Commons.Events;
 using MultiUserEdit.Commons.Models;
 using MultiUserEdit.Networking;
 using MultiUserEdit.Settings;
@@ -11,15 +11,11 @@ namespace MultiUserEdit.Commons
 {
     internal class FileTransferManager
     {
-        // Durable ObjectsのWebSocket受信上限は32MiB。Base64化で約1.33倍に膨らむため、
-        // 8MB → 約10.7MB と余裕を持たせつつ、メッセージ数（＝Workerのリクエスト数）を抑える。
         private const int ChunkSize = 8 * 1024 * 1024;
         private static readonly TimeSpan TransferTimeout = TimeSpan.FromMinutes(3);
 
-        // 告知してから「送ってほしい」の返答を待つ時間。この間に誰からも要求が来なければ転送しない。
         private static readonly TimeSpan RequestWindow = TimeSpan.FromSeconds(2);
 
-        // 告知したファイルを覚えておく時間（ウィンドウ経過後に届いた要求にも応えられるようにする）
         private static readonly TimeSpan AnnouncementLifetime = TimeSpan.FromMinutes(5);
 
         private class FileTask
@@ -29,7 +25,6 @@ namespace MultiUserEdit.Commons
             public long TransferredBytes { get; set; }
         }
 
-        // 告知済みファイル。要求が来たときに何を送ればよいか引くために保持する。
         private class Announcement
         {
             public required string FilePath { get; init; }
@@ -37,7 +32,6 @@ namespace MultiUserEdit.Commons
             public required int ExpectedReplies { get; init; }
             public DateTime AnnouncedAt { get; } = DateTime.UtcNow;
 
-            // 全員から返事が揃ったら待たずに進むための合図
             public TaskCompletionSource AllReplied { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
             public ConcurrentDictionary<Guid, byte> Replies { get; } = new();
             public ConcurrentDictionary<Guid, byte> Requesters { get; } = new();
@@ -51,22 +45,19 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        // 返事を待つ相手の人数（自分以外の参加者数）を取得する
         public Func<int>? GetPeerCount { get; set; }
 
-        // 送信管理と受信管理（インスタンスごとに独立）
         private readonly ConcurrentDictionary<string, FileTask> activeUploads = new();
         private readonly ConcurrentDictionary<Guid, IncomingTransfer> incomingTransfers = new();
         private readonly ConcurrentDictionary<Guid, FileTask> activeDownloads = new();
 
         private readonly ConcurrentDictionary<Guid, Announcement> announcements = new();
-        // 告知の返答受付中のファイルパス（同じファイルの二重告知を防ぐ）
         private readonly ConcurrentDictionary<string, byte> announcingPaths = new();
-        // ハッシュ計算のキャッシュ。パス・更新日時・サイズが同じなら再計算しない。
         private readonly ConcurrentDictionary<string, (DateTime WriteTime, long Size, string Hash)> hashCache = new();
+        private readonly ConcurrentDictionary<string, bool> sendDecisions = new(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, (DateTime WriteTime, long Size)> announcedFiles = new(StringComparer.OrdinalIgnoreCase);
 
         public event Action<string, string>? TransferCompleted;
-        // プロセス内・YMM4インスタンス間での干渉を防ぐためインスタンスイベントにする
         public event Action<TransferSummary>? TransferSummaryChanged;
 
         static FileTransferManager()
@@ -82,6 +73,8 @@ namespace MultiUserEdit.Commons
             return dir;
         }
 
+        private static readonly ConcurrentDictionary<string, byte> receivedFiles = new(StringComparer.OrdinalIgnoreCase);
+
         public static void CleanUpTempFiles()
         {
             if (MultiUserEditSettings.Default.StorageMode != FileStorageMode.TemporarySession)
@@ -89,14 +82,54 @@ namespace MultiUserEdit.Commons
                 return;
             }
 
+            foreach (var path in receivedFiles.Keys)
+            {
+                try { File.Delete(path); } catch { }
+            }
+
+            receivedFiles.Clear();
+            RemoveEmptyDirectories();
+        }
+
+        private static void RemoveEmptyDirectories()
+        {
+            try
+            {
+                var dir = GetSaveDirectory();
+                if (!Directory.Exists(dir)) return;
+
+                foreach (var subDirectory in Directory.GetDirectories(dir, "*", SearchOption.AllDirectories).OrderByDescending(path => path.Length))
+                {
+                    try
+                    {
+                        if (Directory.GetFileSystemEntries(subDirectory).Length == 0) Directory.Delete(subDirectory);
+                    }
+                    catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] Temp cleanup failed: {ex.Message}");
+            }
+        }
+
+        public static void DeleteAllFiles()
+        {
+            receivedFiles.Clear();
+
             try
             {
                 var dir = GetSaveDirectory();
                 if (Directory.Exists(dir))
                 {
-                    foreach (var file in Directory.GetFiles(dir))
+                    foreach (var file in Directory.GetFiles(dir, "*", SearchOption.AllDirectories))
                     {
                         try { File.Delete(file); } catch { }
+                    }
+
+                    foreach (var subDirectory in Directory.GetDirectories(dir))
+                    {
+                        try { Directory.Delete(subDirectory, recursive: true); } catch { }
                     }
                 }
             }
@@ -106,52 +139,120 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        // 拡張子ブロック・送信確認ダイアログのみを行う（実際の転送は行わない）。
-        // 呼び出し側がイベント送信前に「この転送は実際に行われるか」を判定するために使う。
-        public bool ConfirmSend(string filePath)
+        private static readonly TimeSpan ConfirmBatchWindow = TimeSpan.FromMilliseconds(200);
+
+        private readonly System.Threading.Lock confirmLock = new();
+        private readonly Dictionary<string, TaskCompletionSource<bool>> pendingConfirms = new(StringComparer.OrdinalIgnoreCase);
+        private bool confirmFlushScheduled;
+
+        public Task<bool> ConfirmSendAsync(string filePath)
         {
-            if (!File.Exists(filePath)) return false;
+            if (!File.Exists(filePath)) return Task.FromResult(false);
+
+            if (sendDecisions.TryGetValue(filePath, out var remembered)) return Task.FromResult(remembered);
 
             if (!MultiUserEditSettings.Default.IsExtensionAllowed(filePath))
             {
-                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-                {
-                    System.Windows.MessageBox.Show($"拡張子 [{Path.GetExtension(filePath)}] のファイルは共有設定で許可されていないため送信できません。\n(設定画面から共有可能な拡張子を変更できます)", "送信ブロック", System.Windows.MessageBoxButton.OK);
-                });
-                return false;
+                sendDecisions[filePath] = false;
+                ErrorNotifier.NotifyOnce(
+                    "素材を送信できませんでした",
+                    $"拡張子 [{Path.GetExtension(filePath)}] のファイルは共有設定で許可されていないため送信できません。\n" +
+                    "設定 → ファイル → 共有可能なファイル形式 から許可してください。");
+                return Task.FromResult(false);
             }
 
-            if (MultiUserEditSettings.Default.ConfirmBeforeFileSend)
+            if (!MultiUserEditSettings.Default.ConfirmBeforeFileSend)
             {
-                bool confirmed = false;
-                var fileName = Path.GetFileName(filePath);
-                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-                {
-                    var result = System.Windows.MessageBox.Show($"素材ファイル「{fileName}」を他メンバーに送信してもよろしいですか？", "ファイル送信の確認", System.Windows.MessageBoxButton.YesNo);
-                    confirmed = (result == System.Windows.MessageBoxResult.Yes);
-                });
-                if (!confirmed) return false;
+                sendDecisions[filePath] = true;
+                return Task.FromResult(true);
             }
 
-            return true;
+            lock (confirmLock)
+            {
+                if (sendDecisions.TryGetValue(filePath, out remembered)) return Task.FromResult(remembered);
+                if (pendingConfirms.TryGetValue(filePath, out var existing)) return existing.Task;
+
+                var waiter = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                pendingConfirms[filePath] = waiter;
+
+                if (!confirmFlushScheduled)
+                {
+                    confirmFlushScheduled = true;
+                    _ = Task.Delay(ConfirmBatchWindow).ContinueWith(_ => FlushConfirms(), TaskScheduler.Default);
+                }
+
+                return waiter.Task;
+            }
         }
+
+        private void FlushConfirms()
+        {
+            List<KeyValuePair<string, TaskCompletionSource<bool>>> batch;
+            lock (confirmLock)
+            {
+                confirmFlushScheduled = false;
+                batch = [.. pendingConfirms];
+                pendingConfirms.Clear();
+            }
+
+            if (batch.Count == 0) return;
+
+            var confirmed = AskUser([.. batch.Select(entry => Path.GetFileName(entry.Key)).Distinct(StringComparer.OrdinalIgnoreCase)]);
+
+            foreach (var entry in batch)
+            {
+                sendDecisions[entry.Key] = confirmed;
+                entry.Value.TrySetResult(confirmed);
+            }
+        }
+
+        private static bool AskUser(IReadOnlyList<string> fileNames)
+        {
+            if (fileNames.Count == 0) return false;
+
+            const int MaxListed = 10;
+            var message = fileNames.Count == 1
+                ? $"素材ファイル「{fileNames[0]}」を他メンバーに送信してもよろしいですか？"
+                : $"以下の素材ファイル {fileNames.Count} 件を他メンバーに送信してもよろしいですか？\n\n"
+                    + string.Join("\n", fileNames.Take(MaxListed).Select(name => "・" + name))
+                    + (fileNames.Count > MaxListed ? $"\n ほか {fileNames.Count - MaxListed} 件" : string.Empty);
+
+            var confirmed = false;
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            {
+                confirmed = System.Windows.MessageBox.Show(
+                    message,
+                    "ファイル送信の確認",
+                    System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.Yes;
+            });
+
+            return confirmed;
+        }
+
+        public bool IsSendDenied(string filePath) =>
+            sendDecisions.TryGetValue(filePath, out var allowed) && !allowed;
+
+        public bool IsSendAllowed(string filePath) =>
+            sendDecisions.TryGetValue(filePath, out var allowed) && allowed;
 
         public async Task SendFileAsync(string filePath, SessionClient sessionClient, Guid executorId)
         {
-            if (!ConfirmSend(filePath)) return;
+            if (!await ConfirmSendAsync(filePath)) return;
             await TransferAsync(filePath, sessionClient, executorId);
         }
 
-        // 送信確認済みのファイルをチャンク転送する。ConfirmSend を事前に済ませている呼び出し側は
-        // ダイアログを再表示させないためこちらを直接使う。
-        internal async Task TransferAsync(string filePath, SessionClient sessionClient, Guid executorId)
+        internal Task TransferAsync(string filePath, SessionClient sessionClient, Guid executorId) =>
+            TransferAsync(new SharedFile(filePath, Path.GetFileName(filePath)), null, sessionClient, executorId);
+
+        internal async Task TransferAsync(SharedFile file, string? characterName, SessionClient sessionClient, Guid executorId)
         {
-            var fileName = Path.GetFileName(filePath);
+            var filePath = file.FullPath;
+            var fileName = file.Name;
             if (string.IsNullOrEmpty(fileName)) return;
             if (!File.Exists(filePath)) return;
 
-            // 同じファイルの告知・送信が二重に走らないようにする
             if (activeUploads.ContainsKey(filePath)) return;
+            if (IsAlreadyAnnounced(filePath)) return;
             if (!announcingPaths.TryAdd(filePath, 0)) return;
 
             Guid transferId;
@@ -163,7 +264,7 @@ namespace MultiUserEdit.Commons
                 if (hash == null) return;
 
                 var peerCount = Math.Max(0, GetPeerCount?.Invoke() ?? 0);
-                if (peerCount == 0) return; // 自分しかいないので送る相手がいない
+                if (peerCount == 0) return;
 
                 transferId = Guid.NewGuid();
                 announcement = new Announcement
@@ -175,41 +276,73 @@ namespace MultiUserEdit.Commons
                 announcements[transferId] = announcement;
                 PruneAnnouncements();
 
-                var availableEvt = new FileAvailableEvent(transferId, fileName, new FileInfo(filePath).Length, hash)
+                var availableEvt = new FileAvailableEvent(transferId, fileName, new FileInfo(filePath).Length, hash, characterName)
                 {
                     DateTime = DateTime.UtcNow,
                     ExecutorId = executorId
                 };
                 await sessionClient.SendAsync(null, availableEvt);
 
-                // 全員の返事が揃えば即座に進む。返事が来ない相手がいる場合だけタイムアウトまで待つ。
                 await Task.WhenAny(announcement.AllReplied.Task, Task.Delay(RequestWindow));
             }
             finally
             {
                 announcingPaths.TryRemove(filePath, out _);
+                RememberAnnounced(filePath);
             }
 
             var requesters = announcement.Requesters.Keys.ToList();
 
-            // 全員が同じ内容のファイルを既に持っている場合は1バイトも送らない
             if (requesters.Count == 0)
             {
                 Debug.WriteLine($"[MultiUserEdit] Skipped transfer (all peers already have it): {fileName}");
                 return;
             }
 
-            // 要求者が1人だけならその人にだけ送る。複数なら全員へ配る方が総送信量は少ない。
             var targetId = requesters.Count == 1 ? requesters[0].ToString() : null;
             await SendChunksAsync(filePath, fileName, transferId, sessionClient, executorId, targetId);
         }
 
-        /// <summary>ウィンドウ経過後に届いた要求。その人にだけ改めて送る。</summary>
+        internal async Task SendDirectAsync(SharedFile file, Guid targetUserId, SessionClient sessionClient, Guid executorId)
+        {
+            if (string.IsNullOrEmpty(file.Name) || !File.Exists(file.FullPath)) return;
+
+            await SendChunksAsync(file.FullPath, file.Name, Guid.NewGuid(),
+                sessionClient, executorId, targetUserId.ToString());
+        }
+
+        private bool IsAlreadyAnnounced(string filePath)
+        {
+            if (!announcedFiles.TryGetValue(filePath, out var announced)) return false;
+
+            var info = new FileInfo(filePath);
+            return announced.WriteTime == info.LastWriteTimeUtc && announced.Size == info.Length;
+        }
+
+        private void RememberAnnounced(string filePath)
+        {
+            try
+            {
+                var info = new FileInfo(filePath);
+                announcedFiles[filePath] = (info.LastWriteTimeUtc, info.Length);
+            }
+            catch { }
+        }
+
+        public void ForgetAnnouncedFiles() => announcedFiles.Clear();
+
+        private static void NotifyBlocked(string fileName)
+        {
+            ErrorNotifier.NotifyOnce(
+                "素材を受け取れませんでした",
+                $"拡張子 [{Path.GetExtension(fileName)}] のファイルは共有設定で許可されていないため受け取れません。\n" +
+                "設定 → ファイル → 共有可能なファイル形式 から許可してください。");
+        }
+
         internal async Task HandleFileRequestAsync(FileRequestEvent evt, SessionClient sessionClient, Guid executorId)
         {
             if (!announcements.TryGetValue(evt.TransferId, out var announcement)) return;
 
-            // 受付中なら記録するだけ。まとめて送るかどうかはTransferAsync側が判断する。
             if (announcingPaths.ContainsKey(announcement.FilePath))
             {
                 announcement.AddReply(evt.RequesterId, evt.NeedsTransfer);
@@ -251,8 +384,6 @@ namespace MultiUserEdit.Commons
                 };
                 await sessionClient.SendAsync(targetId, startEvt);
 
-                // ファイル全体をメモリに載せず、1チャンクずつ読みながら送る。
-                // チャンクが大きいため、まとめ送りはせず1つずつ送信する（同時に保持するのは1チャンク分だけ）。
                 var buffer = new byte[ChunkSize];
                 await using var stream = File.OpenRead(filePath);
 
@@ -271,7 +402,6 @@ namespace MultiUserEdit.Commons
                     fileTask.TransferredBytes = Math.Min(fileTask.TotalBytes, fileTask.TransferredBytes + read);
                     NotifySummary();
 
-                    // 他のシーク・編集パケットがあれば割り込ませ、無ければ直ちに最高速で送信再開
                     await Task.Yield();
                 }
             }
@@ -282,31 +412,31 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        /// <summary>
-        /// 告知されたファイルを既に持っているか調べる。持っていれば転送を要求せず、
-        /// ローカルのファイルをそのまま使ったことにして完了通知だけ出す。
-        /// </summary>
-        /// <returns>転送を要求する必要があるか</returns>
         internal async Task<bool> NeedsTransferAsync(FileAvailableEvent evt)
         {
             if (!MultiUserEditSettings.Default.IsExtensionAllowed(evt.FileName))
             {
                 Debug.WriteLine($"[MultiUserEdit] Security Block: Rejected file announcement with disallowed extension: {evt.FileName}");
+                NotifyBlocked(evt.FileName);
                 return false;
             }
 
-            var savePath = Path.Combine(GetSaveDirectory(), evt.FileName);
+            var characterPath = TachieFileResolver.ResolveLocalPath(
+                TachieFileResolver.GetBaseDirectory(evt.CharacterName), evt.FileName);
 
-            // サイズが違えば内容も違うので、ハッシュ計算をせずに要求する
-            if (!File.Exists(savePath) || new FileInfo(savePath).Length != evt.FileSize) return true;
+            foreach (var localPath in new[] { MediaFileResolver.ResolveLocalTempPath(evt.FileName), characterPath })
+            {
+                if (string.IsNullOrEmpty(localPath)) continue;
 
-            var localHash = await ComputeHashAsync(savePath);
-            if (localHash != evt.Hash) return true;
+                if (!File.Exists(localPath) || new FileInfo(localPath).Length != evt.FileSize) continue;
+                if (await ComputeHashAsync(localPath) != evt.Hash) continue;
 
-            // アイテム側は転送完了を待っているので、届いたことにして先へ進めてやる
-            Debug.WriteLine($"[MultiUserEdit] Reused local file (same content): {evt.FileName}");
-            TransferCompleted?.Invoke(evt.TransferId.ToString(), savePath);
-            return false;
+                Debug.WriteLine($"[MultiUserEdit] Reused local file (same content): {localPath}");
+                TransferCompleted?.Invoke(evt.TransferId.ToString(), localPath);
+                return false;
+            }
+
+            return true;
         }
 
         private async Task<string?> ComputeHashAsync(string filePath)
@@ -322,7 +452,6 @@ namespace MultiUserEdit.Commons
                     return cached.Hash;
                 }
 
-                // 全体をメモリに載せずに済むようストリームで計算する
                 await using var stream = File.OpenRead(filePath);
                 var hashBytes = await System.Security.Cryptography.SHA256.HashDataAsync(stream);
                 var hash = Convert.ToHexStringLower(hashBytes);
@@ -347,20 +476,18 @@ namespace MultiUserEdit.Commons
             foreach (var transferId in expired) announcements.TryRemove(transferId, out _);
         }
 
-        public void HandleTransferStart(FileTransferStartEvent evt, Guid localUserId)
+        public void HandleTransferStart(FileTransferStartEvent evt)
         {
             if (!MultiUserEditSettings.Default.IsExtensionAllowed(evt.FileName))
             {
                 Debug.WriteLine($"[MultiUserEdit] Security Block: Rejected file transfer with disallowed extension: {evt.FileName}");
+                NotifyBlocked(evt.FileName);
                 return;
             }
 
-            var finalPath = Path.Combine(GetSaveDirectory(), evt.FileName);
-            // tempPathはTransferId基準にして、同名ファイルの転送が同時に走っても書き込み中のバッファが
-            // 衝突しないようにする（同じ動画を複数アイテムへ同時に送った場合等）
+            var finalPath = MediaFileResolver.ResolveLocalTempPath(evt.FileName);
             var tempPath = Path.Combine(GetSaveDirectory(), $"{evt.TransferId}.tmp");
 
-            // 書き込み位置は送信側のチャンクサイズ基準で決める（未指定なら自分と同じ設定とみなす）
             var chunkSize = evt.ChunkSize > 0 ? evt.ChunkSize : ChunkSize;
 
             incomingTransfers[evt.TransferId] = new IncomingTransfer(evt.FileName, finalPath, tempPath, evt.TotalChunks, chunkSize);
@@ -374,7 +501,7 @@ namespace MultiUserEdit.Commons
             NotifySummary();
         }
 
-        public void HandleChunk(FileChunkEvent evt, Guid localUserId)
+        public void HandleChunk(FileChunkEvent evt)
         {
             if (!incomingTransfers.TryGetValue(evt.TransferId, out var transfer)) return;
 
@@ -390,7 +517,6 @@ namespace MultiUserEdit.Commons
                 var chunkBytes = Convert.FromBase64String(evt.Data);
                 chunkLength = chunkBytes.Length;
 
-                // 溜め込まずにその場で一時ファイルへ書き出す（保持するのは1チャンク分だけ）
                 var stream = transfer.OpenStream();
                 stream.Position = (long)evt.ChunkIndex * transfer.ChunkSize;
                 stream.Write(chunkBytes, 0, chunkBytes.Length);
@@ -420,11 +546,11 @@ namespace MultiUserEdit.Commons
             {
                 transfer.CloseStream();
 
-                // Delete→Moveの2段階だと、その間だけSavePathにファイルが存在しない瞬間ができてしまい、
-                // ちょうどそのタイミングでYMM4がサムネイル再読み込みを行うとFileNotFoundExceptionになる
-                // （アイテムを連続して動かしているとサムネイル再読み込みの頻度が上がり発生しやすくなる）。
-                // overwrite:trueで置き換えれば、この隙間なくアトミックに入れ替えられる。
+                var saveDirectory = Path.GetDirectoryName(transfer.SavePath);
+                if (!string.IsNullOrEmpty(saveDirectory)) Directory.CreateDirectory(saveDirectory);
+
                 File.Move(transfer.TempPath, transfer.SavePath, overwrite: true);
+                receivedFiles[transfer.SavePath] = 0;
 
                 TransferCompleted?.Invoke(evt.TransferId.ToString(), transfer.SavePath);
             }
@@ -456,20 +582,37 @@ namespace MultiUserEdit.Commons
                 return;
             }
 
-            bool isUploading = uploads.Count > 0;
-            var targetList = isUploading ? uploads : downloads;
-
-            long totalBytes = targetList.Sum(t => t.TotalBytes);
-            long transferredBytes = targetList.Sum(t => t.TransferredBytes);
+            var allTransfers = uploads.Concat(downloads).ToList();
+            long totalBytes = allTransfers.Sum(t => t.TotalBytes);
+            long transferredBytes = allTransfers.Sum(t => t.TransferredBytes);
             double progress = totalBytes > 0 ? (double)transferredBytes / totalBytes * 100.0 : 0.0;
-            var currentFile = targetList.FirstOrDefault()?.FileName ?? string.Empty;
+
+            var rawName = (uploads.Count > 0 ? uploads : downloads).FirstOrDefault()?.FileName ?? string.Empty;
+            var currentFile = string.IsNullOrEmpty(rawName) ? string.Empty : Path.GetFileName(rawName.Replace('/', Path.DirectorySeparatorChar));
 
             var summary = new TransferSummary
             {
                 UploadCount = uploads.Count,
                 DownloadCount = downloads.Count,
                 CurrentFileName = currentFile,
-                OverallProgress = Math.Clamp(progress, 0.0, 100.0)
+                OverallProgress = Math.Clamp(progress, 0.0, 100.0),
+                Items =
+                [
+                    .. uploads.Select(t => new TransferItemInfo
+                    {
+                        Name = t.FileName,
+                        IsUpload = true,
+                        TotalBytes = t.TotalBytes,
+                        TransferredBytes = t.TransferredBytes
+                    }),
+                    .. downloads.Select(t => new TransferItemInfo
+                    {
+                        Name = t.FileName,
+                        IsUpload = false,
+                        TotalBytes = t.TotalBytes,
+                        TransferredBytes = t.TransferredBytes
+                    })
+                ]
             };
 
             TransferSummaryChanged?.Invoke(summary);
@@ -477,7 +620,6 @@ namespace MultiUserEdit.Commons
 
         public void CancelAll()
         {
-            // 書き込み中の一時ファイルを開きっぱなしにしないよう、必ず閉じてから捨てる
             foreach (var transfer in incomingTransfers.Values)
             {
                 transfer.CloseStream();

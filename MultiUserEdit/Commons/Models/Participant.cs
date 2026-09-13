@@ -1,4 +1,4 @@
-using System.Windows.Media;
+﻿using System.Windows.Media;
 using YukkuriMovieMaker.Commons;
 
 namespace MultiUserEdit.Commons.Models
@@ -8,8 +8,6 @@ namespace MultiUserEdit.Commons.Models
         private Guid userId;
         public Guid UserId { get => userId; set => Set(ref userId, value); }
 
-        // 接続ごとに変わるUserIdと違い、インストール単位で不変のID。
-        // プロジェクトへ保存する合計参加時間の集計キーとして使う。
         private Guid profileId;
         public Guid ProfileId { get => profileId; set => Set(ref profileId, value); }
 
@@ -19,7 +17,6 @@ namespace MultiUserEdit.Commons.Models
         private string description = string.Empty;
         public string Description { get => description; set => Set(ref description, value); }
 
-        // このセッションで参加した時刻。「編集時間」はここからの経過時間。
         private DateTime joinedAt = DateTime.Now;
         public DateTime JoinedAt { get => joinedAt; set => Set(ref joinedAt, value); }
 
@@ -33,20 +30,14 @@ namespace MultiUserEdit.Commons.Models
         public UserStatus Status
         {
             get => status;
-            set
-            {
-                if (Set(ref status, value))
-                {
-                    OnPropertyChanged(nameof(StatusBrush));
-                    OnPropertyChanged(nameof(StatusText));
-                }
-            }
+            set => Set(ref status, value, nameof(Status), nameof(StatusBrush), nameof(StatusText));
         }
 
         public Brush StatusBrush => Status switch
         {
             UserStatus.Active => new SolidColorBrush(Color.FromRgb(76, 175, 80)),
             UserStatus.Away => new SolidColorBrush(Color.FromRgb(255, 152, 0)),
+            UserStatus.Disconnected => new SolidColorBrush(Color.FromRgb(158, 158, 158)),
             _ => new SolidColorBrush(Color.FromRgb(158, 158, 158))
         };
 
@@ -54,6 +45,7 @@ namespace MultiUserEdit.Commons.Models
         {
             UserStatus.Active => "オンライン",
             UserStatus.Away => "離席中",
+            UserStatus.Disconnected => "接続切れ",
             _ => "オフライン"
         };
 

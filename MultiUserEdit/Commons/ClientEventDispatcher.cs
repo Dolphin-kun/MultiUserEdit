@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons.EventHandlers;
+﻿using MultiUserEdit.Commons.EventHandlers;
 using MultiUserEdit.Commons.Events;
 using MultiUserEdit.ViewModels;
 
@@ -24,10 +24,13 @@ namespace MultiUserEdit.Commons
             Register(new FileRequestEventHandler());
             Register(new FileTransferStartEventHandler());
             Register(new FileChunkEventHandler());
+            Register(new CharacterRequestEventHandler());
+            Register(new CharacterSharedEventHandler());
             Register(new SceneAddedEventHandler());
             Register(new SceneRemovedEventHandler());
             Register(new SceneRenamedEventHandler());
             Register(new VideoInfoUpdatedEventHandler());
+            Register(new ItemStateRequestEventHandler());
             Register(new PermissionUpdatedEventHandler());
             Register(new UserLeftEventHandler());
             Register(new UserKickedEventHandler());

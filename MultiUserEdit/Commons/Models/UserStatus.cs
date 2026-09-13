@@ -1,8 +1,9 @@
-namespace MultiUserEdit.Commons.Models
+﻿namespace MultiUserEdit.Commons.Models
 {
     public enum UserStatus
     {
         Active,
-        Away
+        Away,
+        Disconnected
     }
 }

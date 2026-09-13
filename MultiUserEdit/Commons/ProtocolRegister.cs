@@ -1,4 +1,4 @@
-using Microsoft.Win32;
+﻿using Microsoft.Win32;
 using System.Diagnostics;
 
 namespace MultiUserEdit.Commons
@@ -40,10 +40,6 @@ namespace MultiUserEdit.Commons
 
                 using var commandKey = key.CreateSubKey(@"shell\open\command");
 
-                // YMM4は多重起動できず、既に起動中の状態でYMM4.exeに引数付きで再起動しても無視されるだけで
-                // 「新しいウィンドウを開く」動作にはならない。一方、引数無しで起動すると既存インスタンスがある場合に
-                // 新しいウィンドウを開いてくれるため、ディープリンクの内容は一時ファイル経由で渡し、
-                // YMM4自体はPowerShell経由で無引数起動する。
                 var psCommand = $"powershell.exe -WindowStyle Hidden -Command \"[System.IO.File]::WriteAllText([System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'deeplink.txt'), '%1'); Start-Process '{processPath}'\"";
                 commandKey?.SetValue("", psCommand);
 

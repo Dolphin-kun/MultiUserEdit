@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons.Models;
+﻿using MultiUserEdit.Commons.Models;
 using MultiUserEdit.Settings;
 using MultiUserEdit.Views.Converters;
 using System.Collections.ObjectModel;
@@ -13,7 +13,6 @@ namespace MultiUserEdit.Views.SettingsPages
     {
         private readonly ObservableCollection<ExtensionOption> extensionOptions = [];
 
-        // 一括操作の途中で保存が何度も走らないようにするフラグ
         private bool suppressSave;
 
         public FileSettingsView()
@@ -28,7 +27,6 @@ namespace MultiUserEdit.Views.SettingsPages
             LoadOptions();
         }
 
-        // 設定は従来どおりカンマ区切りの文字列で保持し、この画面はその見せ方だけを担う
         private void LoadOptions()
         {
             var enabled = ParseSettings();
@@ -38,7 +36,6 @@ namespace MultiUserEdit.Views.SettingsPages
             foreach (var extension in FileExtensionCatalog.AllExtensions)
                 AddOption(extension, enabled.Contains(extension));
 
-            // 一覧に無い拡張子が設定に入っていれば「追加した形式」として拾う
             foreach (var extension in enabled.Except(FileExtensionCatalog.AllExtensions))
                 AddOption(extension, true);
         }
@@ -52,12 +49,11 @@ namespace MultiUserEdit.Views.SettingsPages
 
         private static HashSet<string> ParseSettings()
         {
-            return MultiUserEditSettings.Default.AllowedExtensions
+            return [.. MultiUserEditSettings.Default.AllowedExtensions
                 .Split([',', ';'], StringSplitOptions.RemoveEmptyEntries)
                 .Select(FileExtensionCatalog.Normalize)
                 .Where(extension => extension != null)
-                .Select(extension => extension!)
-                .ToHashSet();
+                .Select(extension => extension!)];
         }
 
         private void Save()
@@ -102,7 +98,6 @@ namespace MultiUserEdit.Views.SettingsPages
             NewExtensionBox.Text = string.Empty;
             if (extension == null) return;
 
-            // 既にある場合は追加せずチェックを入れるだけにする
             var existing = extensionOptions.FirstOrDefault(option => option.Extension == extension);
             if (existing != null)
             {
@@ -123,13 +118,11 @@ namespace MultiUserEdit.Views.SettingsPages
             Save();
         }
 
-        // 入力欄がホイールを吸ってしまい、ページ全体のスクロールが止まるのを防ぐ
         private void OnInputPreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             Behaviors.MouseWheelRedirector.Redirect(sender, e);
         }
 
-        // 拡張子一覧が上端・下端に達したら、そこから先はページ全体のスクロールへ回す
         private void OnNestedScrollPreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
             Behaviors.MouseWheelRedirector.RedirectAtEdge(sender, e);

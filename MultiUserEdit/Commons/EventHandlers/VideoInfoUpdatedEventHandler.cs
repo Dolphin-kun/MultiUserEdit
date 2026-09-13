@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons.Events;
+﻿using MultiUserEdit.Commons.Events;
 using MultiUserEdit.ViewModels;
 
 namespace MultiUserEdit.Commons.EventHandlers
@@ -21,6 +21,8 @@ namespace MultiUserEdit.Commons.EventHandlers
                         videoInfo.Height = editEvent.Height;
                         videoInfo.FPS = editEvent.FPS;
                         videoInfo.Hz = editEvent.Hz;
+                        if (VideoInfoSerializer.ToColor(editEvent.BackgroundColor) is { } background)
+                            videoInfo.BackgroundColor = background;
                     }
                 }
                 catch { }

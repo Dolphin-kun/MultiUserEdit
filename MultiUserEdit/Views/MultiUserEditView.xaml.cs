@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons;
+﻿using MultiUserEdit.Commons;
 using MultiUserEdit.ViewModels;
 using MultiUserEdit.Views.Controls;
 using System.Windows;
@@ -20,7 +20,6 @@ namespace MultiUserEdit.Views
         private SettingsPages.LinkSettingsView? linkSettingsView;
         private SettingsPages.AboutSettingsView? aboutSettingsView;
 
-        // 設定を開く前に表示していたページ。「戻る」で復帰させる。
         private object? lastMainContent;
         private SidebarButton? lastMainNavButton;
 
@@ -42,7 +41,7 @@ namespace MultiUserEdit.Views
             linkSettingsView = new SettingsPages.LinkSettingsView { DataContext = DataContext };
             aboutSettingsView = new SettingsPages.AboutSettingsView { DataContext = DataContext };
 
-            filesViewModel = new FilesViewModel();
+            filesViewModel = new FilesViewModel(DataContext as MultiUserEditViewModel);
             filesView = new FilesView { DataContext = filesViewModel };
 
             MainContentControl.Content = homeView;
@@ -60,8 +59,6 @@ namespace MultiUserEdit.Views
             var parentWindow = Window.GetWindow(this);
             viewModel.AdornerManager?.AttachAdorner(viewModel, parentWindow);
 
-            // PreviewViewModel は非公開型で IsPlaying を公開する API が無いためリフレクション参照が必要。
-            // ただしビジュアルツリー探索とGetProperty解決は毎フレーム行うと非常に重いので、初回のみ実施してキャッシュする。
             var previewVm = (VisualTreeHelperExtensions.FindVisualChild<PreviewView>(parentWindow) as FrameworkElement)?.DataContext;
             var isPlayingProp = previewVm?.GetType().GetProperty("IsPlaying");
 
@@ -117,8 +114,6 @@ namespace MultiUserEdit.Views
             );
         }
 
-
-
         private void OnNavHomeClick(object sender, RoutedEventArgs e)
         {
             if (homeView != null)
@@ -140,7 +135,6 @@ namespace MultiUserEdit.Views
             }
         }
 
-        // 設定を開くとサイドバーの内容そのものが設定項目に切り替わる（項目が増えても縦に伸ばせるため）
         private void OnNavSettingsClick(object sender, RoutedEventArgs e)
         {
             lastMainContent = MainContentControl.Content;
@@ -163,7 +157,6 @@ namespace MultiUserEdit.Views
             MainNavPanel.Visibility = Visibility.Visible;
             MainNavFooter.Visibility = Visibility.Visible;
 
-            // 「戻る」自体はRadioButtonなので選択状態を残さない
             SettingsBackButton.IsChecked = false;
 
             if (lastMainNavButton != null) lastMainNavButton.IsChecked = true;
@@ -193,4 +186,3 @@ namespace MultiUserEdit.Views
         }
     }
 }
-        

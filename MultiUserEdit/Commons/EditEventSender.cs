@@ -1,5 +1,6 @@
-using MultiUserEdit.Commons.Events;
+﻿using MultiUserEdit.Commons.Events;
 using MultiUserEdit.Networking;
+using Newtonsoft.Json.Linq;
 using System.Collections.Concurrent;
 using System.IO;
 using YukkuriMovieMaker.Project.Items;
@@ -14,7 +15,7 @@ namespace MultiUserEdit.Commons
 
         private Guid LocalUserId => getLocalUserIdFunc();
 
-        private readonly object cursorLock = new();
+        private readonly System.Threading.Lock cursorLock = new();
         private DateTime lastCursorSentTime = DateTime.MinValue;
         private bool cursorFlushScheduled;
         private (int Frame, int TimelineIndex, bool IsPlaying) latestCursor;
@@ -32,12 +33,11 @@ namespace MultiUserEdit.Commons
 
         private readonly ConcurrentDictionary<Guid, MoveThrottleState> itemMovedThrottles = new();
 
-        // アイテム削除時にitemMovedThrottles/itemUpdateThrottlesへ残ったスロットル状態を破棄する
-        // （呼ばないと、セッションを使い続けるほど削除済みアイテムのエントリが際限なく蓄積する）
         public void ClearItemThrottleState(Guid itemId)
         {
             itemMovedThrottles.TryRemove(itemId, out _);
             itemUpdateThrottles.TryRemove(itemId, out _);
+            lastSentItemJson.TryRemove(itemId, out _);
         }
 
         public async Task SendCursorMovedAsync(int currentFrame, int timelineIndex, bool isPlaying)
@@ -54,9 +54,6 @@ namespace MultiUserEdit.Commons
             catch { }
         }
 
-        // CancellationTokenSource を使ったキャンセル方式は、遅延タスク側の Dispose と
-        // 新規呼び出し側の Cancel が競合すると ObjectDisposedException を起こすため、
-        // 「最新値を保持し、未スケジュールなら1回だけ遅延送信を積む」方式に変更している。
         public Task SendCursorMovedThrottledAsync(int currentFrame, int timelineIndex, bool isPlaying)
         {
             lock (cursorLock)
@@ -64,7 +61,7 @@ namespace MultiUserEdit.Commons
                 latestCursor = (currentFrame, timelineIndex, isPlaying);
 
                 var now = DateTime.UtcNow;
-                if ((now - lastCursorSentTime).TotalMilliseconds >= 33) // ~30 FPS max
+                if ((now - lastCursorSentTime).TotalMilliseconds >= 33)
                 {
                     lastCursorSentTime = now;
                     return SendCursorMovedAsync(currentFrame, timelineIndex, isPlaying);
@@ -96,26 +93,27 @@ namespace MultiUserEdit.Commons
 
             try
             {
+                await Task.Yield();
+
+                if (!await ConfirmAllAsync(MediaFileResolver.GetTransferableFilePaths(item))) return;
+
                 var itemId = ItemIdManager.GetOrCreateId(item);
-                var tempDir = FileTransferManager.GetSaveDirectory();
 
-                // 送信がブロックされる・ユーザーが拒否するファイルは対象から除外する。
-                // 付けたまま送るとイベントだけが届き、受信側はプレースホルダーのまま永久に転送完了を待ち続ける。
-                var (itemJson, filesToSend) = MediaFileResolver.SerializeForSync(item, filter: fp =>
-                    !fp.StartsWith(tempDir, StringComparison.OrdinalIgnoreCase) && fileTransferManager.ConfirmSend(fp));
+                var (itemJson, filesToSend) = MediaFileResolver.SerializeForSync(item);
+                var mediaFileNames = filesToSend.Count > 0 ? filesToSend.Where(file => file.ShouldTransfer).Select(file => file.Name).ToList() : null;
+                var characterName = CharacterResolver.GetCharacter(item)?.Name;
 
-                var mediaFileNames = filesToSend.Count > 0 ? filesToSend.Select(fp => Path.GetFileName(fp)!).ToList() : null;
-
-                var evt = new ItemAddedEvent(itemId, timelineIndex, item.GetType().AssemblyQualifiedName!, itemJson, frame, layer, mediaFileNames)
+                var evt = new ItemAddedEvent(itemId, timelineIndex, ItemTypeResolver.GetTypeName(item.GetType()), itemJson, frame, layer, mediaFileNames)
                 {
                     DateTime = DateTime.UtcNow,
                     ExecutorId = LocalUserId
                 };
+                SetBaseline(itemId, itemJson);
                 await sessionClient.SendAsync(null, evt);
 
-                foreach (var fp in filesToSend)
+                foreach (var file in filesToSend.Where(file => file.ShouldTransfer))
                 {
-                    _ = fileTransferManager.TransferAsync(fp, sessionClient, LocalUserId);
+                    _ = fileTransferManager.TransferAsync(file, characterName, sessionClient, LocalUserId);
                 }
             }
             catch { }
@@ -147,7 +145,7 @@ namespace MultiUserEdit.Commons
                 state.Layer = layer;
 
                 var now = DateTime.UtcNow;
-                if ((now - state.LastSent).TotalMilliseconds >= 33) // ~30 FPS max
+                if ((now - state.LastSent).TotalMilliseconds >= 33)
                 {
                     state.LastSent = now;
                     return SendItemMovedAsync(itemId, timelineIndex, frame, length, layer);
@@ -190,26 +188,98 @@ namespace MultiUserEdit.Commons
             catch { }
         }
 
+        private async Task<bool> ConfirmAllAsync(IReadOnlyList<string> filePaths)
+        {
+            if (filePaths.Count == 0) return true;
+
+            var results = await Task.WhenAll(filePaths.Select(fileTransferManager.ConfirmSendAsync));
+            return results.All(allowed => allowed);
+        }
+
+        private readonly ConcurrentDictionary<Guid, string> lastSentItemJson = new();
+
+        public void SetBaseline(Guid itemId, string itemJson) => lastSentItemJson[itemId] = itemJson;
+
+        public void ClearBaseline(Guid itemId) => lastSentItemJson.TryRemove(itemId, out _);
+
+        public void ClearAllBaselines() => lastSentItemJson.Clear();
+
+        private string? BuildPayload(Guid itemId, string itemJson)
+        {
+            if (!lastSentItemJson.TryGetValue(itemId, out var baseline)) return itemJson;
+
+            try
+            {
+                var previous = JObject.Parse(baseline);
+                var current = JObject.Parse(itemJson);
+                var payload = new JObject();
+                var changed = false;
+
+                foreach (var property in current.Properties())
+                {
+                    if (property.Name == TypeProperty)
+                    {
+                        payload[property.Name] = property.Value;
+                        continue;
+                    }
+
+                    var before = previous[property.Name];
+                    if (before != null && JToken.DeepEquals(before, property.Value)) continue;
+
+                    payload[property.Name] = property.Value;
+                    changed = true;
+                }
+
+                foreach (var property in previous.Properties())
+                {
+                    if (property.Name == TypeProperty) continue;
+                    if (current[property.Name] != null) continue;
+
+                    payload[property.Name] = JValue.CreateNull();
+                    changed = true;
+                }
+
+                return changed ? payload.ToString(Newtonsoft.Json.Formatting.None) : null;
+            }
+            catch
+            {
+                return itemJson;
+            }
+        }
+
+        private const string TypeProperty = "$type";
+
         public async Task SendItemUpdatedAsync(IItem item, int timelineIndex)
         {
             if (!sessionClient.IsConnected) return;
 
             try
             {
-                // 未転送のファイル参照（立ち絵の表情差分等）でローカル環境のフルパスを相手に漏らさないよう、
-                // ItemAdded同様にファイル名のみへ一時的に差し替えてシリアライズする。
-                // どのファイル名に差し替えたかをMediaFileNamesとして一緒に送ることで、受信側は自分の
-                // アイテムの現在の状態から逆算せずに（動画・音声が初回転送中でFilePathがnullの場合でも）
-                // 確実に対象を解決できる。
-                var (itemJson, files) = MediaFileResolver.SerializeForSync(item);
-                var mediaFileNames = files.Count > 0 ? files.Select(fp => Path.GetFileName(fp)!).ToList() : null;
+                await Task.Yield();
+
+                if (!await ConfirmAllAsync(MediaFileResolver.GetTransferableFilePaths(item))) return;
+
+                var (itemJson, files) = MediaFileResolver.SerializeForSync(item, filter: fileTransferManager.IsSendAllowed);
+                var mediaFileNames = files.Count > 0 ? files.Where(file => file.ShouldTransfer).Select(file => file.Name).ToList() : null;
+                var characterName = CharacterResolver.GetCharacter(item)?.Name;
                 var itemId = ItemIdManager.GetOrCreateId(item);
-                var evt = new ItemUpdatedEvent(itemId, timelineIndex, itemJson, mediaFileNames)
+
+                var payload = BuildPayload(itemId, itemJson);
+                if (payload == null) return;
+
+                lastSentItemJson[itemId] = itemJson;
+
+                var evt = new ItemUpdatedEvent(itemId, timelineIndex, payload, mediaFileNames)
                 {
                     DateTime = DateTime.UtcNow,
                     ExecutorId = LocalUserId
                 };
                 await sessionClient.SendAsync(null, evt);
+
+                foreach (var file in files)
+                {
+                    _ = fileTransferManager.TransferAsync(file, characterName, sessionClient, LocalUserId);
+                }
             }
             catch { }
         }
@@ -225,12 +295,9 @@ namespace MultiUserEdit.Commons
 
         private readonly ConcurrentDictionary<Guid, UpdateThrottleState> itemUpdateThrottles = new();
 
-        // 回転・拡大縮小など、タイムライン上のドラッグ操作を伴わないプロパティ変更はFrame/Layer/Lengthの
-        // 変更(SendItemMovedThrottledAsync)と異なりスロットリングされておらず、キャンバス上でハンドルを
-        // 連続してドラッグすると1秒間に何十回もSendItemUpdatedAsync（フルシリアライズを伴う）が発火し、
-        // UIスレッドを圧迫していた。ItemMoved同様のスロットリングパターンを適用する。
-        // （以前はファイル参照の書き換え周りの競合を抑える目的もあって100msにしていたが、その競合自体は
-        // 根本原因を修正済みのため、SendItemMovedThrottledAsyncと同じ~30fps相当まで詰めてリアルタイム性を戻す）
+        private const int CoalesceDelayMilliseconds = 16;
+        private const int MinimumSendIntervalMilliseconds = 33;
+
         public Task SendItemUpdatedThrottledAsync(IItem item, int timelineIndex)
         {
             var itemId = ItemIdManager.GetOrCreateId(item);
@@ -241,30 +308,25 @@ namespace MultiUserEdit.Commons
                 state.Item = item;
                 state.TimelineIndex = timelineIndex;
 
-                var now = DateTime.UtcNow;
-                if ((now - state.LastSent).TotalMilliseconds >= 33)
-                {
-                    state.LastSent = now;
-                    return SendItemUpdatedAsync(item, timelineIndex);
-                }
+                if (state.FlushScheduled) return Task.CompletedTask;
 
-                if (!state.FlushScheduled)
+                var elapsed = (DateTime.UtcNow - state.LastSent).TotalMilliseconds;
+                var delay = (int)Math.Max(CoalesceDelayMilliseconds, MinimumSendIntervalMilliseconds - elapsed);
+
+                state.FlushScheduled = true;
+                _ = Task.Delay(delay).ContinueWith(_ =>
                 {
-                    state.FlushScheduled = true;
-                    _ = Task.Delay(35).ContinueWith(_ =>
+                    IItem toSendItem;
+                    int toSendTimelineIndex;
+                    lock (state.Lock)
                     {
-                        IItem toSendItem;
-                        int toSendTimelineIndex;
-                        lock (state.Lock)
-                        {
-                            state.FlushScheduled = false;
-                            state.LastSent = DateTime.UtcNow;
-                            toSendItem = state.Item!;
-                            toSendTimelineIndex = state.TimelineIndex;
-                        }
-                        _ = SendItemUpdatedAsync(toSendItem, toSendTimelineIndex);
-                    }, TaskScheduler.Default);
-                }
+                        state.FlushScheduled = false;
+                        state.LastSent = DateTime.UtcNow;
+                        toSendItem = state.Item!;
+                        toSendTimelineIndex = state.TimelineIndex;
+                    }
+                    _ = SendItemUpdatedAsync(toSendItem, toSendTimelineIndex);
+                }, TaskScheduler.Default);
 
                 return Task.CompletedTask;
             }
@@ -312,11 +374,11 @@ namespace MultiUserEdit.Commons
             catch { }
         }
 
-        public async Task SendVideoInfoUpdatedAsync(int index, int width, int height, int fps, int hz)
+        public async Task SendVideoInfoUpdatedAsync(int index, int width, int height, int fps, int hz, string? backgroundColor)
         {
             try
             {
-                var evt = new VideoInfoUpdatedEvent(index, width, height, fps, hz)
+                var evt = new VideoInfoUpdatedEvent(index, width, height, fps, hz, backgroundColor)
                 {
                     DateTime = DateTime.UtcNow,
                     ExecutorId = LocalUserId

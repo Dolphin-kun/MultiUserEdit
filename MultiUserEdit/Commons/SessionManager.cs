@@ -5,7 +5,7 @@ namespace MultiUserEdit.Commons
 {
     public static class SessionManager
     {
-        private static readonly ConditionalWeakTable<Scenes, CollaborationSession> sessions = new();
+        private static readonly ConditionalWeakTable<Scenes, CollaborationSession> sessions = [];
 
         public static CollaborationSession GetOrCreate(Scenes scenes)
         {

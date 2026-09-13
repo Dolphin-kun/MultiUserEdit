@@ -1,0 +1,28 @@
+<Window x:Class="MultiUserEdit.Views.CharacterNameDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="キャラクター名" Height="100" Width="360"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
+        ShowInTaskbar="False">
+
+    <Grid Margin="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBox x:Name="NameBox" Grid.Row="0" Height="26" Padding="6,3"
+                 VerticalContentAlignment="Center" MaxLength="64"
+                 TextChanged="OnNameChanged" />
+
+        <TextBlock x:Name="ErrorText" Grid.Row="1" FontSize="10" Foreground="#FF5252"
+                   Margin="0" Visibility="Collapsed"
+                   Text="同じ名前のキャラクターが既にあります。" />
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0">
+            <Button x:Name="DecideButton" Content="決定" Click="OnDecideClick" Cursor="Hand"
+                    Width="90" Height="26" Margin="0" IsDefault="True" />
+        </StackPanel>
+    </Grid>
+</Window>

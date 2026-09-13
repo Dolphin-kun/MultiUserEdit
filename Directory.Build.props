@@ -2,5 +2,15 @@
   <PropertyGroup>
 	  <YMM4DirPath>C:\ドキュメント\YukkuriMovieMaker_v4_Lite_Plugin\</YMM4DirPath>
 	  <SubYMM4DirPath>C:\ドキュメント\YukkuriMovieMaker_v4_Lite_Community\</SubYMM4DirPath>
+
+	  <!--
+	    参照するYMM4アセンブリは「対応する最も古いバージョン」のものを指す。
+	    YukkuriMovieMaker.dll はアセンブリバージョンが製品バージョンと連動しており(例: 4.55.0.1 / 4.56.1.0)、
+	    新しい版でビルドしたプラグインは古い版のYMM4では参照を解決できずGetTypes()で失敗する。
+	    YMM4 4.56以降はその失敗を捕捉して「非対応プラグイン」として除外するが、
+	    4.55以前は例外がPluginLoaderの静的コンストラクタから抜けてYMM4自体が起動できなくなる。
+	    古い版で参照しておけば、新しい版のYMM4でもそのまま読み込める。
+	  -->
+	  <YMM4RefDirPath>C:\ドキュメント\YukkuriMovieMaker_v4_Lite_Community\</YMM4RefDirPath>
   </PropertyGroup>
 </Project>

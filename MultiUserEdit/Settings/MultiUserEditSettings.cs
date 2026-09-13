@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons.Models;
+﻿using MultiUserEdit.Commons.Models;
 using System.IO;
 using YukkuriMovieMaker.Plugin;
 
@@ -33,8 +33,6 @@ namespace MultiUserEdit.Settings
             set => Set(ref userDescription, value);
         }
 
-        // 接続ごとに発行されるUserIdと異なり、インストール単位で変わらないID。
-        // プロジェクトに保存する合計参加時間を同一人物として積算するために使う。
         private string profileId = string.Empty;
         public string ProfileId
         {
@@ -63,10 +61,10 @@ namespace MultiUserEdit.Settings
             if (string.IsNullOrWhiteSpace(ext)) return false;
 
             var allowedList = AllowedExtensions
-                .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Split([',', ';'], StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Trim())
                 .Where(x => !string.IsNullOrEmpty(x))
-                .Select(x => x.StartsWith(".") ? x : "." + x);
+                .Select(x => x.StartsWith('.') ? x : "." + x);
 
             return allowedList.Any(x => x.Equals(ext, StringComparison.OrdinalIgnoreCase));
         }
