@@ -27,6 +27,8 @@ namespace MultiUserEdit.Commons.Events
     [JsonDerivedType(typeof(CharacterRequestEvent), 31)]
     [JsonDerivedType(typeof(CharacterSharedEvent), 32)]
     [JsonDerivedType(typeof(ItemStateRequestEvent), 33)]
+    [JsonDerivedType(typeof(StateDigestRequestEvent), 34)]
+    [JsonDerivedType(typeof(StateDigestEvent), 35)]
     public abstract record EditEvent
     {
         public DateTime DateTime { get; init; }

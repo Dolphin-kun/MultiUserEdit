@@ -31,6 +31,8 @@ namespace MultiUserEdit.Commons
             Register(new SceneRenamedEventHandler());
             Register(new VideoInfoUpdatedEventHandler());
             Register(new ItemStateRequestEventHandler());
+            Register(new StateDigestRequestEventHandler());
+            Register(new StateDigestEventHandler());
             Register(new PermissionUpdatedEventHandler());
             Register(new UserLeftEventHandler());
             Register(new UserKickedEventHandler());

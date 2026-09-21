@@ -232,6 +232,8 @@ namespace MultiUserEdit.Commons
         public bool IsSendDenied(string filePath) =>
             sendDecisions.TryGetValue(filePath, out var allowed) && !allowed;
 
+        public void MarkSendAllowed(string filePath) => sendDecisions.TryAdd(filePath, true);
+
         public bool IsSendAllowed(string filePath) =>
             sendDecisions.TryGetValue(filePath, out var allowed) && allowed;
 
@@ -296,6 +298,7 @@ namespace MultiUserEdit.Commons
             if (requesters.Count == 0)
             {
                 Debug.WriteLine($"[MultiUserEdit] Skipped transfer (all peers already have it): {fileName}");
+                RecordSent(filePath, wasTransferred: false);
                 return;
             }
 
@@ -404,12 +407,39 @@ namespace MultiUserEdit.Commons
 
                     await Task.Yield();
                 }
+
+                RecordSent(filePath, wasTransferred: true);
             }
             finally
             {
                 activeUploads.TryRemove(filePath, out _);
                 NotifySummary();
             }
+        }
+
+        private readonly ConcurrentDictionary<string, SentFileRecord> sentFiles = new(StringComparer.OrdinalIgnoreCase);
+
+        public event Action? SentFilesChanged;
+
+        public IReadOnlyList<SentFileRecord> GetSentFiles() => [.. sentFiles.Values.OrderByDescending(record => record.SentAt)];
+
+        private void RecordSent(string filePath, bool wasTransferred)
+        {
+            try
+            {
+                var size = File.Exists(filePath) ? new FileInfo(filePath).Length : 0;
+                sentFiles.AddOrUpdate(
+                    filePath,
+                    _ => new SentFileRecord(filePath, size, DateTime.Now, wasTransferred),
+                    (_, existing) => new SentFileRecord(filePath, size, DateTime.Now, wasTransferred || existing.WasTransferred));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] Record sent file failed: {ex.Message}");
+                return;
+            }
+
+            SentFilesChanged?.Invoke();
         }
 
         internal async Task<bool> NeedsTransferAsync(FileAvailableEvent evt)
@@ -505,11 +535,13 @@ namespace MultiUserEdit.Commons
         {
             if (!incomingTransfers.TryGetValue(evt.TransferId, out var transfer)) return;
 
-            if (DateTime.UtcNow - transfer.StartedAt > TransferTimeout)
+            if (DateTime.UtcNow - transfer.LastActivityAt > TransferTimeout)
             {
                 AbortTransfer(evt.TransferId, transfer);
                 return;
             }
+
+            transfer.LastActivityAt = DateTime.UtcNow;
 
             int chunkLength;
             try
@@ -616,6 +648,12 @@ namespace MultiUserEdit.Commons
             };
 
             TransferSummaryChanged?.Invoke(summary);
+        }
+
+        public bool IsReceivingAny()
+        {
+            var now = DateTime.UtcNow;
+            return incomingTransfers.Values.Any(transfer => now - transfer.LastActivityAt <= TransferTimeout);
         }
 
         public void CancelAll()

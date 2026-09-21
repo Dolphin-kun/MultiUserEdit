@@ -7,6 +7,7 @@ namespace MultiUserEdit.Commons.EventHandlers
     internal static class TransferWaiter
     {
         public static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(3);
+        private static readonly TimeSpan ProgressCheckInterval = TimeSpan.FromSeconds(5);
 
         public static void WhenFilesReady(MultiUserEditViewModel viewModel, IReadOnlyList<string> fileNames, Action action, TimeSpan? timeout = null)
         {
@@ -46,8 +47,24 @@ namespace MultiUserEdit.Commons.EventHandlers
 
             if (timeout == null) return;
 
-            _ = Task.Delay(timeout.Value).ContinueWith(_ =>
+            _ = GiveUpWhenStalledAsync(timeout.Value);
+
+            async Task GiveUpWhenStalledAsync(TimeSpan initialWait)
             {
+                await Task.Delay(initialWait);
+
+                while (true)
+                {
+                    lock (remaining)
+                    {
+                        if (finished) return;
+                    }
+
+                    if (!viewModel.IsReceivingFiles()) break;
+
+                    await Task.Delay(ProgressCheckInterval);
+                }
+
                 lock (remaining)
                 {
                     if (finished) return;
@@ -56,7 +73,7 @@ namespace MultiUserEdit.Commons.EventHandlers
 
                 viewModel.FileTransferCompleted -= onCompleted;
                 Application.Current?.Dispatcher.InvokeAsync(() => viewModel.ExecuteRemoteAction(action));
-            }, TaskScheduler.Default);
+            }
         }
 
         private static bool Matches(string savedPath, string name)

@@ -48,7 +48,7 @@ namespace MultiUserEdit.Commons.EventHandlers
 
                 var itemJson = MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, itemType, editEvent.MediaFileNames, tachieBaseDirectory);
 
-                FontAvailabilityChecker.NotifyMissingFonts(itemJson, viewModel.GetUserName(editEvent.ExecutorId));
+                FontAvailabilityChecker.NotifyMissingFonts(editEvent.ItemId, itemJson, viewModel.GetUserName(editEvent.ExecutorId));
 
                 var item = AddItem(editEvent, viewModel, timeline, itemType, itemJson);
                 if (item == null) return;

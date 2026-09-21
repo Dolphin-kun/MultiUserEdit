@@ -6,6 +6,16 @@ namespace MultiUserEdit.Commons.Models
         public string FilePath { get; set; } = string.Empty;
         public long SizeBytes { get; set; }
         public DateTime LastModified { get; set; }
+        public bool IsSent { get; set; }
+        public bool WasTransferred { get; set; } = true;
+
+        public string DirectionText => IsSent ? "送信" : "受信";
+
+        public string StatusText => !IsSent
+            ? "受信済み"
+            : WasTransferred ? "送信済み" : "相手が保有済みのため送信を省略";
+
+        public bool CanDelete => !IsSent;
 
         public string FormattedSize => SizeBytes switch
         {

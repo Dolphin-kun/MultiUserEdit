@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons.Events;
+﻿using MultiUserEdit.Commons.Events;
 using MultiUserEdit.ViewModels;
 
 namespace MultiUserEdit.Commons.EventHandlers
@@ -7,7 +7,7 @@ namespace MultiUserEdit.Commons.EventHandlers
     {
         public void Handle(SyncScenesEvent editEvent, MultiUserEditViewModel viewModel)
         {
-            viewModel.ApplySyncScenes(editEvent.Scenes, editEvent.ExecutorId);
+            viewModel.ApplySyncScenes(editEvent.Scenes, editEvent.ExecutorId, editEvent.IsManual);
         }
     }
 }

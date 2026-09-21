@@ -15,7 +15,7 @@ namespace MultiUserEdit.Commons
             if (!notified.TryAdd($"{title}\n{message}", 0)) return;
 
             Application.Current?.Dispatcher.InvokeAsync(() =>
-                MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Warning));
+                MessageBox.Show(message, title, MessageBoxButton.OK));
         }
     }
 }

@@ -18,6 +18,7 @@ namespace MultiUserEdit.Views
         public string ResultUserName { get; private set; }
         public string ResultDescription { get; private set; }
         public bool KickRequested { get; private set; }
+        public bool SyncFromRequested { get; private set; }
 
         public UserProfileDialog(Participant participant, bool isSelf, bool canManage, Func<double?> getTotalSeconds)
         {
@@ -83,6 +84,7 @@ namespace MultiUserEdit.Views
         {
             PermissionTab.Visibility = canManage ? Visibility.Visible : Visibility.Collapsed;
             KickButton.Visibility = canManage ? Visibility.Visible : Visibility.Collapsed;
+            SyncFromButton.Visibility = isSelf ? Visibility.Collapsed : Visibility.Visible;
 
             if (!canManage) return;
 
@@ -143,6 +145,13 @@ namespace MultiUserEdit.Views
             EditPropsCheck.IsChecked = preset.CanEditProperties;
             ManageScenesCheck.IsChecked = preset.CanManageScenes;
             SyncSeekCheck.IsChecked = preset.CanSyncSeekPosition;
+        }
+
+        private void OnSyncFromClick(object sender, RoutedEventArgs e)
+        {
+            SyncFromRequested = true;
+            DialogResult = true;
+            Close();
         }
 
         private void OnKickClick(object sender, RoutedEventArgs e)

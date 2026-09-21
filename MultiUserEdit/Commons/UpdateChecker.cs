@@ -9,7 +9,7 @@ namespace MultiUserEdit.Commons
 {
     internal sealed class UpdateChecker : Bindable
     {
-        private const string PostId = "";
+        private const string PostId = "1789275383618793";
 
         private const string FallbackUrl = "https://ymm4-info.net/";
 
@@ -44,16 +44,32 @@ namespace MultiUserEdit.Commons
         {
             OpenUpdateUrlCommand = new ActionCommand(
                 _ => HasUpdate,
-                _ => Process.Start(new ProcessStartInfo
-                {
-                    FileName = string.IsNullOrEmpty(downloadUrl) ? FallbackUrl : downloadUrl,
-                    UseShellExecute = true
-                }));
+                _ => OpenUpdatePage());
         }
 
         public void EnsureChecked()
         {
             checkTask ??= CheckAsync();
+        }
+
+        public async Task<bool> IsOutdatedAsync(TimeSpan maxWait)
+        {
+            EnsureChecked();
+            await Task.WhenAny(checkTask!, Task.Delay(maxWait));
+            return HasUpdate;
+        }
+
+        public void OpenUpdatePage()
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = string.IsNullOrEmpty(downloadUrl) ? FallbackUrl : downloadUrl,
+                    UseShellExecute = true
+                });
+            }
+            catch { }
         }
 
         private async Task CheckAsync()

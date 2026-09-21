@@ -1,4 +1,5 @@
-﻿using MultiUserEdit.Commons.Events;
+﻿using MultiUserEdit.Commons;
+using MultiUserEdit.Commons.Events;
 
 namespace MultiUserEdit.Networking
 {
@@ -35,7 +36,7 @@ namespace MultiUserEdit.Networking
 
         private readonly SemaphoreSlim stateLock = new(1, 1);
 
-        public async Task StartAsync(string roomId, bool isHost)
+        public async Task StartAsync(string roomId, bool isHost, string? hostKey)
         {
             await stateLock.WaitAsync();
             try
@@ -47,7 +48,13 @@ namespace MultiUserEdit.Networking
 
                 try
                 {
-                    await networkProvider.ConnectAsync(url);
+                    var headers = new Dictionary<string, string>
+                    {
+                        ["X-Client-Version"] = UpdateChecker.Instance.CurrentVersion
+                    };
+                    if (isHost && !string.IsNullOrEmpty(hostKey)) headers["X-Host-Key"] = hostKey;
+
+                    await networkProvider.ConnectAsync(url, headers);
                     IsConnected = true;
                     LastSentAt = DateTime.Now;
                 }

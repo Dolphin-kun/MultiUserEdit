@@ -35,7 +35,7 @@ namespace MultiUserEdit.Networking
             userId = Guid.NewGuid().ToString();
         }
 
-        public async Task ConnectAsync(string url)
+        public async Task ConnectAsync(string url, IReadOnlyDictionary<string, string> headers)
         {
             await connectionLock.WaitAsync();
             try
@@ -47,6 +47,8 @@ namespace MultiUserEdit.Networking
                 var socket = new ClientWebSocket();
                 socket.Options.KeepAliveInterval = KeepAliveInterval;
                 socket.Options.KeepAliveTimeout = KeepAliveTimeout;
+                foreach (var (name, value) in headers)
+                    socket.Options.SetRequestHeader(name, value);
 
                 var source = new CancellationTokenSource();
                 webSocket = socket;

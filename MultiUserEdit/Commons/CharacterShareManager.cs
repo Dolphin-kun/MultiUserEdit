@@ -206,6 +206,19 @@ namespace MultiUserEdit.Commons
             TransferWaiter.WhenFilesReady(viewModel, missingFiles, () => CreateCharacterCore(evt), FileWaitTimeout);
         }
 
+        private static void NotifyMissingCharacterFiles(string characterName, IReadOnlyList<string> missingFiles)
+        {
+            const int MaxListed = 5;
+            var list = string.Join("\n", missingFiles.Take(MaxListed).Select(name => "・" + Path.GetFileName(TachieFileResolver.ToLocalSeparators(name))));
+            if (missingFiles.Count > MaxListed) list += $"\n ほか {missingFiles.Count - MaxListed} 件";
+
+            ErrorNotifier.NotifyOnce(
+                "立ち絵の素材を受け取れませんでした",
+                $"キャラクター「{characterName}」の立ち絵素材が届かないまま時間切れになりました。\n\n{list}\n\n" +
+                "キャラクターは作成しましたが、立ち絵は表示されません。\n" +
+                "通信環境を確認して、プロジェクトを開き直すと表示される場合があります。");
+        }
+
         private void CreateCharacterCore(CharacterSharedEvent evt)
         {
             string? failure = null;
@@ -214,6 +227,9 @@ namespace MultiUserEdit.Commons
             {
                 var sharedRoot = TachieFileResolver.GetSharedRoot(evt.CharacterName);
                 Directory.CreateDirectory(sharedRoot);
+
+                var stillMissing = MediaFileResolver.GetMissingFileNames(evt.MediaFileNames);
+                if (stillMissing.Count > 0) NotifyMissingCharacterFiles(evt.CharacterName, stillMissing);
 
                 var characterJson = MediaFileResolver.ResolveCharacterJson(evt.CharacterJson, evt.MediaFileNames, sharedRoot);
                 var character = JsonConvert.DeserializeObject<Character>(characterJson, ItemSerializerOptions.Character);
@@ -252,8 +268,7 @@ namespace MultiUserEdit.Commons
                 $"キャラクター「{evt.CharacterName}」を追加できませんでした。\n{failure}\n\n" +
                 "同名のキャラクターがある場合はそちらに紐づけて続行します。",
                 "キャラクターの読み込み",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+                MessageBoxButton.OK);
 
             Decide(evt.CharacterName, evt.CharacterName);
         }

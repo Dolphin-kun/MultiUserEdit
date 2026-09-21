@@ -11,6 +11,7 @@ namespace MultiUserEdit.Commons.Models
         public int ChunkSize { get; } = chunkSize;
         public int ReceivedChunks { get; set; }
         public DateTime StartedAt { get; } = DateTime.UtcNow;
+        public DateTime LastActivityAt { get; set; } = DateTime.UtcNow;
 
         private FileStream? stream;
 

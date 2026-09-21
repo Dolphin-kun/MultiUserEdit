@@ -8,6 +8,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using YukkuriMovieMaker.Commons;
@@ -65,10 +67,36 @@ namespace MultiUserEdit.Commons
         private List<Timeline> scenesSnapshot = [];
 
         public Dictionary<Guid, Guid> LockedItems { get; } = [];
+
+        public Dictionary<Guid, OperatingItem> OperatingItems { get; } = [];
+        public event Action? OperatingItemsChanged;
+
+        private void NoteRemoteOperation(EditEvent editEvent)
+        {
+            switch (editEvent)
+            {
+                case ItemMovedEvent moved:
+                    OperatingItems[moved.ItemId] = new OperatingItem(editEvent.ExecutorId, moved.TimelineIndex, DateTime.UtcNow);
+                    break;
+                case ItemUpdatedEvent updated:
+                    OperatingItems[updated.ItemId] = new OperatingItem(editEvent.ExecutorId, updated.TimelineIndex, DateTime.UtcNow);
+                    break;
+                case ItemRemovedEvent removed:
+                    if (!OperatingItems.Remove(removed.ItemId)) return;
+                    break;
+                default:
+                    return;
+            }
+
+            OperatingItemsChanged?.Invoke();
+        }
         private readonly Dictionary<Guid, long> locallyLockedItems = [];
         private readonly Dictionary<Guid, DateTime> lockedItemsReceivedAt = [];
 
         public event Action<string, string>? FileTransferCompleted;
+        public event Action? SentFilesChanged;
+
+        internal IReadOnlyList<SentFileRecord> GetSentFiles() => fileTransferManager.GetSentFiles();
 
         private Func<int, bool, Task>? previewSeekAction;
         private Func<bool>? getIsPlayingFunc;
@@ -154,11 +182,52 @@ namespace MultiUserEdit.Commons
         public ICommand SyncNowCommand { get; }
         public ICommand KickUserCommand { get; }
 
+        private bool awaitingInitialSync;
+        private Guid? pendingManualSyncSource;
+
+        internal void SyncFrom(Guid sourceUserId)
+        {
+            if (!IsConnected || sourceUserId == LocalUserId) return;
+
+            var sourceName = GetParticipantName(sourceUserId);
+            var confirmed = MessageBox.Show(
+                SyncFromConfirmMessage(sourceName),
+                "データの同期",
+                MessageBoxButton.OKCancel) == MessageBoxResult.OK;
+            if (!confirmed) return;
+
+            RequestSyncFrom(sourceUserId);
+        }
+
+        private void RequestSyncFrom(Guid sourceUserId)
+        {
+            pendingManualSyncSource = sourceUserId;
+
+            var request = new SyncRequestEvent(sourceUserId, IsManual: true)
+            {
+                DateTime = DateTime.UtcNow,
+                ExecutorId = LocalUserId
+            };
+            _ = sessionClient.SendAsync(sourceUserId.ToString(), request);
+        }
+
+        private string GetParticipantName(Guid userId)
+        {
+            var name = Participants.FirstOrDefault(p => p.UserId == userId)?.UserName;
+            return string.IsNullOrWhiteSpace(name) ? "共同編集相手" : name;
+        }
+
         private void SyncNow()
         {
             if (!IsConnected) return;
 
-            if (IsHost)
+            if (!IsHost)
+            {
+                var host = Participants.FirstOrDefault(p => p.Role == UserRole.Host && p.UserId != LocalUserId);
+                if (host != null) SyncFrom(host.UserId);
+                return;
+            }
+
             {
                 var confirmed = MessageBox.Show(
                     "参加者全員のタイムラインを、自分のタイムラインの状態で上書きします。\n実行してもよろしいですか？",
@@ -167,16 +236,8 @@ namespace MultiUserEdit.Commons
 
                 if (!confirmed) return;
 
-                HandleSyncRequestEvent();
-                return;
+                SendSyncScenes(null, isManual: true);
             }
-
-            var request = new SyncRequestEvent
-            {
-                DateTime = DateTime.UtcNow,
-                ExecutorId = LocalUserId
-            };
-            _ = sessionClient.SendAsync(null, request);
         }
 
         private bool isProtocolRegistered = ProtocolRegister.IsRegistered();
@@ -248,7 +309,7 @@ namespace MultiUserEdit.Commons
         {
             if (!IsConnected) return;
 
-            var presenceEvt = new PresenceEvent(LocalUserId, UserName, localUserRole, true, LocalProfileId, UserDescription)
+            var presenceEvt = new PresenceEvent(LocalUserId, UserName, localUserRole, true, LocalProfileId, UserDescription, UpdateChecker.Instance.CurrentVersion)
             {
                 DateTime = DateTime.UtcNow,
                 ExecutorId = LocalUserId
@@ -308,7 +369,10 @@ namespace MultiUserEdit.Commons
             {
                 GetPeerCount = () => Participants.Count(p => p.UserId != LocalUserId)
             };
-            eventSender = new EditEventSender(sessionClient, fileTransferManager, () => LocalUserId);
+            eventSender = new EditEventSender(sessionClient, fileTransferManager, () => LocalUserId)
+            {
+                IsItemAlive = item => Scenes?.Timelines.Any(timeline => timeline.Items.Contains(item)) ?? false
+            };
             timelineSyncManager = new TimelineSyncManager(eventSender, () => isApplyingRemoteEvent, IsItemEditableLocally);
             characterShareManager = new CharacterShareManager(
                 sessionClient,
@@ -319,6 +383,7 @@ namespace MultiUserEdit.Commons
                 ExecuteRemoteAction);
 
             fileTransferManager.TransferCompleted += (transferId, path) => FileTransferCompleted?.Invoke(transferId, path);
+            fileTransferManager.SentFilesChanged += () => SentFilesChanged?.Invoke();
             fileTransferManager.TransferSummaryChanged += OnTransferSummaryChanged;
 
             LocalUserId = sessionClient.LocalUserId;
@@ -541,6 +606,12 @@ namespace MultiUserEdit.Commons
                 if (p.Status != UserStatus.Disconnected && now - p.LastActivity > AwayThreshold)
                     p.Status = UserStatus.Away;
             }
+
+            var staleOperations = OperatingItems
+                .Where(kvp => DateTime.UtcNow - kvp.Value.LastActivity > TimeSpan.FromSeconds(10))
+                .Select(kvp => kvp.Key)
+                .ToList();
+            foreach (var itemId in staleOperations) OperatingItems.Remove(itemId);
 
             var expired = lockedItemsReceivedAt
                 .Where(kvp => DateTime.UtcNow - kvp.Value > TimeSpan.FromMinutes(5))
@@ -823,11 +894,39 @@ namespace MultiUserEdit.Commons
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
         }
 
-        public void ApplySyncScenes(OnlineScenes onlineScenes, Guid ownerId)
+        private static string SyncFromConfirmMessage(string sourceName) =>
+            $"現在のタイムライン上のアイテムをすべて削除して、{sourceName} の状態と同期します。\nよろしいですか？";
+
+        public void ApplySyncScenes(OnlineScenes onlineScenes, Guid ownerId, bool isManual)
         {
             if (onlineScenes == null || Scenes == null) return;
 
-            if (Scenes.Timelines.Any(t => t.Items.Count > 0))
+            if (isManual)
+            {
+                var requestedByMe = pendingManualSyncSource == ownerId;
+                if (requestedByMe) pendingManualSyncSource = null;
+
+                if (!requestedByMe && Scenes.Timelines.Any(t => t.Items.Count > 0))
+                {
+                    var sourceName = GetParticipantName(ownerId);
+                    var accepted = MessageBox.Show(
+                        $"{sourceName} がデータの同期を実行しました。\n\n" + SyncFromConfirmMessage(sourceName),
+                        "データの同期",
+                        MessageBoxButton.OKCancel) == MessageBoxResult.OK;
+
+                    if (!accepted) return;
+                }
+            }
+            else if (!awaitingInitialSync)
+            {
+                return;
+            }
+            else
+            {
+                awaitingInitialSync = false;
+            }
+
+            if (!isManual && Scenes.Timelines.Any(t => t.Items.Count > 0))
             {
                 var result = MessageBox.Show(
                     "ルームに参加するため、現在のタイムライン上のアイテムをすべて削除してホストの状態と同期します。\n削除して同期を開始してもよろしいですか？",
@@ -840,6 +939,8 @@ namespace MultiUserEdit.Commons
                     return;
                 }
             }
+
+            eventSender.ClearAllBaselines();
 
             var previousApplying = isApplyingRemoteEvent;
             isApplyingRemoteEvent = true;
@@ -941,7 +1042,10 @@ namespace MultiUserEdit.Commons
 
         private async Task CreateRoomAsync()
         {
+            if (!await EnsureLatestPluginAsync()) return;
+
             RoomId = Guid.NewGuid().ToString();
+            hostKey = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
             localUserRole = UserRole.Host;
             IsHost = true;
             CurrentUserPermission = UserPermission.CreateFromLevel(PermissionLevel.Full);
@@ -950,10 +1054,32 @@ namespace MultiUserEdit.Commons
 
         private async Task JoinRoomAsync()
         {
+            if (!await EnsureLatestPluginAsync()) return;
+
             RoomId = InputRoomId;
             localUserRole = UserRole.Guest;
             IsHost = false;
             await ConnectNetworkAsync(RoomId);
+        }
+
+        private string? hostKey;
+
+        private static async Task<bool> EnsureLatestPluginAsync()
+        {
+            var checker = UpdateChecker.Instance;
+            if (!await checker.IsOutdatedAsync(TimeSpan.FromSeconds(3))) return true;
+
+            PromptUpdate($"新しいバージョン ({checker.LatestVersion}) が公開されています。\n共同編集は最新のプラグイン同士でのみ利用できます。");
+            return false;
+        }
+
+        private static void PromptUpdate(string reason)
+        {
+            var result = MessageBox.Show(
+                $"{reason}\n\n更新ページを開きますか？",
+                "プラグインの更新が必要です",
+                MessageBoxButton.YesNo);
+            if (result == MessageBoxResult.Yes) UpdateChecker.Instance.OpenUpdatePage();
         }
 
         private TaskCompletionSource<bool>? guestRoomValidation;
@@ -975,7 +1101,7 @@ namespace MultiUserEdit.Commons
                     guestRoomValidation = new TaskCompletionSource<bool>();
                 }
 
-                await sessionClient.StartAsync(targetRoomId, localUserRole == UserRole.Host);
+                await sessionClient.StartAsync(targetRoomId, localUserRole == UserRole.Host, hostKey);
 
                 if (!IsCurrent()) return;
 
@@ -1008,7 +1134,7 @@ namespace MultiUserEdit.Commons
                     ThemeColor = ParticipantColorGenerator.Generate(LocalUserId)
                 });
 
-                var presenceEvt = new PresenceEvent(LocalUserId, UserName, localUserRole, false, LocalProfileId, UserDescription)
+                var presenceEvt = new PresenceEvent(LocalUserId, UserName, localUserRole, false, LocalProfileId, UserDescription, UpdateChecker.Instance.CurrentVersion)
                 {
                     DateTime = DateTime.UtcNow,
                     ExecutorId = LocalUserId
@@ -1019,6 +1145,7 @@ namespace MultiUserEdit.Commons
 
                 if (localUserRole == UserRole.Guest)
                 {
+                    awaitingInitialSync = true;
                     var syncRequest = new SyncRequestEvent
                     {
                         DateTime = DateTime.UtcNow,
@@ -1076,13 +1203,17 @@ namespace MultiUserEdit.Commons
                 IsConnected = false;
                 isJoining = false;
                 watchedHostId = Guid.Empty;
+                awaitingInitialSync = false;
+                pendingManualSyncSource = null;
                 IsHost = false;
+                hostKey = null;
                 RoomId = string.Empty;
                 InputRoomId = string.Empty;
                 Participants.Clear();
                 locallyLockedItems.Clear();
                 lockedItemsReceivedAt.Clear();
                 LockedItems.Clear();
+                OperatingItems.Clear();
                 fileTransferManager.CancelAll();
                 characterShareManager.Reset();
                 RefreshCommandStates();
@@ -1100,12 +1231,25 @@ namespace MultiUserEdit.Commons
             var dispatcher = Application.Current?.Dispatcher;
             if (dispatcher == null) return;
 
+            if (editEvent is FileTransferStartEvent or FileChunkEvent)
+            {
+                if (editEvent.ExecutorId == LocalUserId) return;
+
+                if (editEvent is FileTransferStartEvent start) fileTransferManager.HandleTransferStart(start);
+                else if (editEvent is FileChunkEvent chunk) fileTransferManager.HandleChunk(chunk);
+
+                var executorId = editEvent.ExecutorId;
+                dispatcher.InvokeAsync(() => UpdateParticipantActivity(executorId));
+                return;
+            }
+
             void Process()
             {
                 if (editEvent.ExecutorId == LocalUserId) return;
 
                 UpdateParticipantActivity(editEvent.ExecutorId);
                 DispatchEvent(editEvent);
+                NoteRemoteOperation(editEvent);
             }
 
             if (dispatcher.CheckAccess())
@@ -1180,9 +1324,15 @@ namespace MultiUserEdit.Commons
                 MoveHostToTopIfNeeded(p);
             }
 
+            if (!IsHost && evt.Role == UserRole.Host && !IsCompatibleVersion(evt.Version))
+            {
+                HandleHostVersionMismatch(evt.Version);
+                return;
+            }
+
             if (!evt.IsReply)
             {
-                var replyEvt = new PresenceEvent(LocalUserId, UserName, localUserRole, true, LocalProfileId, UserDescription)
+                var replyEvt = new PresenceEvent(LocalUserId, UserName, localUserRole, true, LocalProfileId, UserDescription, UpdateChecker.Instance.CurrentVersion)
                 {
                     DateTime = DateTime.UtcNow,
                     ExecutorId = LocalUserId
@@ -1194,9 +1344,54 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        internal void HandleSyncRequestEvent()
+        private bool versionMismatchHandled;
+
+        private static bool IsCompatibleVersion(string peerVersion) =>
+            Version.TryParse(peerVersion, out var peer)
+            && Version.TryParse(UpdateChecker.Instance.CurrentVersion, out var mine)
+            && peer == mine;
+
+        private void HandleHostVersionMismatch(string hostVersion)
         {
-            if (localUserRole != UserRole.Host || Scenes == null) return;
+            if (versionMismatchHandled) return;
+            versionMismatchHandled = true;
+
+            var hostIsNewer = !Version.TryParse(hostVersion, out var host)
+                || !Version.TryParse(UpdateChecker.Instance.CurrentVersion, out var mine)
+                || host > mine;
+            var shownHostVersion = string.IsNullOrEmpty(hostVersion) ? "不明" : hostVersion;
+
+            Application.Current?.Dispatcher.InvokeAsync(async () =>
+            {
+                await StopNetworkAsync();
+                versionMismatchHandled = false;
+
+                if (hostIsNewer)
+                {
+                    PromptUpdate($"ホストのプラグイン ({shownHostVersion}) より古いバージョン ({UpdateChecker.Instance.CurrentVersion}) のため、接続を切断しました。");
+                }
+                else
+                {
+                    MessageBox.Show(
+                        $"ホストのプラグイン ({shownHostVersion}) が古いため、接続を切断しました。\nホストにプラグインの更新を依頼してください。",
+                        "接続エラー",
+                        MessageBoxButton.OK);
+                }
+            });
+        }
+
+        internal void HandleSyncRequestEvent(SyncRequestEvent evt)
+        {
+            var isAddressedToMe = evt.SourceUserId == LocalUserId
+                || (evt.SourceUserId == null && localUserRole == UserRole.Host);
+            if (!isAddressedToMe) return;
+
+            SendSyncScenes(evt.ExecutorId.ToString(), evt.IsManual);
+        }
+
+        private void SendSyncScenes(string? targetId, bool isManual)
+        {
+            if (Scenes == null) return;
 
             var onlineScenes = new OnlineScenes();
             var filesToTransfer = new List<(SharedFile File, string? CharacterName)>();
@@ -1233,15 +1428,20 @@ namespace MultiUserEdit.Commons
                 onlineScenes.Timelines.Add(onlineTimeline);
             }
 
-            var syncEvent = new SyncScenesEvent(onlineScenes)
+            var syncEvent = new SyncScenesEvent(onlineScenes, isManual)
             {
                 DateTime = DateTime.UtcNow,
                 ExecutorId = LocalUserId
             };
-            _ = sessionClient.SendAsync(null, syncEvent);
+            _ = sessionClient.SendAsync(targetId, syncEvent);
+
+            if (isManual) fileTransferManager.ForgetAnnouncedFiles();
 
             foreach (var (file, characterName) in filesToTransfer.DistinctBy(entry => entry.File.FullPath, StringComparer.OrdinalIgnoreCase))
             {
+                if (fileTransferManager.IsSendDenied(file.FullPath)) continue;
+
+                fileTransferManager.MarkSendAllowed(file.FullPath);
                 _ = fileTransferManager.TransferAsync(file, characterName, sessionClient, LocalUserId);
             }
         }
@@ -1304,7 +1504,7 @@ namespace MultiUserEdit.Commons
 
                     try
                     {
-                        await sessionClient.StartAsync(targetRoomId, role == UserRole.Host);
+                        await sessionClient.StartAsync(targetRoomId, role == UserRole.Host, hostKey);
                     }
                     catch
                     {
@@ -1314,6 +1514,7 @@ namespace MultiUserEdit.Commons
                     if (!sessionClient.IsConnected) continue;
 
                     BroadcastLocalPresence();
+                    CheckStateAfterReconnect(role);
                     Debug.WriteLine($"[MultiUserEdit] Reconnected (attempt {attempt + 1})");
                     return;
                 }
@@ -1330,18 +1531,137 @@ namespace MultiUserEdit.Commons
             }
         }
 
+        private void CheckStateAfterReconnect(UserRole role)
+        {
+            Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                if (!IsConnected) return;
+
+                if (role == UserRole.Host)
+                {
+                    var digest = ComputeStateDigest();
+                    if (digest == null) return;
+
+                    _ = sessionClient.SendAsync(null, new StateDigestEvent(digest)
+                    {
+                        DateTime = DateTime.UtcNow,
+                        ExecutorId = LocalUserId
+                    });
+                    return;
+                }
+
+                var host = Participants.FirstOrDefault(p => p.Role == UserRole.Host && p.UserId != LocalUserId);
+                _ = sessionClient.SendAsync(host?.UserId.ToString(), new StateDigestRequestEvent
+                {
+                    DateTime = DateTime.UtcNow,
+                    ExecutorId = LocalUserId
+                });
+            });
+        }
+
+        internal void HandleStateDigestRequest(StateDigestRequestEvent evt)
+        {
+            if (!IsConnected || !IsHost) return;
+
+            var digest = ComputeStateDigest();
+            if (digest == null) return;
+
+            _ = sessionClient.SendAsync(evt.ExecutorId.ToString(), new StateDigestEvent(digest)
+            {
+                DateTime = DateTime.UtcNow,
+                ExecutorId = LocalUserId
+            });
+        }
+
+        private bool isDigestPromptShown;
+
+        internal void HandleStateDigest(StateDigestEvent evt)
+        {
+            if (!IsConnected || IsHost || isDigestPromptShown) return;
+
+            var host = Participants.FirstOrDefault(p => p.UserId == evt.ExecutorId && p.Role == UserRole.Host);
+            if (host == null) return;
+
+            var digest = ComputeStateDigest();
+            if (digest == null || digest == evt.Digest) return;
+
+            isDigestPromptShown = true;
+            Application.Current?.Dispatcher.InvokeAsync(() => PromptSyncAfterReconnect(host));
+        }
+
+        private void PromptSyncAfterReconnect(Participant host)
+        {
+            try
+            {
+                var result = MessageBox.Show(
+                    $"通信が一時的に途切れていた間に、{host.UserName} さん (ホスト) のタイムラインとの間にずれが生じました。\n" +
+                    "ホストの状態で同期しますか？\n\n" +
+                    "※ 途切れていた間の自分の変更のうち、ホストに届いていないものは失われます。",
+                    "データの同期",
+                    MessageBoxButton.YesNo);
+
+                if (result == MessageBoxResult.Yes && IsConnected) RequestSyncFrom(host.UserId);
+            }
+            finally
+            {
+                isDigestPromptShown = false;
+            }
+        }
+
+        private string? ComputeStateDigest()
+        {
+            if (Scenes == null) return null;
+
+            try
+            {
+                var builder = new StringBuilder();
+                foreach (var timeline in Scenes.Timelines)
+                {
+                    builder.Append(timeline.ID).Append('\n');
+
+                    var lines = new List<string>();
+                    foreach (var item in timeline.Items)
+                    {
+                        var json = JsonConvert.SerializeObject(item, ItemSerializerOptions.NullPath);
+                        var itemHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json)));
+                        lines.Add($"{ItemIdManager.GetOrCreateId(item)}|{item.Frame}|{item.Layer}|{item.Length}|{itemHash}");
+                    }
+
+                    lines.Sort(StringComparer.Ordinal);
+                    foreach (var line in lines) builder.Append(line).Append('\n');
+                }
+
+                return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(builder.ToString())));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] ComputeStateDigest failed: {ex.Message}");
+                return null;
+            }
+        }
+
         private void HandleRoomNotFound(string? reason)
         {
             guestRoomValidation?.TrySetResult(false);
             ResetNetworkState();
 
-            var message = reason == "expired"
-                ? "このルームは一定時間やり取りが無かったため、自動的に閉じられました。\nホストに新しいルームを作り直してもらってください。"
-                : "ルームが存在しません。ルームIDを確認してください。";
+            if (reason == "outdated")
+            {
+                Application.Current?.Dispatcher.InvokeAsync(() =>
+                    PromptUpdate("お使いのプラグインは古いため、共同編集サーバーに接続できません。"));
+                return;
+            }
+
+            var message = reason switch
+            {
+                "expired" => "このルームは一定時間やり取りが無かったため、自動的に閉じられました。\nホストに新しいルームを作り直してもらってください。",
+                "host_key" => "このルームにはホストとして接続できません。\n新しいルームを作成してください。",
+                _ => "ルームが存在しません。ルームIDを確認してください。"
+            };
 
             Application.Current?.Dispatcher.InvokeAsync(() =>
             {
-                MessageBox.Show(message, "参加エラー", MessageBoxButton.OK);
+                MessageBox.Show(message, "接続エラー", MessageBoxButton.OK);
             });
         }
 
@@ -1448,7 +1768,7 @@ namespace MultiUserEdit.Commons
 
                     if (disposed || !IsConnected || watchedHostId != hostUserId) return;
 
-                    var probe = new PresenceEvent(LocalUserId, UserName, localUserRole, false, LocalProfileId, UserDescription)
+                    var probe = new PresenceEvent(LocalUserId, UserName, localUserRole, false, LocalProfileId, UserDescription, UpdateChecker.Instance.CurrentVersion)
                     {
                         DateTime = DateTime.UtcNow,
                         ExecutorId = LocalUserId
@@ -1526,6 +1846,8 @@ namespace MultiUserEdit.Commons
 
         internal void HandleItemUnlockedEvent(ItemUnlockedEvent evt)
         {
+            if (!LockedItems.TryGetValue(evt.ItemId, out var owner) || owner != evt.UserId) return;
+
             LockedItems.Remove(evt.ItemId);
             lockedItemsReceivedAt.Remove(evt.ItemId);
         }
@@ -1694,9 +2016,11 @@ namespace MultiUserEdit.Commons
 
         public void UnlockItemLocally(Guid itemId)
         {
-            locallyLockedItems.Remove(itemId);
+            if (!locallyLockedItems.Remove(itemId)) return;
             _ = eventSender.SendItemUnlockAsync(itemId);
         }
+
+        internal bool IsReceivingFiles() => fileTransferManager.IsReceivingAny();
 
         internal bool IsItemEditableLocally(Guid itemId) =>
             locallyLockedItems.ContainsKey(itemId) || !LockedItems.ContainsKey(itemId);

@@ -25,6 +25,7 @@ namespace MultiUserEdit.Commons
             public readonly object Lock = new();
             public DateTime LastSent = DateTime.MinValue;
             public bool FlushScheduled;
+            public bool Cancelled;
             public int TimelineIndex;
             public int Frame;
             public int Length;
@@ -35,7 +36,11 @@ namespace MultiUserEdit.Commons
 
         public void ClearItemThrottleState(Guid itemId)
         {
-            itemMovedThrottles.TryRemove(itemId, out _);
+            if (itemMovedThrottles.TryRemove(itemId, out var moveState))
+            {
+                lock (moveState.Lock) moveState.Cancelled = true;
+            }
+
             itemUpdateThrottles.TryRemove(itemId, out _);
             lastSentItemJson.TryRemove(itemId, out _);
         }
@@ -159,6 +164,7 @@ namespace MultiUserEdit.Commons
                         int f, l, ly, ti;
                         lock (state.Lock)
                         {
+                            if (state.Cancelled) return;
                             state.FlushScheduled = false;
                             state.LastSent = DateTime.UtcNow;
                             ti = state.TimelineIndex;
@@ -249,6 +255,8 @@ namespace MultiUserEdit.Commons
 
         private const string TypeProperty = "$type";
 
+        public Func<IItem, bool>? IsItemAlive { get; set; }
+
         public async Task SendItemUpdatedAsync(IItem item, int timelineIndex)
         {
             if (!sessionClient.IsConnected) return;
@@ -256,6 +264,8 @@ namespace MultiUserEdit.Commons
             try
             {
                 await Task.Yield();
+
+                if (IsItemAlive?.Invoke(item) == false) return;
 
                 if (!await ConfirmAllAsync(MediaFileResolver.GetTransferableFilePaths(item))) return;
 

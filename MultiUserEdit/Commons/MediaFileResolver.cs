@@ -105,14 +105,14 @@ namespace MultiUserEdit.Commons
         public static string ResolveJsonFileReferences(string itemJson, Type itemType, IReadOnlyList<string>? mediaFileNames, string? tachieBaseDirectory) =>
             ResolveJsonFileReferences(itemJson, RequiresRealMediaContainer(itemType), mediaFileNames, tachieBaseDirectory);
 
-        private static string ResolveJsonFileReferences(string itemJson, bool requiresRealContainer, IReadOnlyList<string>? mediaFileNames, string? tachieBaseDirectory)
+        private static string ResolveJsonFileReferences(string itemJson, bool requiresRealContainer, IReadOnlyList<string>? mediaFileNames, string? tachieBaseDirectory, bool keepMissingPaths = false)
         {
             var targets = new HashSet<string>(
                 mediaFileNames?.Where(name => !string.IsNullOrEmpty(name)) ?? [],
                 StringComparer.OrdinalIgnoreCase);
             if (targets.Count == 0 && tachieBaseDirectory == null) return itemJson;
 
-            return EditFilePathProperties(itemJson, property =>
+            return EditFilePathProperties(itemJson, targets, property =>
             {
                 if (property.Value.Type != JTokenType.String) return false;
 
@@ -132,6 +132,12 @@ namespace MultiUserEdit.Commons
                 var resolvedPath = ResolveLocalTempPath(fileName);
 
                 if (File.Exists(resolvedPath))
+                {
+                    property.Value = resolvedPath;
+                    return false;
+                }
+
+                if (keepMissingPaths)
                 {
                     property.Value = resolvedPath;
                     return false;
@@ -162,7 +168,7 @@ namespace MultiUserEdit.Commons
         public static string? GetTachieBaseDirectoryFromJson(string itemJson) =>
             TachieFileResolver.GetBaseDirectory(GetCharacterNameFromJson(itemJson));
 
-        private static string EditFilePathProperties(string itemJson, Func<JProperty, bool> edit)
+        private static string EditFilePathProperties(string itemJson, IReadOnlySet<string> referencedValues, Func<JProperty, bool> edit)
         {
             JObject root;
             try
@@ -175,7 +181,7 @@ namespace MultiUserEdit.Commons
             }
 
             var removals = new List<JProperty>();
-            foreach (var property in EnumerateFilePathProperties(root).ToList())
+            foreach (var property in EnumerateFilePathProperties(root, referencedValues).ToList())
             {
                 if (edit(property)) removals.Add(property);
             }
@@ -187,30 +193,41 @@ namespace MultiUserEdit.Commons
             return root.ToString(Newtonsoft.Json.Formatting.None);
         }
 
-        private static IEnumerable<JProperty> EnumerateFilePathProperties(JToken token)
+        private static IEnumerable<JProperty> EnumerateFilePathProperties(JToken token, IReadOnlySet<string> referencedValues)
         {
             switch (token)
             {
                 case JObject obj:
                     foreach (var property in obj.Properties())
                     {
-                        if (PathPropertyNames.Contains(property.Name))
+                        if (IsFileReference(property, referencedValues))
                         {
                             yield return property;
                             continue;
                         }
 
-                        foreach (var nested in EnumerateFilePathProperties(property.Value)) yield return nested;
+                        foreach (var nested in EnumerateFilePathProperties(property.Value, referencedValues)) yield return nested;
                     }
                     break;
 
                 case JArray array:
                     foreach (var element in array)
                     {
-                        foreach (var nested in EnumerateFilePathProperties(element)) yield return nested;
+                        foreach (var nested in EnumerateFilePathProperties(element, referencedValues)) yield return nested;
                     }
                     break;
             }
+        }
+
+        private static bool IsFileReference(JProperty property, IReadOnlySet<string> referencedValues)
+        {
+            if (PathPropertyNames.Contains(property.Name)) return true;
+            if (property.Value.Type != JTokenType.String) return false;
+
+            var value = (string?)property.Value;
+            if (string.IsNullOrEmpty(value)) return false;
+
+            return TachieFileResolver.IsTachieName(value) || referencedValues.Contains(value);
         }
 
         public static string? GetFilePath(IItem item)
@@ -259,15 +276,24 @@ namespace MultiUserEdit.Commons
             serializationCharacterName = character.Name;
             try
             {
-                var characterJson = Newtonsoft.Json.JsonConvert.SerializeObject(character, ItemSerializerOptions.CharacterNullPath);
+                var referenced = ((IFileItem)character).GetFiles()
+                    .Where(path => !string.IsNullOrEmpty(path))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
 
-                var files = character.TachieCharacterParameter is IFileItem fileItem
-                    ? fileItem.GetFiles()
-                        .Where(path => !string.IsNullOrEmpty(path) && File.Exists(path))
-                        .Distinct(StringComparer.OrdinalIgnoreCase)
-                        .Select(path => new SharedFile(path, ToPortableName(path)))
-                        .ToList()
-                    : [];
+                var files = referenced
+                    .Where(File.Exists)
+                    .Select(path => new SharedFile(path, ToPortableName(path)))
+                    .ToList();
+                files.AddRange(GetTachieSiblingImages(files));
+
+                var characterJson = Newtonsoft.Json.JsonConvert.SerializeObject(character, ItemSerializerOptions.CharacterNullPath);
+                characterJson = ReplaceFullPathsInJson(characterJson, files);
+
+                var skipped = referenced
+                    .Where(path => !File.Exists(path) && !Directory.Exists(path))
+                    .ToList();
+                if (skipped.Count > 0) characterJson = ClearFileReferences(characterJson, skipped);
 
                 return (characterJson, files);
             }
@@ -279,7 +305,7 @@ namespace MultiUserEdit.Commons
         }
 
         public static string ResolveCharacterJson(string characterJson, IReadOnlyList<string>? mediaFileNames, string baseDirectory) =>
-            ResolveJsonFileReferences(characterJson, requiresRealContainer: false, mediaFileNames, baseDirectory);
+            ResolveJsonFileReferences(characterJson, requiresRealContainer: false, mediaFileNames, baseDirectory, keepMissingPaths: true);
 
         private static (string itemJson, IReadOnlyList<SharedFile> files) SerializeForSyncCore(IItem item, Type? itemType, Func<string, bool>? filter)
         {
@@ -288,6 +314,7 @@ namespace MultiUserEdit.Commons
                 .Where(fp => File.Exists(fp) && (!ShouldTransfer(item, fp) || filter == null || filter(fp)))
                 .Select(fp => new SharedFile(fp, ToPortableName(fp), ShouldTransfer(item, fp)))
                 .ToList();
+            shared.AddRange(GetTachieSiblingImages(shared));
 
             var itemJson = SerializeWithNullPath(item, itemType);
             itemJson = ReplaceFullPathsInJson(itemJson, shared);
@@ -298,6 +325,64 @@ namespace MultiUserEdit.Commons
             if (skipped.Count > 0) itemJson = ClearFileReferences(itemJson, skipped);
 
             return (itemJson, shared);
+        }
+
+        private static readonly TimeSpan SiblingCacheLifetime = TimeSpan.FromSeconds(5);
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (DateTime CachedAt, string[] Files)> siblingCache =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        private static List<SharedFile> GetTachieSiblingImages(List<SharedFile> files)
+        {
+            var siblings = new List<SharedFile>();
+            var known = new HashSet<string>(files.Select(file => file.FullPath), StringComparer.OrdinalIgnoreCase);
+            var visitedDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var file in files.ToList())
+            {
+                if (!file.ShouldTransfer) continue;
+                if (!TachieFileResolver.IsTachieName(file.Name)) continue;
+
+                var directory = Path.GetDirectoryName(file.FullPath);
+                if (string.IsNullOrEmpty(directory) || !visitedDirectories.Add(directory)) continue;
+
+                foreach (var candidate in GetImageFiles(directory))
+                {
+                    if (!known.Add(candidate)) continue;
+                    if (!Settings.MultiUserEditSettings.Default.IsExtensionAllowed(candidate)) continue;
+
+                    var portableName = ToPortableName(candidate);
+                    if (string.IsNullOrEmpty(portableName)) continue;
+
+                    siblings.Add(new SharedFile(candidate, portableName));
+                }
+            }
+
+            return siblings;
+        }
+
+        private static string[] GetImageFiles(string directory)
+        {
+            var now = DateTime.UtcNow;
+            if (siblingCache.TryGetValue(directory, out var cached) && now - cached.CachedAt < SiblingCacheLifetime)
+                return cached.Files;
+
+            string[] images;
+            try
+            {
+                var fileExtensions = YukkuriMovieMaker.Plugin.SettingsBase<YukkuriMovieMaker.Settings.FileSettings>.Default.FileExtensions;
+                images = Directory.Exists(directory)
+                    ? [.. Directory.EnumerateFiles(directory)
+                        .Where(path => fileExtensions.GetFileType(path).HasFlag(YukkuriMovieMaker.Settings.FileType.画像))]
+                    : [];
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MultiUserEdit] Sibling image lookup failed: {ex.Message}");
+                images = [];
+            }
+
+            siblingCache[directory] = (now, images);
+            return images;
         }
 
         private static string ReplaceFullPathsInJson(string itemJson, List<SharedFile> files)
@@ -347,7 +432,7 @@ namespace MultiUserEdit.Commons
                 targets.Add(ToPortableName(filePath));
             }
 
-            return EditFilePathProperties(itemJson, property =>
+            return EditFilePathProperties(itemJson, targets, property =>
                 property.Value.Type == JTokenType.String &&
                 (string?)property.Value is { Length: > 0 } value &&
                 targets.Contains(value));

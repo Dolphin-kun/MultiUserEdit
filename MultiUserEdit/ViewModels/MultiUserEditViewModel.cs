@@ -52,11 +52,12 @@ namespace MultiUserEdit.ViewModels
 
         public Dictionary<Guid, Guid> LockedItems => CurrentSession?.LockedItems ?? [];
 
+        private readonly System.Threading.Lock fileTransferCompletedLock = new();
         private Action<string, string>? fileTransferCompletedHandlers;
         public event Action<string, string>? FileTransferCompleted
         {
-            add { fileTransferCompletedHandlers += value; }
-            remove { fileTransferCompletedHandlers -= value; }
+            add { lock (fileTransferCompletedLock) fileTransferCompletedHandlers += value; }
+            remove { lock (fileTransferCompletedLock) fileTransferCompletedHandlers -= value; }
         }
 
         private Func<int, bool, Task>? pendingPreviewSeekAction;
@@ -170,11 +171,13 @@ namespace MultiUserEdit.ViewModels
                 {
                     CurrentSession.PropertyChanged -= OnSessionPropertyChanged;
                     CurrentSession.FileTransferCompleted -= OnSessionFileTransferCompleted;
+                    CurrentSession.SentFilesChanged -= OnSessionSentFilesChanged;
                 }
 
                 CurrentSession = SessionManager.GetOrCreate(info.Scenes);
                 CurrentSession.PropertyChanged += OnSessionPropertyChanged;
                 CurrentSession.FileTransferCompleted += OnSessionFileTransferCompleted;
+                CurrentSession.SentFilesChanged += OnSessionSentFilesChanged;
 
                 if (pendingPreviewSeekAction != null)
                     CurrentSession.SetPreviewSeekAction(pendingPreviewSeekAction, pendingIsPlayingFunc);
@@ -192,6 +195,12 @@ namespace MultiUserEdit.ViewModels
         {
             OnPropertyChanged(e.PropertyName ?? string.Empty);
         }
+
+        public event Action? SentFilesChanged;
+
+        internal IReadOnlyList<SentFileRecord> GetSentFiles() => CurrentSession?.GetSentFiles() ?? [];
+
+        private void OnSessionSentFilesChanged() => SentFilesChanged?.Invoke();
 
         private void OnSessionFileTransferCompleted(string transferId, string path)
         {
@@ -253,9 +262,9 @@ namespace MultiUserEdit.ViewModels
             return input;
         }
 
-        public void ApplySyncScenes(OnlineScenes onlineScenes, Guid ownerId)
+        public void ApplySyncScenes(OnlineScenes onlineScenes, Guid ownerId, bool isManual)
         {
-            CurrentSession?.ApplySyncScenes(onlineScenes, ownerId);
+            CurrentSession?.ApplySyncScenes(onlineScenes, ownerId, isManual);
         }
 
         internal void HandlePresenceEvent(PresenceEvent evt)
@@ -263,9 +272,9 @@ namespace MultiUserEdit.ViewModels
             CurrentSession?.HandlePresenceEvent(evt);
         }
 
-        internal void HandleSyncRequestEvent()
+        internal void HandleSyncRequestEvent(SyncRequestEvent evt)
         {
-            CurrentSession?.HandleSyncRequestEvent();
+            CurrentSession?.HandleSyncRequestEvent(evt);
         }
 
         internal void HandleUserLeftEvent(UserLeftEvent evt)
@@ -307,6 +316,23 @@ namespace MultiUserEdit.ViewModels
         {
             CurrentSession?.HandleItemStateRequest(evt);
         }
+
+        internal void HandleStateDigestRequest(Commons.Events.StateDigestRequestEvent evt)
+        {
+            CurrentSession?.HandleStateDigestRequest(evt);
+        }
+
+        internal void HandleStateDigest(Commons.Events.StateDigestEvent evt)
+        {
+            CurrentSession?.HandleStateDigest(evt);
+        }
+
+        internal void SyncFrom(Guid sourceUserId)
+        {
+            CurrentSession?.SyncFrom(sourceUserId);
+        }
+
+        internal bool IsReceivingFiles() => CurrentSession?.IsReceivingFiles() ?? false;
 
         internal string GetUserName(Guid userId) =>
             Participants.FirstOrDefault(p => p.UserId == userId)?.UserName ?? string.Empty;
@@ -358,6 +384,7 @@ namespace MultiUserEdit.ViewModels
 
             CurrentSession.PropertyChanged -= OnSessionPropertyChanged;
             CurrentSession.FileTransferCompleted -= OnSessionFileTransferCompleted;
+            CurrentSession.SentFilesChanged -= OnSessionSentFilesChanged;
             CurrentSession = null;
         }
 

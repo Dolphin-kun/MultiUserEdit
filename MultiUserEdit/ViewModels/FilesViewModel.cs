@@ -15,7 +15,10 @@ namespace MultiUserEdit.ViewModels
 
         public ObservableCollection<MediaFileInfo> Files { get; } = [];
 
-        public ObservableCollection<TransferItemInfo> ActiveTransfers => owner?.ActiveTransfers ?? [];
+        private static readonly ObservableCollection<TransferItemInfo> NoTransfers = [];
+        private ObservableCollection<TransferItemInfo>? subscribedTransfers;
+
+        public ObservableCollection<TransferItemInfo> ActiveTransfers => subscribedTransfers ?? NoTransfers;
 
         public bool HasActiveTransfers => ActiveTransfers.Count > 0;
 
@@ -42,7 +45,10 @@ namespace MultiUserEdit.ViewModels
         {
             this.owner = owner;
 
-            owner?.ActiveTransfers.CollectionChanged += OnActiveTransfersChanged;
+            owner?.PropertyChanged += OnOwnerPropertyChanged;
+            ResubscribeTransfers();
+            owner?.SentFilesChanged += OnFilesChanged;
+            owner?.FileTransferCompleted += OnFileReceived;
 
             RefreshCommand = new ActionCommand((_) => true, ExecuteRefresh);
             DeleteFileCommand = new ActionCommand((_) => true, ExecuteDeleteFile);
@@ -50,6 +56,33 @@ namespace MultiUserEdit.ViewModels
             OpenFolderCommand = new ActionCommand((_) => true, ExecuteOpenFolder);
 
             ExecuteRefresh(null);
+        }
+
+        private void OnOwnerPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(MultiUserEditViewModel.ActiveTransfers))
+                ResubscribeTransfers();
+        }
+
+        private void ResubscribeTransfers()
+        {
+            var current = owner?.CurrentSession?.ActiveTransfers;
+            if (ReferenceEquals(current, subscribedTransfers)) return;
+
+            subscribedTransfers?.CollectionChanged -= OnActiveTransfersChanged;
+            subscribedTransfers = current;
+            subscribedTransfers?.CollectionChanged += OnActiveTransfersChanged;
+
+            OnPropertyChanged(nameof(ActiveTransfers));
+            OnPropertyChanged(nameof(HasActiveTransfers));
+            OnPropertyChanged(nameof(TransferHeaderText));
+        }
+
+        private void OnFileReceived(string transferId, string path) => OnFilesChanged();
+
+        private void OnFilesChanged()
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() => ExecuteRefresh(null));
         }
 
         private void OnActiveTransfersChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -63,6 +96,19 @@ namespace MultiUserEdit.ViewModels
             Files.Clear();
             try
             {
+                foreach (var sent in owner?.GetSentFiles() ?? [])
+                {
+                    Files.Add(new MediaFileInfo
+                    {
+                        FileName = Path.GetFileName(sent.FullPath),
+                        FilePath = sent.FullPath,
+                        SizeBytes = sent.SizeBytes,
+                        LastModified = sent.SentAt,
+                        IsSent = true,
+                        WasTransferred = sent.WasTransferred
+                    });
+                }
+
                 var dir = FileTransferManager.GetSaveDirectory();
                 if (!Directory.Exists(dir)) return;
 
@@ -89,7 +135,7 @@ namespace MultiUserEdit.ViewModels
 
         private void ExecuteDeleteFile(object? param)
         {
-            if (param is not MediaFileInfo item) return;
+            if (param is not MediaFileInfo item || !item.CanDelete) return;
             try
             {
                 if (File.Exists(item.FilePath))

@@ -53,6 +53,12 @@ namespace MultiUserEdit.Views
                 return;
             }
 
+            if (dialog.SyncFromRequested)
+            {
+                viewModel.SyncFrom(participant.UserId);
+                return;
+            }
+
             if (isSelf)
             {
                 viewModel.UserName = dialog.ResultUserName;

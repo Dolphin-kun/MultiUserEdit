@@ -13,7 +13,6 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 
-	<!-- 参照は対応最古バージョンのYMM4から取る（理由はDirectory.Build.propsのコメントを参照） -->
 	<ItemGroup>
 		<Reference Include="Newtonsoft.Json">
 		  <HintPath>$(YMM4RefDirPath)Newtonsoft.Json.dll</HintPath>

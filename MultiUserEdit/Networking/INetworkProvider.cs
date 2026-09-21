@@ -4,7 +4,7 @@ namespace MultiUserEdit.Networking
 {
     public interface INetworkProvider
     {
-        Task ConnectAsync(string url);
+        Task ConnectAsync(string url, IReadOnlyDictionary<string, string> headers);
         Task DisconnectAsync();
         Task SendAsync(string? targetId, object data);
 

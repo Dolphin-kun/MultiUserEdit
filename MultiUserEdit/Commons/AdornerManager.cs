@@ -1,8 +1,9 @@
-using MultiUserEdit.ViewModels;
+﻿using MultiUserEdit.ViewModels;
 using MultiUserEdit.Views.Adorners;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Media;
 using System.Windows.Threading;
 using YukkuriMovieMaker.Views;
 
@@ -18,6 +19,7 @@ namespace MultiUserEdit.Commons
         private CollaborationSession? currentSession;
         private TimelineView? timelineViewReference;
         private Window? ownerWindowReference;
+        private bool isAttaching;
 
         public void SetTimelineViewReference(TimelineView timelineView)
         {
@@ -101,19 +103,12 @@ namespace MultiUserEdit.Commons
         {
             if (currentSession == null) { StopMonitor(); return; }
 
-            if (collaborationAdorner != null && timelineViewboxGrid != null)
+            if (collaborationAdorner != null && !IsAdornerStillShown())
             {
-                var currentLayer = AdornerLayer.GetAdornerLayer(timelineViewboxGrid);
-                if (currentLayer == null || currentLayer != adornerLayer)
-                {
-                    DetachAdornerInternal();
-                    attachCts?.Cancel();
-                    attachCts = new CancellationTokenSource();
-                    _ = TryAttachAsync(currentSession, attachCts.Token);
-                }
+                DetachAdornerInternal();
             }
 
-            if (collaborationAdorner == null && (attachCts == null || attachCts.IsCancellationRequested))
+            if (collaborationAdorner == null && !isAttaching)
             {
                 attachCts?.Cancel();
                 attachCts = new CancellationTokenSource();
@@ -121,7 +116,33 @@ namespace MultiUserEdit.Commons
             }
         }
 
+        private bool IsAdornerStillShown()
+        {
+            var grid = timelineViewboxGrid;
+            if (grid == null || PresentationSource.FromVisual(grid) == null) return false;
+
+            var currentLayer = AdornerLayer.GetAdornerLayer(grid);
+            if (currentLayer == null || currentLayer != adornerLayer) return false;
+
+            if (grid.IsVisible) return true;
+
+            return !EnumerateTimelineViews().Any(view => view.IsVisible);
+        }
+
         private async Task TryAttachAsync(CollaborationSession session, CancellationToken token)
+        {
+            isAttaching = true;
+            try
+            {
+                await TryAttachCoreAsync(session, token);
+            }
+            finally
+            {
+                isAttaching = false;
+            }
+        }
+
+        private async Task TryAttachCoreAsync(CollaborationSession session, CancellationToken token)
         {
             for (int i = 0; i < 30 && !token.IsCancellationRequested; i++)
             {
@@ -150,34 +171,66 @@ namespace MultiUserEdit.Commons
 
         private Grid? TryGetViewboxGrid()
         {
-            if (timelineViewReference != null)
+            Grid? hiddenCandidate = null;
+
+            foreach (var view in EnumerateTimelineViews())
             {
-                var grid = VisualTreeHelperExtensions.FindElementByName<Grid>(timelineViewReference, "viewboxGrid")
-                           ?? timelineViewReference.Content as Grid;
-                if (grid != null) return grid;
+                var grid = VisualTreeHelperExtensions.FindElementByName<Grid>(view, "viewboxGrid")
+                           ?? (view as ContentControl)?.Content as Grid;
+                if (grid == null || AdornerLayer.GetAdornerLayer(grid) == null) continue;
+
+                if (view.IsVisible) return grid;
+                hiddenCandidate ??= grid;
             }
 
-            if (ownerWindowReference != null)
+            return hiddenCandidate;
+        }
+
+        private IEnumerable<TimelineView> EnumerateTimelineViews()
+        {
+            var seen = new HashSet<TimelineView>();
+
+            if (timelineViewReference != null
+                && PresentationSource.FromVisual(timelineViewReference) != null
+                && seen.Add(timelineViewReference))
             {
-                var timelineView = VisualTreeHelperExtensions.FindVisualChild<TimelineView>(ownerWindowReference);
-                if (timelineView != null)
+                yield return timelineViewReference;
+            }
+
+            var windows = new List<Window>();
+            if (ownerWindowReference != null) windows.Add(ownerWindowReference);
+            if (Application.Current != null)
+            {
+                foreach (Window window in Application.Current.Windows) windows.Add(window);
+            }
+
+            foreach (var window in windows.Distinct())
+            {
+                foreach (var view in FindAll<TimelineView>(window))
                 {
-                    return VisualTreeHelperExtensions.FindElementByName<Grid>(timelineView, "viewboxGrid")
-                           ?? (timelineView as ContentControl)?.Content as Grid;
+                    if (PresentationSource.FromVisual(view) == null) continue;
+                    if (seen.Add(view)) yield return view;
                 }
             }
+        }
 
-            if (Application.Current?.MainWindow != null)
+        private static IEnumerable<T> FindAll<T>(DependencyObject root) where T : DependencyObject
+        {
+            var stack = new Stack<DependencyObject>();
+            stack.Push(root);
+
+            while (stack.Count > 0)
             {
-                var timelineView = VisualTreeHelperExtensions.FindVisualChild<TimelineView>(Application.Current.MainWindow);
-                if (timelineView != null)
+                var current = stack.Pop();
+                if (current is T match)
                 {
-                    return VisualTreeHelperExtensions.FindElementByName<Grid>(timelineView, "viewboxGrid")
-                           ?? (timelineView as ContentControl)?.Content as Grid;
+                    yield return match;
+                    continue;
                 }
-            }
 
-            return null;
+                var count = VisualTreeHelper.GetChildrenCount(current);
+                for (var i = 0; i < count; i++) stack.Push(VisualTreeHelper.GetChild(current, i));
+            }
         }
     }
 }
