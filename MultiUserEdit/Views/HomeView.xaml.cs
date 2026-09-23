@@ -10,6 +10,9 @@ namespace MultiUserEdit.Views
         public HomeView()
         {
             InitializeComponent();
+
+            UpdateNotice.DataContext = Commons.UpdateChecker.Instance;
+            Commons.UpdateChecker.Instance.EnsureChecked();
         }
 
         private void OnInputPreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)

@@ -327,6 +327,11 @@ namespace MultiUserEdit.ViewModels
             CurrentSession?.HandleStateDigest(evt);
         }
 
+        internal void HandleMissingResource(Commons.Events.MissingResourceEvent evt)
+        {
+            CurrentSession?.HandleMissingResource(evt);
+        }
+
         internal void SyncFrom(Guid sourceUserId)
         {
             CurrentSession?.SyncFrom(sourceUserId);

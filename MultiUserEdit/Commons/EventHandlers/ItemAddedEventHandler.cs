@@ -20,7 +20,15 @@ namespace MultiUserEdit.Commons.EventHandlers
             try
             {
                 var itemType = ItemTypeResolver.Resolve(editEvent.ItemTypeName);
-                if (itemType == null) return;
+                if (itemType == null)
+                {
+                    if (editEvent.ExecutorId != viewModel.LocalUserId)
+                    {
+                        ResourceAvailabilityChecker.Notify(editEvent.ItemId, editEvent.ExecutorId,
+                            viewModel.GetUserName(editEvent.ExecutorId), editEvent.ItemJson, editEvent.ItemTypeName);
+                    }
+                    return;
+                }
 
                 var isOwnEvent = editEvent.ExecutorId == viewModel.LocalUserId;
                 if (isOwnEvent)
@@ -48,7 +56,8 @@ namespace MultiUserEdit.Commons.EventHandlers
 
                 var itemJson = MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, itemType, editEvent.MediaFileNames, tachieBaseDirectory);
 
-                FontAvailabilityChecker.NotifyMissingFonts(editEvent.ItemId, itemJson, viewModel.GetUserName(editEvent.ExecutorId));
+                ResourceAvailabilityChecker.Notify(editEvent.ItemId, editEvent.ExecutorId,
+                    viewModel.GetUserName(editEvent.ExecutorId), itemJson, null);
 
                 var item = AddItem(editEvent, viewModel, timeline, itemType, itemJson);
                 if (item == null) return;

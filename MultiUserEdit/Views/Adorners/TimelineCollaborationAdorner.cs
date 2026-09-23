@@ -18,6 +18,9 @@ namespace MultiUserEdit.Views.Adorners
         private const double AwayOpacity = 0.35;
         private static readonly TimeSpan OperatingDisplayDuration = TimeSpan.FromSeconds(2);
         private static readonly TimeSpan CanvasOffsetLifetime = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan MaxPlayheadExtrapolation = TimeSpan.FromSeconds(8);
+        private static readonly TimeSpan PlayheadCorrectionDuration = TimeSpan.FromMilliseconds(400);
+        private const double RateSmoothing = 0.3;
 
         private Point? canvasOffset;
         private DateTime canvasOffsetMeasuredAt;
@@ -63,6 +66,7 @@ namespace MultiUserEdit.Views.Adorners
                     p.PropertyChanged -= Participant_PropertyChanged;
             }
 
+            UpdatePlaybackRefresh();
             InvalidateVisual();
         }
 
@@ -70,15 +74,84 @@ namespace MultiUserEdit.Views.Adorners
         {
             if (e.PropertyName is nameof(Participant.CurrentFrame)
                 or nameof(Participant.CurrentTimelineIndex)
+                or nameof(Participant.IsPlaying)
                 or nameof(Participant.Status))
             {
+                UpdatePlaybackRefresh();
                 InvalidateVisual();
+            }
+        }
+
+        private bool followingRendering;
+
+        private void UpdatePlaybackRefresh()
+        {
+            var localUserId = _session.LocalUserId;
+            var playing = _session.Participants.Any(p =>
+                p.UserId != localUserId && p.IsPlaying && p.Status != UserStatus.Disconnected);
+
+            if (playing == followingRendering) return;
+            followingRendering = playing;
+
+            if (playing)
+            {
+                CompositionTarget.Rendering += CompositionTarget_Rendering;
+                _refreshTimer.Stop();
+            }
+            else
+            {
+                CompositionTarget.Rendering -= CompositionTarget_Rendering;
+                _refreshTimer.Start();
+            }
+        }
+
+        private void CompositionTarget_Rendering(object? sender, EventArgs e) => InvalidateVisual();
+
+        private sealed class ChangeObserver<T>(Action onChanged) : IObserver<T>
+        {
+            public void OnCompleted() { }
+            public void OnError(Exception error) { }
+            public void OnNext(T value) => onChanged();
+        }
+
+        private TimelineViewModel? subscribedViewModel;
+        private IDisposable? zoomSubscription;
+        private IDisposable? viewportSubscription;
+
+        private void SubscribeViewportChanges(TimelineViewModel? timelineViewModel)
+        {
+            if (ReferenceEquals(timelineViewModel, subscribedViewModel)) return;
+
+            zoomSubscription?.Dispose();
+            viewportSubscription?.Dispose();
+            zoomSubscription = null;
+            viewportSubscription = null;
+            subscribedViewModel = timelineViewModel;
+
+            if (timelineViewModel == null) return;
+
+            try
+            {
+                zoomSubscription = timelineViewModel.TimelineZoom.Subscribe(new ChangeObserver<double>(InvalidateVisual));
+                viewportSubscription = timelineViewModel.Viewport.Subscribe(new ChangeObserver<Rect>(InvalidateVisual));
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MultiUserEdit] Viewport subscribe failed: {ex.Message}");
             }
         }
 
         public void Detach()
         {
             _refreshTimer.Stop();
+            CompositionTarget.Rendering -= CompositionTarget_Rendering;
+            followingRendering = false;
+            playheads.Clear();
+            zoomSubscription?.Dispose();
+            viewportSubscription?.Dispose();
+            zoomSubscription = null;
+            viewportSubscription = null;
+            subscribedViewModel = null;
             _session.Participants.CollectionChanged -= Participants_CollectionChanged;
             _session.OperatingItemsChanged -= InvalidateVisual;
             foreach (var p in _session.Participants)
@@ -92,6 +165,7 @@ namespace MultiUserEdit.Views.Adorners
             if (_session.Scenes == null) return;
 
             var timelineViewModel = FindTimelineViewModel();
+            SubscribeViewportChanges(timelineViewModel);
             var displayedTimelineIndex = GetDisplayedTimelineIndex(timelineViewModel);
             if (displayedTimelineIndex < 0) return;
 
@@ -121,7 +195,8 @@ namespace MultiUserEdit.Views.Adorners
                 if (participant.Status == UserStatus.Disconnected) continue;
                 if (participant.CurrentTimelineIndex != displayedTimelineIndex) continue;
 
-                var x = participant.CurrentFrame * zoom / 100.0 - scrollX;
+                var frame = GetDisplayFrame(participant, displayedTimelineIndex);
+                var x = frame * zoom / 100.0 - scrollX;
                 if (x < 0 || x > RenderSize.Width) continue;
 
                 var opacity = participant.Status == UserStatus.Away ? AwayOpacity : 1.0;
@@ -134,6 +209,84 @@ namespace MultiUserEdit.Views.Adorners
                 var label = participant.Status == UserStatus.Away ? $"{participant.UserName} (離席中)" : participant.UserName;
                 drawingContext.DrawText(CreateText(label, 12, brush, dpi), new Point(x + 4, 4));
             }
+        }
+
+        private class PlayheadState
+        {
+            public DateTime UpdatedAt;
+            public double Correction;
+            public DateTime CorrectedAt;
+            public double LastDisplayed;
+            public int LastFrame;
+            public double Rate;
+        }
+
+        private readonly Dictionary<Guid, PlayheadState> playheads = [];
+
+        private double GetDisplayFrame(Participant participant, int timelineIndex)
+        {
+            if (!participant.IsPlaying)
+            {
+                playheads.Remove(participant.UserId);
+                return participant.CurrentFrame;
+            }
+
+            var timelines = _session.Scenes?.Timelines;
+            var fps = timelines != null && timelineIndex >= 0 && timelineIndex < timelines.Count
+                ? timelines[timelineIndex].VideoInfo?.FPS ?? 0
+                : 0;
+            if (fps <= 0) return participant.CurrentFrame;
+
+            var now = DateTime.UtcNow;
+            var elapsed = now - participant.FrameUpdatedAt;
+            if (elapsed <= TimeSpan.Zero || elapsed > MaxPlayheadExtrapolation)
+            {
+                playheads.Remove(participant.UserId);
+                return participant.CurrentFrame;
+            }
+
+            if (!playheads.TryGetValue(participant.UserId, out var state))
+            {
+                state = new PlayheadState
+                {
+                    UpdatedAt = participant.FrameUpdatedAt,
+                    LastFrame = participant.CurrentFrame,
+                    Rate = fps,
+                    LastDisplayed = participant.CurrentFrame
+                };
+                playheads[participant.UserId] = state;
+            }
+            else if (state.UpdatedAt != participant.FrameUpdatedAt)
+            {
+                var interval = (participant.FrameUpdatedAt - state.UpdatedAt).TotalSeconds;
+                var advanced = participant.CurrentFrame - state.LastFrame;
+
+                if (interval > 0.05 && advanced > 0 && advanced < interval * fps * 2)
+                {
+                    var observed = advanced / interval;
+                    state.Rate = state.Rate * (1 - RateSmoothing) + observed * RateSmoothing;
+                }
+                else
+                {
+                    state.Rate = fps;
+                }
+
+                var gap = state.LastDisplayed - participant.CurrentFrame - (now - participant.FrameUpdatedAt).TotalSeconds * state.Rate;
+                state.Correction = Math.Abs(gap) < fps ? gap : 0;
+                state.CorrectedAt = now;
+                state.UpdatedAt = participant.FrameUpdatedAt;
+                state.LastFrame = participant.CurrentFrame;
+            }
+
+            var estimated = participant.CurrentFrame + elapsed.TotalSeconds * state.Rate;
+
+            var correctionAge = now - state.CorrectedAt;
+            var correction = correctionAge < PlayheadCorrectionDuration
+                ? state.Correction * (1 - correctionAge / PlayheadCorrectionDuration)
+                : 0;
+
+            state.LastDisplayed = estimated + correction;
+            return state.LastDisplayed;
         }
 
         private void DrawItemOperators(DrawingContext drawingContext, double dpi, int displayedTimelineIndex, TimelineViewModel? timelineViewModel)

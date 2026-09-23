@@ -388,9 +388,12 @@ namespace MultiUserEdit.Commons
 
             LocalUserId = sessionClient.LocalUserId;
 
+            ResourceAvailabilityChecker.MissingReported = SendMissingResource;
+
             sessionClient.EventReceived += HandleEventReceived;
             sessionClient.Disconnected += HandleDisconnected;
             sessionClient.RoomNotFound += HandleRoomNotFound;
+            sessionClient.UpdateAvailable += HandleUpdateAvailable;
             sessionClient.PeerDisconnected += HandlePeerDisconnected;
             sessionClient.ConnectionStateChanged += HandleConnectionStateChanged;
 
@@ -1002,7 +1005,12 @@ namespace MultiUserEdit.Commons
         private void AddSyncedItem(Timeline timeline, OnlineItem onlineItem, Guid ownerId)
         {
             var itemType = ItemTypeResolver.Resolve(onlineItem.ItemTypeName);
-            if (itemType == null) return;
+            if (itemType == null)
+            {
+                ResourceAvailabilityChecker.Notify(onlineItem.ItemId, ownerId, GetParticipantName(ownerId),
+                    onlineItem.ItemJson, onlineItem.ItemTypeName);
+                return;
+            }
 
             try
             {
@@ -1120,6 +1128,7 @@ namespace MultiUserEdit.Commons
 
                 Participants.Clear();
                 eventSender.ClearAllBaselines();
+                ResourceAvailabilityChecker.Reset();
                 AddParticipantSorted(new Participant
                 {
                     UserId = LocalUserId,
@@ -1467,6 +1476,8 @@ namespace MultiUserEdit.Commons
             }
         }
 
+        private static readonly TimeSpan CursorEchoWindow = TimeSpan.FromSeconds(2);
+
         private static readonly TimeSpan[] ReconnectDelays =
         [
             TimeSpan.FromSeconds(2),
@@ -1559,6 +1570,24 @@ namespace MultiUserEdit.Commons
             });
         }
 
+        private void SendMissingResource(Guid targetUserId, string[] fonts, string[] plugins)
+        {
+            if (!IsConnected || targetUserId == LocalUserId) return;
+            if (fonts.Length == 0 && plugins.Length == 0) return;
+
+            _ = sessionClient.SendAsync(targetUserId.ToString(), new MissingResourceEvent(fonts, plugins)
+            {
+                DateTime = DateTime.UtcNow,
+                ExecutorId = LocalUserId
+            });
+        }
+
+        internal void HandleMissingResource(MissingResourceEvent evt)
+        {
+            ResourceAvailabilityChecker.NotifyReportedByPeer(
+                GetParticipantName(evt.ExecutorId), evt.Fonts, evt.Plugins);
+        }
+
         internal void HandleStateDigestRequest(StateDigestRequestEvent evt)
         {
             if (!IsConnected || !IsHost) return;
@@ -1640,7 +1669,22 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        private void HandleRoomNotFound(string? reason)
+        private bool updateNoticeShown;
+
+        private void HandleUpdateAvailable(string? latestVersion)
+        {
+            if (updateNoticeShown) return;
+            updateNoticeShown = true;
+
+            Application.Current?.Dispatcher.InvokeAsync(() =>
+                PromptUpdate($"新しいバージョン{FormatVersion(latestVersion)}が公開されています。\n"
+                    + "共同編集は最新のプラグイン同士でのみ利用できるため、更新するまで次回から接続できません。"));
+        }
+
+        private static string FormatVersion(string? version) =>
+            string.IsNullOrWhiteSpace(version) ? " " : $" ({version}) ";
+
+        private void HandleRoomNotFound(string? reason, string? latestVersion)
         {
             guestRoomValidation?.TrySetResult(false);
             ResetNetworkState();
@@ -1648,7 +1692,8 @@ namespace MultiUserEdit.Commons
             if (reason == "outdated")
             {
                 Application.Current?.Dispatcher.InvokeAsync(() =>
-                    PromptUpdate("お使いのプラグインは古いため、共同編集サーバーに接続できません。"));
+                    PromptUpdate($"お使いのプラグイン ({UpdateChecker.Instance.CurrentVersion}) は古いため、共同編集サーバーに接続できません。\n"
+                        + $"公開中の最新バージョンは{FormatVersion(latestVersion).TrimEnd()}です。"));
                 return;
             }
 
@@ -1858,6 +1903,8 @@ namespace MultiUserEdit.Commons
             var p = EnsureParticipant(evt.ExecutorId);
             p.CurrentFrame = evt.CurrentFrame;
             p.CurrentTimelineIndex = evt.TimelineIndex;
+            p.IsPlaying = evt.IsPlaying;
+            p.FrameUpdatedAt = DateTime.UtcNow;
 
             if (!IsHost && CurrentUserPermission.CanSyncSeekPosition && p.Role == UserRole.Host)
             {
@@ -1865,8 +1912,14 @@ namespace MultiUserEdit.Commons
             }
         }
 
+        private int lastAppliedRemoteFrame = -1;
+        private DateTime lastAppliedRemoteFrameAt = DateTime.MinValue;
+
         private async Task SyncPlaybackStateAsync(int frame, bool isPlaying)
         {
+            lastAppliedRemoteFrame = frame;
+            lastAppliedRemoteFrameAt = DateTime.UtcNow;
+
             if (!isPlaying && FirstOrDefaultTimeline != null)
             {
                 var previous = isApplyingRemoteEvent;
@@ -1984,8 +2037,12 @@ namespace MultiUserEdit.Commons
         {
             try
             {
-                var timelineIndex = Scenes?.Timelines.IndexOf(FirstOrDefaultTimeline!) ?? 0;
                 var isPlaying = getIsPlayingFunc?.Invoke() ?? false;
+                if (!isPlaying
+                    && currentFrame == lastAppliedRemoteFrame
+                    && DateTime.UtcNow - lastAppliedRemoteFrameAt < CursorEchoWindow) return;
+
+                var timelineIndex = Scenes?.Timelines.IndexOf(FirstOrDefaultTimeline!) ?? 0;
                 await eventSender.SendCursorMovedThrottledAsync(currentFrame, timelineIndex, isPlaying);
             }
             catch { }
@@ -2057,6 +2114,8 @@ namespace MultiUserEdit.Commons
             if (disposed) return;
             disposed = true;
 
+            ResourceAvailabilityChecker.MissingReported = null;
+
             AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
             Application.Current?.Exit -= Application_Exit;
 
@@ -2068,6 +2127,7 @@ namespace MultiUserEdit.Commons
             sessionClient.EventReceived -= HandleEventReceived;
             sessionClient.Disconnected -= HandleDisconnected;
             sessionClient.RoomNotFound -= HandleRoomNotFound;
+            sessionClient.UpdateAvailable -= HandleUpdateAvailable;
             sessionClient.PeerDisconnected -= HandlePeerDisconnected;
             sessionClient.ConnectionStateChanged -= HandleConnectionStateChanged;
 

@@ -15,10 +15,14 @@ namespace MultiUserEdit.Commons
 
         private Guid LocalUserId => getLocalUserIdFunc();
 
+        private const int PlayingCursorIntervalMilliseconds = 1000;
+        private const int SeekingCursorIntervalMilliseconds = 33;
+
         private readonly System.Threading.Lock cursorLock = new();
         private DateTime lastCursorSentTime = DateTime.MinValue;
         private bool cursorFlushScheduled;
         private (int Frame, int TimelineIndex, bool IsPlaying) latestCursor;
+        private (int Frame, int TimelineIndex, bool IsPlaying) lastSentCursor = (-1, -1, false);
 
         private class MoveThrottleState
         {
@@ -63,26 +67,36 @@ namespace MultiUserEdit.Commons
         {
             lock (cursorLock)
             {
-                latestCursor = (currentFrame, timelineIndex, isPlaying);
+                var next = (currentFrame, timelineIndex, isPlaying);
+                if (next == lastSentCursor && !cursorFlushScheduled) return Task.CompletedTask;
 
+                latestCursor = next;
+
+                var stateChanged = isPlaying != lastSentCursor.IsPlaying;
+                var interval = isPlaying ? PlayingCursorIntervalMilliseconds : SeekingCursorIntervalMilliseconds;
                 var now = DateTime.UtcNow;
-                if ((now - lastCursorSentTime).TotalMilliseconds >= 33)
+
+                if (stateChanged || (now - lastCursorSentTime).TotalMilliseconds >= interval)
                 {
                     lastCursorSentTime = now;
+                    lastSentCursor = next;
                     return SendCursorMovedAsync(currentFrame, timelineIndex, isPlaying);
                 }
 
                 if (!cursorFlushScheduled)
                 {
                     cursorFlushScheduled = true;
-                    _ = Task.Delay(35).ContinueWith(_ =>
+                    var delay = (int)Math.Max(1, interval - (now - lastCursorSentTime).TotalMilliseconds);
+                    _ = Task.Delay(delay).ContinueWith(_ =>
                     {
                         (int Frame, int TimelineIndex, bool IsPlaying) toSend;
                         lock (cursorLock)
                         {
                             cursorFlushScheduled = false;
+                            if (latestCursor == lastSentCursor) return;
                             lastCursorSentTime = DateTime.UtcNow;
                             toSend = latestCursor;
+                            lastSentCursor = toSend;
                         }
                         _ = SendCursorMovedAsync(toSend.Frame, toSend.TimelineIndex, toSend.IsPlaying);
                     }, TaskScheduler.Default);
