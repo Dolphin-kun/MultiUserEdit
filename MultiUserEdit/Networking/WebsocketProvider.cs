@@ -27,7 +27,8 @@ namespace MultiUserEdit.Networking
 
         public event EventHandler<EditEvent>? EventReceived;
         public event Action? Disconnected;
-        public event Action<string?>? RoomNotFound;
+        public event Action<string?, string?>? RoomNotFound;
+        public event Action<string?>? UpdateAvailable;
         public event Action<Guid, bool>? PeerDisconnected;
 
         public WebsocketProvider()
@@ -162,6 +163,7 @@ namespace MultiUserEdit.Networking
             bool serverDisconnected = false;
             bool roomNotFound = false;
             string? roomNotFoundReason = null;
+            string? roomNotFoundLatestVersion = null;
 
             bool IsCurrent() => Volatile.Read(ref generation) == myGeneration;
 
@@ -217,7 +219,17 @@ namespace MultiUserEdit.Networking
                                 roomNotFoundReason = dataProp.TryGetProperty("reason", out var reasonProp)
                                     ? reasonProp.GetString()
                                     : null;
+                                roomNotFoundLatestVersion = dataProp.TryGetProperty("latestVersion", out var latestProp)
+                                    ? latestProp.GetString()
+                                    : null;
                                 return;
+                            }
+                            if (senderId == "server" && typeStr == "update_available")
+                            {
+                                UpdateAvailable?.Invoke(dataProp.TryGetProperty("latestVersion", out var availableProp)
+                                    ? availableProp.GetString()
+                                    : null);
+                                continue;
                             }
                             if (senderId == "server" && typeStr == "peer_disconnected")
                             {
@@ -270,7 +282,7 @@ namespace MultiUserEdit.Networking
                 {
                     if (roomNotFound)
                     {
-                        RoomNotFound?.Invoke(roomNotFoundReason);
+                        RoomNotFound?.Invoke(roomNotFoundReason, roomNotFoundLatestVersion);
                     }
                     else if (serverDisconnected)
                     {

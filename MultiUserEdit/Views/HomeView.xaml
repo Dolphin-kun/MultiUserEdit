@@ -44,6 +44,27 @@
                 </Grid>
             </Border>
 
+            <Border x:Name="UpdateNotice" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1"
+                    CornerRadius="4" Padding="12" Margin="0,0,0,12"
+                    Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"
+                                   Text="{Binding LatestVersion, Mode=OneWay, StringFormat=新しいバージョン {0} が公開されています}" />
+                        <TextBlock FontSize="11" Opacity="0.8" Margin="0,4,0,0" TextWrapping="Wrap"
+                                   Text="共同編集は最新のプラグイン同士でのみ利用できます。更新してください。" />
+                    </StackPanel>
+
+                    <Button Grid.Column="1" Content="更新ページを開く" Command="{Binding OpenUpdateUrlCommand}"
+                            Cursor="Hand" Padding="10,4" Margin="8,0,0,0" VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
             <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,0,0,12">
                 <StackPanel>
                     <TextBlock Text="ルーム" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />

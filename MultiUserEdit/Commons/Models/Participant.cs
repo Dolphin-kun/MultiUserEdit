@@ -52,6 +52,12 @@ namespace MultiUserEdit.Commons.Models
         private int currentFrame;
         public int CurrentFrame { get => currentFrame; set => Set(ref currentFrame, value); }
 
+        private bool isPlaying;
+        public bool IsPlaying { get => isPlaying; set => Set(ref isPlaying, value); }
+
+        private DateTime frameUpdatedAt = DateTime.UtcNow;
+        public DateTime FrameUpdatedAt { get => frameUpdatedAt; set => Set(ref frameUpdatedAt, value); }
+
         private int currentTimelineIndex;
         public int CurrentTimelineIndex { get => currentTimelineIndex; set => Set(ref currentTimelineIndex, value); }
 

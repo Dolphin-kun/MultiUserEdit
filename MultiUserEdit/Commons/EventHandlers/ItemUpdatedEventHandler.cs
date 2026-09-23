@@ -20,7 +20,8 @@ namespace MultiUserEdit.Commons.EventHandlers
             try
             {
                 var itemJson = MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, item, editEvent.MediaFileNames);
-                FontAvailabilityChecker.NotifyMissingFonts(editEvent.ItemId, itemJson, viewModel.GetUserName(editEvent.ExecutorId));
+                ResourceAvailabilityChecker.Notify(editEvent.ItemId, editEvent.ExecutorId,
+                    viewModel.GetUserName(editEvent.ExecutorId), itemJson, null);
                 JsonConvert.PopulateObject(itemJson, item, ItemSerializerOptions.Default);
                 viewModel.EventSender?.ClearBaseline(editEvent.ItemId);
 

@@ -16,7 +16,8 @@ namespace MultiUserEdit.Networking
 
         public event EventHandler<EditEvent>? EventReceived;
         public event Action? Disconnected;
-        public event Action<string?>? RoomNotFound;
+        public event Action<string?, string?>? RoomNotFound;
+        public event Action<string?>? UpdateAvailable;
         public event Action<Guid, bool>? PeerDisconnected;
         public event Action<bool>? ConnectionStateChanged;
 
@@ -31,6 +32,7 @@ namespace MultiUserEdit.Networking
             this.networkProvider.EventReceived += HandleEventReceived;
             this.networkProvider.Disconnected += HandleDisconnected;
             this.networkProvider.RoomNotFound += HandleRoomNotFound;
+            this.networkProvider.UpdateAvailable += version => UpdateAvailable?.Invoke(version);
             this.networkProvider.PeerDisconnected += HandlePeerDisconnected;
         }
 
@@ -105,11 +107,11 @@ namespace MultiUserEdit.Networking
             Disconnected?.Invoke();
         }
 
-        private void HandleRoomNotFound(string? reason)
+        private void HandleRoomNotFound(string? reason, string? latestVersion)
         {
             IsConnected = false;
             ConnectionStateChanged?.Invoke(IsConnected);
-            RoomNotFound?.Invoke(reason);
+            RoomNotFound?.Invoke(reason, latestVersion);
         }
 
         private void HandlePeerDisconnected(Guid userId, bool isHost)
