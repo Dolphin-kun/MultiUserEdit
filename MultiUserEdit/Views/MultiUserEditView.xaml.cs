@@ -41,6 +41,7 @@ namespace MultiUserEdit.Views
             linkSettingsView = new SettingsPages.LinkSettingsView { DataContext = DataContext };
             aboutSettingsView = new SettingsPages.AboutSettingsView { DataContext = DataContext };
 
+            filesViewModel?.Dispose();
             filesViewModel = new FilesViewModel(DataContext as MultiUserEditViewModel);
             filesView = new FilesView { DataContext = filesViewModel };
 

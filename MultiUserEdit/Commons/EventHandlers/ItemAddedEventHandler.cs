@@ -46,11 +46,26 @@ namespace MultiUserEdit.Commons.EventHandlers
 
                 var tachieBaseDirectory = MediaFileResolver.GetTachieBaseDirectoryFromJson(editEvent.ItemJson);
 
-                var missingFiles = MediaFileResolver.GetMissingFileNames(editEvent.MediaFileNames, itemType, tachieBaseDirectory);
+                var requiresRealContainer = MediaFileResolver.RequiresRealMediaContainer(itemType);
+
+                var missingFiles = requiresRealContainer
+                    ? MediaFileResolver.GetMissingFileNames(editEvent.MediaFileNames, tachieBaseDirectory)
+                    : MediaFileResolver.GetMissingFileNames(editEvent.MediaFileNames, itemType, tachieBaseDirectory);
+
                 if (canWait && missingFiles.Count > 0)
                 {
                     TransferWaiter.WhenFilesReady(viewModel, missingFiles,
                         () => Handle(editEvent, viewModel, canWait: false), TransferWaiter.DefaultTimeout);
+                    return;
+                }
+
+                if (requiresRealContainer && missingFiles.Count > 0)
+                {
+                    ErrorNotifier.NotifyOnce(
+                        "動画・音声ファイルを受信できませんでした",
+                        $"{viewModel.GetUserName(editEvent.ExecutorId)} が追加したアイテムのファイルが届かなかったため、アイテムを追加できませんでした。\n\n"
+                        + string.Join("\n", missingFiles.Take(5).Select(name => "・" + name))
+                        + "\n\n送信側で「データを同期する」を実行すると、もう一度送信されます。");
                     return;
                 }
 

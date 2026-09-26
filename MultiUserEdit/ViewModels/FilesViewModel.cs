@@ -9,7 +9,7 @@ using YukkuriMovieMaker.Commons;
 
 namespace MultiUserEdit.ViewModels
 {
-    public class FilesViewModel : Bindable
+    public class FilesViewModel : Bindable, IDisposable
     {
         private readonly MultiUserEditViewModel? owner;
 
@@ -56,6 +56,21 @@ namespace MultiUserEdit.ViewModels
             OpenFolderCommand = new ActionCommand((_) => true, ExecuteOpenFolder);
 
             ExecuteRefresh(null);
+        }
+
+        public void Dispose()
+        {
+            if (owner != null)
+            {
+                owner.PropertyChanged -= OnOwnerPropertyChanged;
+                owner.SentFilesChanged -= OnFilesChanged;
+                owner.FileTransferCompleted -= OnFileReceived;
+            }
+
+            subscribedTransfers?.CollectionChanged -= OnActiveTransfersChanged;
+            subscribedTransfers = null;
+
+            GC.SuppressFinalize(this);
         }
 
         private void OnOwnerPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
