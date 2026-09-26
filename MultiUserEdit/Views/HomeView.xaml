@@ -44,6 +44,30 @@
                 </Grid>
             </Border>
 
+            <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1"
+                    CornerRadius="4" Padding="12" Margin="0,0,0,12"
+                    Visibility="{Binding HasDivergenceWarning, Converter={StaticResource BoolToVisConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DivergenceWarningText}" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock FontSize="11" Opacity="0.8" Margin="0,4,0,0" TextWrapping="Wrap"
+                                   Text="気になる場合は同期してください。同期すると、届いていない自分の変更は失われます。" />
+                    </StackPanel>
+
+                    <Button Grid.Column="1" Content="データを同期する" Command="{Binding SyncNowCommand}"
+                            Cursor="Hand" Padding="10,4" Margin="8,0,0,0" VerticalAlignment="Center" />
+
+                    <Button Grid.Column="2" Content="閉じる" Command="{Binding DismissDivergenceWarningCommand}"
+                            Cursor="Hand" Padding="10,4" Margin="6,0,0,0" VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
             <Border x:Name="UpdateNotice" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1"
                     CornerRadius="4" Padding="12" Margin="0,0,0,12"
                     Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisConverter}}">

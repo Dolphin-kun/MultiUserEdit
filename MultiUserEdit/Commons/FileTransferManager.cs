@@ -14,7 +14,7 @@ namespace MultiUserEdit.Commons
         private const int ChunkSize = 8 * 1024 * 1024;
         private static readonly TimeSpan TransferTimeout = TimeSpan.FromMinutes(3);
 
-        private static readonly TimeSpan RequestWindow = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan RequestWindow = TimeSpan.FromSeconds(15);
 
         private static readonly TimeSpan AnnouncementLifetime = TimeSpan.FromMinutes(5);
 
@@ -297,6 +297,13 @@ namespace MultiUserEdit.Commons
 
             if (requesters.Count == 0)
             {
+                if (announcement.Replies.IsEmpty)
+                {
+                    Debug.WriteLine($"[MultiUserEdit] No reply within the request window, sending to everyone: {fileName}");
+                    await SendChunksAsync(filePath, fileName, transferId, sessionClient, executorId, null);
+                    return;
+                }
+
                 Debug.WriteLine($"[MultiUserEdit] Skipped transfer (all peers already have it): {fileName}");
                 RecordSent(filePath, wasTransferred: false);
                 return;

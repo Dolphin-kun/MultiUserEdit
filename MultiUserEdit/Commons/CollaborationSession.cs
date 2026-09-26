@@ -189,6 +189,8 @@ namespace MultiUserEdit.Commons
         {
             if (!IsConnected || sourceUserId == LocalUserId) return;
 
+            HasDivergenceWarning = false;
+
             var sourceName = GetParticipantName(sourceUserId);
             var confirmed = MessageBox.Show(
                 SyncFromConfirmMessage(sourceName),
@@ -1002,7 +1004,10 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        private void AddSyncedItem(Timeline timeline, OnlineItem onlineItem, Guid ownerId)
+        private void AddSyncedItem(Timeline timeline, OnlineItem onlineItem, Guid ownerId) =>
+            AddSyncedItem(timeline, onlineItem, ownerId, canWait: true);
+
+        private void AddSyncedItem(Timeline timeline, OnlineItem onlineItem, Guid ownerId, bool canWait)
         {
             var itemType = ItemTypeResolver.Resolve(onlineItem.ItemTypeName);
             if (itemType == null)
@@ -1019,6 +1024,28 @@ namespace MultiUserEdit.Commons
                 {
                     RequestCharacter(characterName, ownerId, () => AddSyncedItem(timeline, onlineItem, ownerId));
                     return;
+                }
+
+                if (MediaFileResolver.RequiresRealMediaContainer(itemType))
+                {
+                    var pending = MediaFileResolver.GetMissingFileNames(onlineItem.MediaFileNames);
+                    if (pending.Count > 0)
+                    {
+                        if (canWait && activeViewModel != null)
+                        {
+                            TransferWaiter.WhenFilesReady(activeViewModel, pending,
+                                () => AddSyncedItem(timeline, onlineItem, ownerId, canWait: false),
+                                TransferWaiter.DefaultTimeout);
+                            return;
+                        }
+
+                        ErrorNotifier.NotifyOnce(
+                            "動画・音声ファイルを受信できませんでした",
+                            $"{GetParticipantName(ownerId)} のアイテムのファイルが届かなかったため、アイテムを追加できませんでした。\n\n"
+                            + string.Join("\n", pending.Take(5).Select(name => "・" + name))
+                            + "\n\n「データを同期する」を実行すると、もう一度受信できます。");
+                        return;
+                    }
                 }
 
                 var itemJson = MediaFileResolver.ResolveJsonFileReferences(onlineItem.ItemJson, itemType, onlineItem.MediaFileNames);
@@ -1128,6 +1155,7 @@ namespace MultiUserEdit.Commons
 
                 Participants.Clear();
                 eventSender.ClearAllBaselines();
+                HasDivergenceWarning = false;
                 ResourceAvailabilityChecker.Reset();
                 AddParticipantSorted(new Participant
                 {
@@ -1215,6 +1243,7 @@ namespace MultiUserEdit.Commons
                 awaitingInitialSync = false;
                 pendingManualSyncSource = null;
                 IsHost = false;
+                HasDivergenceWarning = false;
                 hostKey = null;
                 RoomId = string.Empty;
                 InputRoomId = string.Empty;
@@ -1444,7 +1473,7 @@ namespace MultiUserEdit.Commons
             };
             _ = sessionClient.SendAsync(targetId, syncEvent);
 
-            if (isManual) fileTransferManager.ForgetAnnouncedFiles();
+            fileTransferManager.ForgetAnnouncedFiles();
 
             foreach (var (file, characterName) in filesToTransfer.DistinctBy(entry => entry.File.FullPath, StringComparer.OrdinalIgnoreCase))
             {
@@ -1602,39 +1631,46 @@ namespace MultiUserEdit.Commons
             });
         }
 
-        private bool isDigestPromptShown;
+        private bool hasDivergenceWarning;
+        public bool HasDivergenceWarning
+        {
+            get => hasDivergenceWarning;
+            private set => Set(ref hasDivergenceWarning, value);
+        }
+
+        private string divergenceWarningText = string.Empty;
+        public string DivergenceWarningText
+        {
+            get => divergenceWarningText;
+            private set => Set(ref divergenceWarningText, value);
+        }
+
+        public void DismissDivergenceWarning() => HasDivergenceWarning = false;
 
         internal void HandleStateDigest(StateDigestEvent evt)
         {
-            if (!IsConnected || IsHost || isDigestPromptShown) return;
+            if (!IsConnected || IsHost) return;
 
             var host = Participants.FirstOrDefault(p => p.UserId == evt.ExecutorId && p.Role == UserRole.Host);
             if (host == null) return;
 
             var digest = ComputeStateDigest();
-            if (digest == null || digest == evt.Digest) return;
+            if (digest == null) return;
 
-            isDigestPromptShown = true;
-            Application.Current?.Dispatcher.InvokeAsync(() => PromptSyncAfterReconnect(host));
-        }
+            var matched = digest == evt.Digest;
+            var hostName = host.UserName;
 
-        private void PromptSyncAfterReconnect(Participant host)
-        {
-            try
+            Application.Current?.Dispatcher.InvokeAsync(() =>
             {
-                var result = MessageBox.Show(
-                    $"通信が一時的に途切れていた間に、{host.UserName} さん (ホスト) のタイムラインとの間にずれが生じました。\n" +
-                    "ホストの状態で同期しますか？\n\n" +
-                    "※ 途切れていた間の自分の変更のうち、ホストに届いていないものは失われます。",
-                    "データの同期",
-                    MessageBoxButton.YesNo);
+                if (matched)
+                {
+                    HasDivergenceWarning = false;
+                    return;
+                }
 
-                if (result == MessageBoxResult.Yes && IsConnected) RequestSyncFrom(host.UserId);
-            }
-            finally
-            {
-                isDigestPromptShown = false;
-            }
+                DivergenceWarningText = $"通信が途切れていた間に、{hostName} さん (ホスト) の内容とずれた可能性があります。";
+                HasDivergenceWarning = true;
+            });
         }
 
         private string? ComputeStateDigest()

@@ -154,8 +154,16 @@ namespace MultiUserEdit.ViewModels
 
         public bool IsConnected => CurrentSession?.IsConnected ?? false;
 
+        public bool HasDivergenceWarning => CurrentSession?.HasDivergenceWarning ?? false;
+        public string DivergenceWarningText => CurrentSession?.DivergenceWarningText ?? string.Empty;
+
+        public ICommand DismissDivergenceWarningCommand { get; }
+
         public MultiUserEditViewModel()
         {
+            DismissDivergenceWarningCommand = new ActionCommand(
+                _ => true,
+                _ => CurrentSession?.DismissDivergenceWarning());
         }
 
         public void SetTimelineViewReference(YukkuriMovieMaker.Views.TimelineView timelineView)
