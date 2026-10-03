@@ -20,7 +20,7 @@ namespace MultiUserEdit.Commons
         private bool Suppressed => IsSendingSuppressed?.Invoke() ?? false;
 
         private const int PlayingCursorIntervalMilliseconds = 1000;
-        private const int SeekingCursorIntervalMilliseconds = 33;
+        private const int SeekingCursorIntervalMilliseconds = 16;
 
         private readonly System.Threading.Lock cursorLock = new();
         private DateTime lastCursorSentTime = DateTime.MinValue;
@@ -178,7 +178,7 @@ namespace MultiUserEdit.Commons
                 state.Layer = layer;
 
                 var now = DateTime.UtcNow;
-                if ((now - state.LastSent).TotalMilliseconds >= 33)
+                if ((now - state.LastSent).TotalMilliseconds >= MinimumSendIntervalMilliseconds)
                 {
                     state.LastSent = now;
                     return SendItemMovedAsync(itemId, timelineIndex, frame, length, layer);
@@ -187,7 +187,7 @@ namespace MultiUserEdit.Commons
                 if (!state.FlushScheduled)
                 {
                     state.FlushScheduled = true;
-                    _ = Task.Delay(35).ContinueWith(_ =>
+                    _ = Task.Delay(MinimumSendIntervalMilliseconds + 2).ContinueWith(_ =>
                     {
                         int f, l, ly, ti;
                         lock (state.Lock)
@@ -337,8 +337,8 @@ namespace MultiUserEdit.Commons
 
         private readonly ConcurrentDictionary<Guid, UpdateThrottleState> itemUpdateThrottles = new();
 
-        private const int CoalesceDelayMilliseconds = 16;
-        private const int MinimumSendIntervalMilliseconds = 33;
+        private const int CoalesceDelayMilliseconds = 8;
+        private const int MinimumSendIntervalMilliseconds = 16;
 
         public Task SendItemUpdatedThrottledAsync(IItem item, int timelineIndex)
         {

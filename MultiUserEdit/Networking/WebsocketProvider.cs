@@ -1,4 +1,7 @@
 ﻿using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -31,6 +34,31 @@ namespace MultiUserEdit.Networking
         public event Action<string?>? UpdateAvailable;
         public event Action<Guid, bool>? PeerDisconnected;
 
+        private static readonly HttpMessageInvoker NoDelayInvoker = CreateNoDelayInvoker();
+
+        private static HttpMessageInvoker CreateNoDelayInvoker()
+        {
+            var handler = new SocketsHttpHandler
+            {
+                ConnectCallback = async (context, token) =>
+                {
+                    var socket = new Socket(SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
+                    try
+                    {
+                        await socket.ConnectAsync(context.DnsEndPoint, token);
+                        return new NetworkStream(socket, ownsSocket: true);
+                    }
+                    catch
+                    {
+                        socket.Dispose();
+                        throw;
+                    }
+                }
+            };
+
+            return new HttpMessageInvoker(handler);
+        }
+
         public WebsocketProvider()
         {
             userId = Guid.NewGuid().ToString();
@@ -48,6 +76,7 @@ namespace MultiUserEdit.Networking
                 var socket = new ClientWebSocket();
                 socket.Options.KeepAliveInterval = KeepAliveInterval;
                 socket.Options.KeepAliveTimeout = KeepAliveTimeout;
+                socket.Options.HttpVersion = HttpVersion.Version11;
                 foreach (var (name, value) in headers)
                     socket.Options.SetRequestHeader(name, value);
 
@@ -61,7 +90,7 @@ namespace MultiUserEdit.Networking
 
                 try
                 {
-                    await socket.ConnectAsync(uri, CancellationToken.None);
+                    await socket.ConnectAsync(uri, NoDelayInvoker, CancellationToken.None);
                 }
                 catch
                 {
@@ -211,69 +240,16 @@ namespace MultiUserEdit.Networking
                         using var doc = JsonDocument.Parse(json);
                         var root = doc.RootElement;
 
-                        if (!root.TryGetProperty("senderId", out var senderIdProp)) continue;
-                        if (!root.TryGetProperty("data", out var dataProp)) continue;
-
-                        var senderId = senderIdProp.GetString() ?? "unknown";
-
-                        if (senderId == userId) continue;
-
-                        var dataJson = dataProp.GetRawText();
-
-                        if (dataProp.ValueKind == JsonValueKind.Object &&
-                            dataProp.TryGetProperty("type", out var typeProp))
+                        if (IsBatch(root))
                         {
-                            var typeStr = typeProp.GetString();
-                            if (senderId == "server" && typeStr == "room_not_found")
+                            foreach (var item in root.GetProperty("data").GetProperty("items").EnumerateArray())
                             {
-                                roomNotFound = true;
-                                roomNotFoundReason = dataProp.TryGetProperty("reason", out var reasonProp)
-                                    ? reasonProp.GetString()
-                                    : null;
-                                roomNotFoundLatestVersion = dataProp.TryGetProperty("latestVersion", out var latestProp)
-                                    ? latestProp.GetString()
-                                    : null;
-                                return;
+                                if (HandlePayload(item, ref roomNotFound, ref roomNotFoundReason, ref roomNotFoundLatestVersion)) return;
                             }
-                            if (senderId == "server" && typeStr == "update_available")
-                            {
-                                UpdateAvailable?.Invoke(dataProp.TryGetProperty("latestVersion", out var availableProp)
-                                    ? availableProp.GetString()
-                                    : null);
-                                continue;
-                            }
-                            if (senderId == "server" && typeStr == "peer_disconnected")
-                            {
-                                if (dataProp.TryGetProperty("userId", out var userIdProp) &&
-                                    Guid.TryParse(userIdProp.GetString(), out var peerUserId))
-                                {
-                                    var peerIsHost = dataProp.TryGetProperty("isHost", out var isHostProp) && isHostProp.GetBoolean();
-                                    PeerDisconnected?.Invoke(peerUserId, peerIsHost);
-                                }
-                                continue;
-                            }
+                            continue;
                         }
 
-                        if (dataProp.ValueKind == JsonValueKind.Object && dataProp.TryGetProperty("$type", out _))
-                        {
-                            try
-                            {
-                                var editEvent = JsonSerializer.Deserialize<EditEvent>(dataJson);
-                                if (editEvent != null)
-                                {
-                                    if (Guid.TryParse(senderId, out var executorGuid))
-                                    {
-                                        editEvent = editEvent with { ExecutorId = executorGuid };
-                                    }
-
-                                    EventReceived?.Invoke(this, editEvent);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"[WebsocketProvider] Event Deserialize Exception: {ex.Message}");
-                            }
-                        }
+                        if (HandlePayload(root, ref roomNotFound, ref roomNotFoundReason, ref roomNotFoundLatestVersion)) return;
                     }
                     catch (JsonException ex)
                     {
@@ -301,6 +277,85 @@ namespace MultiUserEdit.Networking
                     }
                 }
             }
+        }
+
+        private static bool IsBatch(JsonElement root) =>
+            root.TryGetProperty("senderId", out var sender)
+            && sender.GetString() == "server"
+            && root.TryGetProperty("data", out var data)
+            && data.ValueKind == JsonValueKind.Object
+            && data.TryGetProperty("type", out var type)
+            && type.GetString() == "batch"
+            && data.TryGetProperty("items", out var items)
+            && items.ValueKind == JsonValueKind.Array;
+
+        private bool HandlePayload(JsonElement root, ref bool roomNotFound, ref string? roomNotFoundReason, ref string? roomNotFoundLatestVersion)
+        {
+            if (!root.TryGetProperty("senderId", out var senderIdProp)) return false;
+            if (!root.TryGetProperty("data", out var dataProp)) return false;
+
+            var senderId = senderIdProp.GetString() ?? "unknown";
+
+            if (senderId == userId) return false;
+
+            var dataJson = dataProp.GetRawText();
+
+            if (dataProp.ValueKind == JsonValueKind.Object &&
+                dataProp.TryGetProperty("type", out var typeProp))
+            {
+                var typeStr = typeProp.GetString();
+                if (senderId == "server" && typeStr == "room_not_found")
+                {
+                    roomNotFound = true;
+                    roomNotFoundReason = dataProp.TryGetProperty("reason", out var reasonProp)
+                        ? reasonProp.GetString()
+                        : null;
+                    roomNotFoundLatestVersion = dataProp.TryGetProperty("latestVersion", out var latestProp)
+                        ? latestProp.GetString()
+                        : null;
+                    return true;
+                }
+                if (senderId == "server" && typeStr == "update_available")
+                {
+                    UpdateAvailable?.Invoke(dataProp.TryGetProperty("latestVersion", out var availableProp)
+                        ? availableProp.GetString()
+                        : null);
+                    return false;
+                }
+                if (senderId == "server" && typeStr == "peer_disconnected")
+                {
+                    if (dataProp.TryGetProperty("userId", out var userIdProp) &&
+                        Guid.TryParse(userIdProp.GetString(), out var peerUserId))
+                    {
+                        var peerIsHost = dataProp.TryGetProperty("isHost", out var isHostProp) && isHostProp.GetBoolean();
+                        PeerDisconnected?.Invoke(peerUserId, peerIsHost);
+                    }
+                    return false;
+                }
+            }
+
+            if (dataProp.ValueKind == JsonValueKind.Object && dataProp.TryGetProperty("$type", out _))
+            {
+                try
+                {
+                    var editEvent = JsonSerializer.Deserialize<EditEvent>(dataJson);
+                    if (editEvent != null)
+                    {
+                        if (Guid.TryParse(senderId, out var executorGuid))
+                        {
+                            editEvent = editEvent with { ExecutorId = executorGuid };
+                        }
+
+                        EventReceived?.Invoke(this, editEvent);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[WebsocketProvider] Event Deserialize Exception: {ex.Message}");
+                }
+            }
+
+            return false;
         }
     }
 }

@@ -24,6 +24,9 @@ namespace MultiUserEdit.Commons
     public class CollaborationSession : Bindable, IDisposable
     {
         private readonly SessionClient sessionClient;
+        private readonly RoomMigration roomMigration;
+        private bool isSwitchingRoom;
+        private string? pendingMigrationRoomId;
         internal SessionClient SessionClient => sessionClient;
 
         private readonly ClientEventDispatcher eventDispatcher;
@@ -368,6 +371,7 @@ namespace MultiUserEdit.Commons
         {
             Scenes = scenes;
             sessionClient = new SessionClient(new WebsocketProvider());
+            roomMigration = new RoomMigration(() => sessionClient, () => LocalUserId);
             eventDispatcher = new ClientEventDispatcher();
             adornerManager = new AdornerManager();
             fileTransferManager = new FileTransferManager
@@ -403,7 +407,7 @@ namespace MultiUserEdit.Commons
             sessionClient.PeerDisconnected += HandlePeerDisconnected;
             sessionClient.ConnectionStateChanged += HandleConnectionStateChanged;
 
-            CreateRoomCommand = new ActionCommand(_ => !IsConnected && !isJoining, async _ => await CreateRoomAsync());
+            CreateRoomCommand = new ActionCommand(_ => !IsConnected && !isJoining, async _ => await CreateRoomAsync(IsLargeRoomSelected));
             JoinRoomCommand = new ActionCommand(_ => !IsConnected && !isJoining && !string.IsNullOrWhiteSpace(InputRoomId), async _ => await JoinRoomAsync());
             CopyRoomIdCommand = new ActionCommand(_ => !string.IsNullOrEmpty(RoomId), _ => Clipboard.SetText(RoomId));
             CopyInviteLinkCommand = new ActionCommand(_ => !string.IsNullOrEmpty(RoomId), _ => Clipboard.SetText($"https://multi-user-edit.dolphin-discord-js.workers.dev/?roomId={RoomId}"));
@@ -602,6 +606,8 @@ namespace MultiUserEdit.Commons
 
         private void PresenceTimer_Tick(object? sender, EventArgs e)
         {
+            UpdateRoomMigration();
+
             var now = DateTime.Now;
             foreach (var p in Participants)
             {
@@ -1079,11 +1085,31 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        private async Task CreateRoomAsync()
+        private bool isLargeRoomSelected;
+        public bool IsLargeRoomSelected
+        {
+            get => isLargeRoomSelected;
+            set => Set(ref isLargeRoomSelected, value, nameof(IsLargeRoomSelected), nameof(IsSmallRoomSelected));
+        }
+
+        public bool IsSmallRoomSelected
+        {
+            get => !isLargeRoomSelected;
+            set
+            {
+                if (value) IsLargeRoomSelected = false;
+            }
+        }
+
+        private async Task CreateRoomAsync(bool isLargeRoom)
         {
             if (!await EnsureLatestPluginAsync()) return;
 
-            RoomId = Guid.NewGuid().ToString();
+            if (isLargeRoom && !await ConfirmLargeRoomAsync()) return;
+
+            RoomId = isLargeRoom
+                ? SessionClient.LargeRoomPrefix + Guid.NewGuid()
+                : Guid.NewGuid().ToString();
             hostKey = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
             localUserRole = UserRole.Host;
             IsHost = true;
@@ -1119,6 +1145,26 @@ namespace MultiUserEdit.Commons
                 "プラグインの更新が必要です",
                 MessageBoxButton.YesNo);
             if (result == MessageBoxResult.Yes) UpdateChecker.Instance.OpenUpdatePage();
+        }
+
+        public bool IsLargeRoom => SessionClient.IsLargeRoom(RoomId);
+
+        private const string RelayConnectionFailedMessage =
+            "大きい部屋用の中継サーバーに接続できませんでした。\n\n"
+            + "サーバーが停止しているか、通信が遮断されている可能性があります。\n"
+            + "ホストに状況を確認してください。";
+
+        private static async Task<bool> ConfirmLargeRoomAsync()
+        {
+            var reachable = await RelayAvailabilityChecker.IsAvailableAsync();
+            if (reachable) return true;
+
+            return MessageBox.Show(
+                "大きい部屋用の中継サーバーに接続できませんでした。\n"
+                + "サーバーが停止しているか、通信が遮断されている可能性があります。\n\n"
+                + "このまま作成しますか？（参加者も接続できない可能性があります）",
+                "中継サーバーに接続できません",
+                MessageBoxButton.YesNo) == MessageBoxResult.Yes;
         }
 
         private TaskCompletionSource<bool>? guestRoomValidation;
@@ -1198,6 +1244,14 @@ namespace MultiUserEdit.Commons
             catch (Exception ex)
             {
                 Debug.WriteLine($"[MultiUserEdit] start failed: {ex.Message}");
+
+                if (IsCurrent() && SessionClient.IsLargeRoom(targetRoomId))
+                {
+                    Application.Current?.Dispatcher.InvokeAsync(() => MessageBox.Show(
+                        RelayConnectionFailedMessage,
+                        "接続エラー",
+                        MessageBoxButton.OK));
+                }
             }
             finally
             {
@@ -1285,19 +1339,52 @@ namespace MultiUserEdit.Commons
                 return;
             }
 
-            void Process()
-            {
-                if (editEvent.ExecutorId == LocalUserId) return;
-
-                UpdateParticipantActivity(editEvent.ExecutorId);
-                DispatchEvent(editEvent);
-                NoteRemoteOperation(editEvent);
-            }
+            if (editEvent.ExecutorId == LocalUserId) return;
 
             if (dispatcher.CheckAccess())
-                Process();
-            else
-                dispatcher.Invoke(Process);
+            {
+                ApplyEvent(editEvent);
+                return;
+            }
+
+            bool schedule;
+            lock (receivedEvents)
+            {
+                receivedEvents.Enqueue(editEvent);
+                schedule = !receivedFlushScheduled;
+                receivedFlushScheduled = true;
+            }
+
+            if (schedule) dispatcher.InvokeAsync(DrainReceivedEvents);
+        }
+
+        private readonly Queue<EditEvent> receivedEvents = new();
+        private bool receivedFlushScheduled;
+
+        private void DrainReceivedEvents()
+        {
+            while (true)
+            {
+                EditEvent next;
+                lock (receivedEvents)
+                {
+                    if (receivedEvents.Count == 0)
+                    {
+                        receivedFlushScheduled = false;
+                        return;
+                    }
+                    next = receivedEvents.Dequeue();
+                }
+
+                ApplyEvent(next);
+            }
+        }
+
+        private void ApplyEvent(EditEvent editEvent)
+        {
+            UpdateParticipantActivity(editEvent.ExecutorId);
+            DispatchEvent(editEvent);
+            NoteRemoteOperation(editEvent);
         }
 
         private void UpdateParticipantActivity(Guid executorId)
@@ -1526,6 +1613,8 @@ namespace MultiUserEdit.Commons
         {
             Debug.WriteLine("[MultiUserEdit] Disconnected by server");
 
+            if (isSwitchingRoom) return;
+
             if (disposed || isReconnecting || string.IsNullOrEmpty(RoomId))
             {
                 ResetNetworkState();
@@ -1613,6 +1702,124 @@ namespace MultiUserEdit.Commons
                 DateTime = DateTime.UtcNow,
                 ExecutorId = LocalUserId
             });
+        }
+
+        private void UpdateRoomMigration()
+        {
+            if (!IsConnected || !IsHost || !IsLargeRoom) return;
+
+            var others = Participants.Where(p => p.UserId != LocalUserId).Select(p => p.UserId).ToList();
+            roomMigration.NoteParticipantCount(Participants.Count);
+
+            if (roomMigration.IsRunning)
+            {
+                var roomId = roomMigration.PendingRoomId;
+                var key = roomMigration.PendingHostKey;
+                if (roomId == null || key == null) return;
+
+                if (roomMigration.HasFailure || roomMigration.TimedOut)
+                {
+                    roomMigration.Broadcast(RoomMigration.PhaseAbort, roomId);
+                    roomMigration.Finish();
+                    return;
+                }
+
+                if (!roomMigration.AllAcked(others)) return;
+
+                roomMigration.Broadcast(RoomMigration.PhaseCommit, roomId);
+                roomMigration.Finish();
+                _ = SwitchRoomAsync(roomId, key);
+                return;
+            }
+
+            if (roomMigration.ShouldStart(Participants.Count)) _ = StartRoomMigrationAsync();
+        }
+
+        private async Task StartRoomMigrationAsync()
+        {
+            var (newRoomId, newHostKey) = roomMigration.Begin();
+
+            if (!await RoomProbe.CreateRoomAsync(newRoomId, newHostKey))
+            {
+                Debug.WriteLine("[MultiUserEdit] migration aborted: could not create the small room");
+                roomMigration.Finish();
+                return;
+            }
+
+            if (!Participants.Any(p => p.UserId != LocalUserId))
+            {
+                roomMigration.Finish();
+                _ = SwitchRoomAsync(newRoomId, newHostKey);
+                return;
+            }
+
+            roomMigration.Broadcast(RoomMigration.PhasePrepare, newRoomId);
+        }
+
+        internal void HandleRoomMigration(RoomMigrationEvent evt)
+        {
+            if (IsHost) return;
+
+            switch (evt.Phase)
+            {
+                case RoomMigration.PhasePrepare:
+                    var hostId = evt.ExecutorId;
+                    var target = evt.NewRoomId;
+                    _ = Task.Run(async () =>
+                    {
+                        var ok = await RoomProbe.CanJoinAsync(target);
+                        pendingMigrationRoomId = ok ? target : null;
+                        roomMigration.SendAck(hostId, ok);
+                    });
+                    break;
+
+                case RoomMigration.PhaseCommit:
+                    if (pendingMigrationRoomId == evt.NewRoomId)
+                    {
+                        pendingMigrationRoomId = null;
+                        _ = SwitchRoomAsync(evt.NewRoomId, null);
+                    }
+                    break;
+
+                case RoomMigration.PhaseAbort:
+                    pendingMigrationRoomId = null;
+                    break;
+            }
+        }
+
+        internal void HandleRoomMigrationAck(RoomMigrationAckEvent evt)
+        {
+            if (!IsHost) return;
+            roomMigration.NoteAck(evt.ExecutorId, evt.Success);
+        }
+
+        private async Task SwitchRoomAsync(string newRoomId, string? newHostKey)
+        {
+            if (isSwitchingRoom) return;
+
+            isSwitchingRoom = true;
+            try
+            {
+                await sessionClient.StopAsync();
+
+                if (newHostKey != null) hostKey = newHostKey;
+                RoomId = newRoomId;
+
+                await sessionClient.StartAsync(newRoomId, localUserRole == UserRole.Host, hostKey);
+
+                IsConnected = sessionClient.IsConnected;
+                BroadcastLocalPresence();
+                RoomMigration.NotifyMoved();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] room switch failed: {ex.Message}");
+            }
+            finally
+            {
+                isSwitchingRoom = false;
+                RefreshCommandStates();
+            }
         }
 
         internal void HandleMissingResource(MissingResourceEvent evt)
@@ -1737,6 +1944,17 @@ namespace MultiUserEdit.Commons
                 return;
             }
 
+            if (reason == "full")
+            {
+                var limitText = SessionClient.IsLargeRoom(RoomId) || SessionClient.IsLargeRoom(InputRoomId)
+                    ? "この部屋は参加できる人数の上限に達しました。"
+                    : "この部屋は参加できる人数の上限に達しました。\nホストに大きい部屋を作ってもらってください。";
+
+                Application.Current?.Dispatcher.InvokeAsync(() =>
+                    MessageBox.Show(limitText, "満員です", MessageBoxButton.OK));
+                return;
+            }
+
             var message = reason switch
             {
                 "expired" => "このルームは一定時間やり取りが無かったため、自動的に閉じられました。\nホストに新しいルームを作り直してもらってください。",
@@ -1752,6 +1970,8 @@ namespace MultiUserEdit.Commons
 
         private void HandleConnectionStateChanged(bool connected)
         {
+            if (isSwitchingRoom) return;
+
             if (!connected)
             {
                 ResetNetworkState();
