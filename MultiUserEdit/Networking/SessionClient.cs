@@ -6,6 +6,18 @@ namespace MultiUserEdit.Networking
     internal sealed class SessionClient
     {
         private const string WebSocketEndpointBase = "wss://multi-user-edit.dolphin-discord-js.workers.dev";
+        private const string RelayEndpointBase = "wss://mue-relay.ymm4-info.net";
+
+        public const string LargeRoomPrefix = "big-";
+
+        public const int SmallRoomLimit = 10;
+        public const int LargeRoomLimit = 100;
+
+        public static bool IsLargeRoom(string? roomId) =>
+            roomId?.StartsWith(LargeRoomPrefix, StringComparison.OrdinalIgnoreCase) ?? false;
+
+        public static string EndpointFor(string? roomId) =>
+            IsLargeRoom(roomId) ? RelayEndpointBase : WebSocketEndpointBase;
 
         private readonly INetworkProvider networkProvider;
 
@@ -46,7 +58,8 @@ namespace MultiUserEdit.Networking
                 if (IsConnected) return;
 
                 var role = isHost ? "host" : "guest";
-                var url = $"{WebSocketEndpointBase}?roomId={roomId}&role={role}&userId={LocalUserId}";
+                var useRelay = IsLargeRoom(roomId);
+                var url = $"{EndpointFor(roomId)}/?roomId={roomId}&role={role}&userId={LocalUserId}";
 
                 try
                 {
@@ -54,6 +67,7 @@ namespace MultiUserEdit.Networking
                     {
                         ["X-Client-Version"] = UpdateChecker.Instance.CurrentVersion
                     };
+                    if (useRelay) headers["X-Batch"] = "1";
                     if (isHost && !string.IsNullOrEmpty(hostKey)) headers["X-Host-Key"] = hostKey;
 
                     await networkProvider.ConnectAsync(url, headers);
@@ -94,6 +108,12 @@ namespace MultiUserEdit.Networking
         {
             LastSentAt = DateTime.Now;
             return networkProvider.SendAsync(targetId, data);
+        }
+
+        public Task SendToManyAsync(IReadOnlyList<string> targetIds, object data)
+        {
+            LastSentAt = DateTime.Now;
+            return networkProvider.SendToManyAsync(targetIds, data);
         }
 
         private void HandleEventReceived(object? sender, EditEvent editEvent)

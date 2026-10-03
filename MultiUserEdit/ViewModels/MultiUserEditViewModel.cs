@@ -154,6 +154,18 @@ namespace MultiUserEdit.ViewModels
 
         public bool IsConnected => CurrentSession?.IsConnected ?? false;
 
+        public bool IsLargeRoomSelected
+        {
+            get => CurrentSession?.IsLargeRoomSelected ?? false;
+            set => CurrentSession?.IsLargeRoomSelected = value;
+        }
+
+        public bool IsSmallRoomSelected
+        {
+            get => CurrentSession?.IsSmallRoomSelected ?? true;
+            set => CurrentSession?.IsSmallRoomSelected = value;
+        }
+
         public bool HasDivergenceWarning => CurrentSession?.HasDivergenceWarning ?? false;
         public string DivergenceWarningText => CurrentSession?.DivergenceWarningText ?? string.Empty;
 
@@ -338,6 +350,16 @@ namespace MultiUserEdit.ViewModels
         internal void HandleMissingResource(Commons.Events.MissingResourceEvent evt)
         {
             CurrentSession?.HandleMissingResource(evt);
+        }
+
+        internal void HandleRoomMigration(Commons.Events.RoomMigrationEvent evt)
+        {
+            CurrentSession?.HandleRoomMigration(evt);
+        }
+
+        internal void HandleRoomMigrationAck(Commons.Events.RoomMigrationAckEvent evt)
+        {
+            CurrentSession?.HandleRoomMigrationAck(evt);
         }
 
         internal void SyncFrom(Guid sourceUserId)

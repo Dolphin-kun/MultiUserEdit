@@ -7,6 +7,7 @@ namespace MultiUserEdit.Networking
         Task ConnectAsync(string url, IReadOnlyDictionary<string, string> headers);
         Task DisconnectAsync();
         Task SendAsync(string? targetId, object data);
+        Task SendToManyAsync(IReadOnlyList<string> targetIds, object data);
 
         event EventHandler<EditEvent> EventReceived;
         event Action Disconnected;
