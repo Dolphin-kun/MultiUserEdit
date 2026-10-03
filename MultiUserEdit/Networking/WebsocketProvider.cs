@@ -123,7 +123,17 @@ namespace MultiUserEdit.Networking
             cts = null;
         }
 
-        public async Task SendAsync(string? targetId, object data)
+        public Task SendToManyAsync(IReadOnlyList<string> targetIds, object data)
+        {
+            if (targetIds.Count == 0) return Task.CompletedTask;
+            if (targetIds.Count == 1) return SendAsync(targetIds[0], data);
+
+            return SendCoreAsync(data, null, targetIds);
+        }
+
+        public Task SendAsync(string? targetId, object data) => SendCoreAsync(data, targetId, null);
+
+        private async Task SendCoreAsync(object data, string? targetId, IReadOnlyList<string>? targetIds)
         {
             if (webSocket?.State != WebSocketState.Open) return;
 
@@ -135,6 +145,7 @@ namespace MultiUserEdit.Networking
             {
                 senderId = userId,
                 targetId,
+                targetIds,
                 data = dataElement
             };
 

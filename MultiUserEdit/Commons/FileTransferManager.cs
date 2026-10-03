@@ -309,8 +309,8 @@ namespace MultiUserEdit.Commons
                 return;
             }
 
-            var targetId = requesters.Count == 1 ? requesters[0].ToString() : null;
-            await SendChunksAsync(filePath, fileName, transferId, sessionClient, executorId, targetId);
+            await SendChunksAsync(filePath, fileName, transferId, sessionClient, executorId,
+                [.. requesters.Select(id => id.ToString())]);
         }
 
         internal async Task SendDirectAsync(SharedFile file, Guid targetUserId, SessionClient sessionClient, Guid executorId)
@@ -318,7 +318,7 @@ namespace MultiUserEdit.Commons
             if (string.IsNullOrEmpty(file.Name) || !File.Exists(file.FullPath)) return;
 
             await SendChunksAsync(file.FullPath, file.Name, Guid.NewGuid(),
-                sessionClient, executorId, targetUserId.ToString());
+                sessionClient, executorId, [targetUserId.ToString()]);
         }
 
         private bool IsAlreadyAnnounced(string filePath)
@@ -362,11 +362,14 @@ namespace MultiUserEdit.Commons
             if (!evt.NeedsTransfer) return;
 
             await SendChunksAsync(announcement.FilePath, announcement.FileName, evt.TransferId,
-                sessionClient, executorId, evt.RequesterId.ToString());
+                sessionClient, executorId, [evt.RequesterId.ToString()]);
         }
 
+        private static Task SendToTargetsAsync(SessionClient sessionClient, IReadOnlyList<string>? targetIds, object data) =>
+            targetIds == null ? sessionClient.SendAsync(null, data) : sessionClient.SendToManyAsync(targetIds, data);
+
         private async Task SendChunksAsync(string filePath, string fileName, Guid transferId,
-            SessionClient sessionClient, Guid executorId, string? targetId)
+            SessionClient sessionClient, Guid executorId, IReadOnlyList<string>? targetIds)
         {
             if (!File.Exists(filePath)) return;
 
@@ -392,7 +395,7 @@ namespace MultiUserEdit.Commons
                     DateTime = DateTime.UtcNow,
                     ExecutorId = executorId
                 };
-                await sessionClient.SendAsync(targetId, startEvt);
+                await SendToTargetsAsync(sessionClient, targetIds, startEvt);
 
                 var buffer = new byte[ChunkSize];
                 await using var stream = File.OpenRead(filePath);
@@ -407,7 +410,7 @@ namespace MultiUserEdit.Commons
                         DateTime = DateTime.UtcNow,
                         ExecutorId = executorId
                     };
-                    await sessionClient.SendAsync(targetId, chunkEvt);
+                    await SendToTargetsAsync(sessionClient, targetIds, chunkEvt);
 
                     fileTask.TransferredBytes = Math.Min(fileTask.TotalBytes, fileTask.TransferredBytes + read);
                     NotifySummary();

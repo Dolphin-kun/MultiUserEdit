@@ -96,6 +96,12 @@ namespace MultiUserEdit.Networking
             return networkProvider.SendAsync(targetId, data);
         }
 
+        public Task SendToManyAsync(IReadOnlyList<string> targetIds, object data)
+        {
+            LastSentAt = DateTime.Now;
+            return networkProvider.SendToManyAsync(targetIds, data);
+        }
+
         private void HandleEventReceived(object? sender, EditEvent editEvent)
         {
             EventReceived?.Invoke(this, editEvent);

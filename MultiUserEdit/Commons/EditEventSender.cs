@@ -15,6 +15,10 @@ namespace MultiUserEdit.Commons
 
         private Guid LocalUserId => getLocalUserIdFunc();
 
+        public Func<bool>? IsSendingSuppressed { get; set; }
+
+        private bool Suppressed => IsSendingSuppressed?.Invoke() ?? false;
+
         private const int PlayingCursorIntervalMilliseconds = 1000;
         private const int SeekingCursorIntervalMilliseconds = 33;
 
@@ -51,6 +55,8 @@ namespace MultiUserEdit.Commons
 
         public async Task SendCursorMovedAsync(int currentFrame, int timelineIndex, bool isPlaying)
         {
+            if (Suppressed) return;
+
             try
             {
                 var evt = new CursorMovedEvent(currentFrame, timelineIndex, isPlaying)
@@ -65,6 +71,8 @@ namespace MultiUserEdit.Commons
 
         public Task SendCursorMovedThrottledAsync(int currentFrame, int timelineIndex, bool isPlaying)
         {
+            if (Suppressed) return Task.CompletedTask;
+
             lock (cursorLock)
             {
                 var next = (currentFrame, timelineIndex, isPlaying);
@@ -108,6 +116,8 @@ namespace MultiUserEdit.Commons
 
         public async Task SendItemAddedAsync(IItem item, int frame, int layer, int timelineIndex)
         {
+            if (Suppressed) return;
+
             if (!sessionClient.IsConnected) return;
 
             try
@@ -140,6 +150,8 @@ namespace MultiUserEdit.Commons
 
         public async Task SendItemMovedAsync(Guid itemId, int timelineIndex, int frame, int length, int layer)
         {
+            if (Suppressed) return;
+
             try
             {
                 var evt = new ItemMovedEvent(itemId, timelineIndex, frame, length, layer)
@@ -154,6 +166,8 @@ namespace MultiUserEdit.Commons
 
         public Task SendItemMovedThrottledAsync(Guid itemId, int timelineIndex, int frame, int length, int layer)
         {
+            if (Suppressed) return Task.CompletedTask;
+
             var state = itemMovedThrottles.GetOrAdd(itemId, static _ => new MoveThrottleState());
 
             lock (state.Lock)
@@ -196,6 +210,8 @@ namespace MultiUserEdit.Commons
 
         public async Task SendItemRemovedAsync(Guid itemId, int timelineIndex)
         {
+            if (Suppressed) return;
+
             try
             {
                 var evt = new ItemRemovedEvent(itemId, timelineIndex)
@@ -273,6 +289,8 @@ namespace MultiUserEdit.Commons
 
         public async Task SendItemUpdatedAsync(IItem item, int timelineIndex)
         {
+            if (Suppressed) return;
+
             if (!sessionClient.IsConnected) return;
 
             try
@@ -324,6 +342,8 @@ namespace MultiUserEdit.Commons
 
         public Task SendItemUpdatedThrottledAsync(IItem item, int timelineIndex)
         {
+            if (Suppressed) return Task.CompletedTask;
+
             var itemId = ItemIdManager.GetOrCreateId(item);
             var state = itemUpdateThrottles.GetOrAdd(itemId, static _ => new UpdateThrottleState());
 
@@ -358,6 +378,8 @@ namespace MultiUserEdit.Commons
 
         public async Task SendSceneAddedAsync(int index, string name = "")
         {
+            if (Suppressed) return;
+
             try
             {
                 var evt = new SceneAddedEvent(index, name)
@@ -372,6 +394,8 @@ namespace MultiUserEdit.Commons
 
         public async Task SendSceneRemovedAsync(int index)
         {
+            if (Suppressed) return;
+
             try
             {
                 var evt = new SceneRemovedEvent(index)
@@ -386,6 +410,8 @@ namespace MultiUserEdit.Commons
 
         public async Task SendSceneRenamedAsync(int index, string newName)
         {
+            if (Suppressed) return;
+
             try
             {
                 var evt = new SceneRenamedEvent(index, newName)
@@ -400,6 +426,8 @@ namespace MultiUserEdit.Commons
 
         public async Task SendVideoInfoUpdatedAsync(int index, int width, int height, int fps, int hz, string? backgroundColor)
         {
+            if (Suppressed) return;
+
             try
             {
                 var evt = new VideoInfoUpdatedEvent(index, width, height, fps, hz, backgroundColor)
@@ -414,6 +442,8 @@ namespace MultiUserEdit.Commons
 
         public async Task SendItemLockAsync(Guid itemId, long timestamp)
         {
+            if (Suppressed) return;
+
             try
             {
                 var evt = new ItemLockedEvent(itemId, LocalUserId, timestamp)
@@ -428,6 +458,8 @@ namespace MultiUserEdit.Commons
 
         public async Task SendItemUnlockAsync(Guid itemId)
         {
+            if (Suppressed) return;
+
             try
             {
                 var evt = new ItemUnlockedEvent(itemId, LocalUserId)

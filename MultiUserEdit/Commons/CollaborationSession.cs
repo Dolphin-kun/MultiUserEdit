@@ -319,6 +319,9 @@ namespace MultiUserEdit.Commons
             _ = sessionClient.SendAsync(null, presenceEvt);
         }
 
+        public bool IsSpectator =>
+            !IsHost && CurrentUserPermission.Level is PermissionLevel.ReadOnly or PermissionLevel.LiveMirror;
+
         private bool isHost;
         public bool IsHost
         {
@@ -373,7 +376,8 @@ namespace MultiUserEdit.Commons
             };
             eventSender = new EditEventSender(sessionClient, fileTransferManager, () => LocalUserId)
             {
-                IsItemAlive = item => Scenes?.Timelines.Any(timeline => timeline.Items.Contains(item)) ?? false
+                IsItemAlive = item => Scenes?.Timelines.Any(timeline => timeline.Items.Contains(item)) ?? false,
+                IsSendingSuppressed = () => IsSpectator
             };
             timelineSyncManager = new TimelineSyncManager(eventSender, () => isApplyingRemoteEvent, IsItemEditableLocally);
             characterShareManager = new CharacterShareManager(
