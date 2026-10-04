@@ -19,7 +19,8 @@ namespace MultiUserEdit.Commons.EventHandlers
 
             try
             {
-                var itemJson = MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, item, editEvent.MediaFileNames);
+                var itemJson = ItemJsonSanitizer.RemoveUnknownEnumValues(
+                    MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, item, editEvent.MediaFileNames));
                 ResourceAvailabilityChecker.Notify(editEvent.ItemId, editEvent.ExecutorId,
                     viewModel.GetUserName(editEvent.ExecutorId), itemJson, null);
                 JsonConvert.PopulateObject(itemJson, item, ItemSerializerOptions.Default);

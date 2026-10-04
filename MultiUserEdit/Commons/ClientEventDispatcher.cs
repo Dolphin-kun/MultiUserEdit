@@ -24,6 +24,7 @@ namespace MultiUserEdit.Commons
             Register(new FileRequestEventHandler());
             Register(new FileTransferStartEventHandler());
             Register(new FileChunkEventHandler());
+            Register(new FileTransferCancelEventHandler());
             Register(new CharacterRequestEventHandler());
             Register(new CharacterSharedEventHandler());
             Register(new SceneAddedEventHandler());

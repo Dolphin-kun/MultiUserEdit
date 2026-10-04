@@ -10,7 +10,7 @@ namespace MultiUserEdit.Networking
 
         public const string LargeRoomPrefix = "big-";
 
-        public const int SmallRoomLimit = 10;
+        public const int SmallRoomLimit = 20;
         public const int LargeRoomLimit = 100;
 
         public static bool IsLargeRoom(string? roomId) =>
@@ -25,6 +25,7 @@ namespace MultiUserEdit.Networking
         public Guid LocalUserId { get; }
 
         public DateTime LastSentAt { get; private set; } = DateTime.Now;
+        public DateTime LastReceivedAt { get; private set; } = DateTime.Now;
 
         public event EventHandler<EditEvent>? EventReceived;
         public event Action? Disconnected;
@@ -73,6 +74,7 @@ namespace MultiUserEdit.Networking
                     await networkProvider.ConnectAsync(url, headers);
                     IsConnected = true;
                     LastSentAt = DateTime.Now;
+                    LastReceivedAt = DateTime.Now;
                 }
                 catch
                 {
@@ -118,6 +120,7 @@ namespace MultiUserEdit.Networking
 
         private void HandleEventReceived(object? sender, EditEvent editEvent)
         {
+            LastReceivedAt = DateTime.Now;
             EventReceived?.Invoke(this, editEvent);
         }
 

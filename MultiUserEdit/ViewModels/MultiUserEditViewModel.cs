@@ -400,8 +400,16 @@ namespace MultiUserEdit.ViewModels
             CurrentSession?.HandleFileChunk(evt);
         }
 
+        internal void HandleFileTransferCancel(FileTransferCancelEvent evt)
+        {
+            CurrentSession?.HandleFileTransferCancel(evt);
+        }
+
         public Task SendFileAsync(string filePath) =>
             CurrentSession?.SendFileAsync(filePath) ?? Task.CompletedTask;
+
+        public void CancelIncomingTransfer(Guid transferId) =>
+            CurrentSession?.CancelIncomingTransfer(transferId);
 
         public void LockItemLocally(Guid itemId)
         {

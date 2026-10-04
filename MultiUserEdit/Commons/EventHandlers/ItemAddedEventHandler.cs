@@ -69,7 +69,8 @@ namespace MultiUserEdit.Commons.EventHandlers
                     return;
                 }
 
-                var itemJson = MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, itemType, editEvent.MediaFileNames, tachieBaseDirectory);
+                var itemJson = ItemJsonSanitizer.RemoveUnknownEnumValues(
+                    MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, itemType, editEvent.MediaFileNames, tachieBaseDirectory));
 
                 ResourceAvailabilityChecker.Notify(editEvent.ItemId, editEvent.ExecutorId,
                     viewModel.GetUserName(editEvent.ExecutorId), itemJson, null);
@@ -89,6 +90,16 @@ namespace MultiUserEdit.Commons.EventHandlers
             }
             catch (Exception ex)
             {
+                if (ItemJsonSanitizer.GetMissingPluginName(ex) is { } pluginName)
+                {
+                    ErrorNotifier.NotifyOnce(
+                        "プラグインが見つかりません",
+                        $"{viewModel.GetUserName(editEvent.ExecutorId)} が使用しているプラグインがこの環境にありません。\n\n"
+                        + $"・{pluginName}\n\n"
+                        + "このアイテムは追加できませんでした。プラグインを導入すると表示できます。");
+                    return;
+                }
+
                 ErrorNotifier.NotifyOnce(
                     "アイテムを追加できませんでした",
                     $"種類: {editEvent.ItemTypeName}\n{ex.Message}");

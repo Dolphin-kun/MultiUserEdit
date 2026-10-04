@@ -1,4 +1,4 @@
-namespace MultiUserEdit.Commons.Models
+﻿namespace MultiUserEdit.Commons.Models
 {
     public class MediaFileInfo
     {
@@ -8,8 +8,13 @@ namespace MultiUserEdit.Commons.Models
         public DateTime LastModified { get; set; }
         public bool IsSent { get; set; }
         public bool WasTransferred { get; set; } = true;
+        public string OwnerName { get; set; } = string.Empty;
 
         public string DirectionText => IsSent ? "送信" : "受信";
+
+        public string OwnerText => IsSent
+            ? "自分"
+            : string.IsNullOrEmpty(OwnerName) ? "不明" : OwnerName;
 
         public string StatusText => !IsSent
             ? "受信済み"

@@ -12,6 +12,12 @@ namespace MultiUserEdit.Commons
         private readonly Func<bool> getIsApplyingRemoteEventFunc = getIsApplyingRemoteEventFunc;
         private readonly Func<Guid, bool> isItemEditableFunc = isItemEditableFunc;
 
+        public Func<IReadOnlyList<IItem>, Timeline, bool>? RejectAddition { get; set; }
+
+        public Func<IReadOnlyList<IItem>, Timeline, bool>? RejectRemoval { get; set; }
+
+        public Action<IItem>? NoteLocalAddition { get; set; }
+
         private readonly Dictionary<IItem, ItemSubscription> itemSubscription = [];
         private readonly Dictionary<Timeline, HashSet<IItem>> timelineItemSnapshot = [];
         private readonly Dictionary<Timeline, HashSet<IItem>> timelineSelectedItemsSnapshot = [];
@@ -129,11 +135,25 @@ namespace MultiUserEdit.Commons
 
             timelineItemSnapshot[timeline] = currentItems;
 
+            if (!suppressEvents && added.Count > 0 && RejectAddition != null && RejectAddition(added, timeline))
+            {
+                timelineItemSnapshot[timeline] = [.. timeline.Items];
+                return;
+            }
+
             foreach (var item in added)
             {
+                if (!suppressEvents) NoteLocalAddition?.Invoke(item);
+
                 SubscribeItem(item, timeline, viewModel);
                 if (!suppressEvents)
                     _ = eventSender.SendItemAddedAsync(item, item.Frame, item.Layer, timelineIndex);
+            }
+
+            if (!suppressEvents && removed.Count > 0 && RejectRemoval != null && RejectRemoval(removed, timeline))
+            {
+                timelineItemSnapshot[timeline] = [.. timeline.Items];
+                return;
             }
 
             foreach (var item in removed)

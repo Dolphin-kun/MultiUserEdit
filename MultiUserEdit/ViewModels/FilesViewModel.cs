@@ -40,6 +40,7 @@ namespace MultiUserEdit.ViewModels
         public ICommand DeleteFileCommand { get; }
         public ICommand CleanFolderCommand { get; }
         public ICommand OpenFolderCommand { get; }
+        public ICommand CancelTransferCommand { get; }
 
         public FilesViewModel(MultiUserEditViewModel? owner = null)
         {
@@ -54,6 +55,7 @@ namespace MultiUserEdit.ViewModels
             DeleteFileCommand = new ActionCommand((_) => true, ExecuteDeleteFile);
             CleanFolderCommand = new ActionCommand((_) => true, ExecuteCleanFolder);
             OpenFolderCommand = new ActionCommand((_) => true, ExecuteOpenFolder);
+            CancelTransferCommand = new ActionCommand((_) => true, ExecuteCancelTransfer);
 
             ExecuteRefresh(null);
         }
@@ -138,7 +140,8 @@ namespace MultiUserEdit.ViewModels
                         FileName = Path.GetRelativePath(dir, info.FullName),
                         FilePath = info.FullName,
                         SizeBytes = info.Length,
-                        LastModified = info.LastWriteTime
+                        LastModified = info.LastWriteTime,
+                        OwnerName = FileTransferManager.GetOwnerName(info.FullName)
                     });
                 }
             }
@@ -146,6 +149,20 @@ namespace MultiUserEdit.ViewModels
             {
                 Debug.WriteLine($"[MultiUserEdit] FilesViewModel Refresh failed: {ex.Message}");
             }
+        }
+
+        private void ExecuteCancelTransfer(object? param)
+        {
+            if (param is not TransferItemInfo transfer || !transfer.CanCancel) return;
+
+            var confirmed = System.Windows.MessageBox.Show(
+                $"「{transfer.DisplayName}」の受け取りを中止します。\nよろしいですか？",
+                "受け取りの中止",
+                System.Windows.MessageBoxButton.OKCancel) == System.Windows.MessageBoxResult.OK;
+
+            if (!confirmed) return;
+
+            owner?.CancelIncomingTransfer(transfer.TransferId);
         }
 
         private void ExecuteDeleteFile(object? param)

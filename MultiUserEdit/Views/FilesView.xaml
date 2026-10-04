@@ -35,8 +35,10 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
@@ -52,7 +54,20 @@
                                 <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding SizeText}" FontSize="10"
                                            Opacity="0.75" Margin="6,0,0,0" VerticalAlignment="Center" />
 
-                                <ProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                                <Button Grid.Row="0" Grid.Column="3"
+                                        Command="{Binding DataContext.CancelTransferCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}" Cursor="Hand" ToolTip="受け取りを中止"
+                                        Background="Transparent" BorderThickness="0" Padding="4,0" Margin="4,0,0,0"
+                                        Visibility="{Binding CanCancel, Converter={StaticResource BoolToVisConverter}}">
+                                    <Path Data="{DynamicResource {x:Static icons:GeometryKeys.CloseCircleOutline}}"
+                                          Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
+                                          Width="12" Height="12" Stretch="Uniform" />
+                                </Button>
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Text="{Binding DetailText}"
+                                           FontSize="10" Opacity="0.7" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+
+                                <ProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4"
                                              Value="{Binding Progress, Mode=OneWay}" Maximum="100" Height="4" Margin="0,3,0,0" />
                             </Grid>
                         </DataTemplate>
@@ -95,7 +110,8 @@
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
-                    <GridViewColumn Header="ファイル名" Width="180">
+                    <GridViewColumn Header="送信者" Width="80" DisplayMemberBinding="{Binding OwnerText}" />
+                    <GridViewColumn Header="ファイル名" Width="150">
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding FileName}" ToolTip="{Binding FilePath}" TextTrimming="CharacterEllipsis" />

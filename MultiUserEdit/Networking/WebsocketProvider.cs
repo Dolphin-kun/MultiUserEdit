@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Buffers;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -162,31 +163,22 @@ namespace MultiUserEdit.Networking
 
         public Task SendAsync(string? targetId, object data) => SendCoreAsync(data, targetId, null);
 
+        private readonly ArrayBufferWriter<byte> sendBuffer = new(8192);
+
         private async Task SendCoreAsync(object data, string? targetId, IReadOnlyList<string>? targetIds)
         {
             if (webSocket?.State != WebSocketState.Open) return;
-
-            var dataElement = data is EditEvent editEvent
-                ? JsonSerializer.SerializeToElement(editEvent)
-                : JsonSerializer.SerializeToElement(data, data.GetType());
-
-            var payload = new
-            {
-                senderId = userId,
-                targetId,
-                targetIds,
-                data = dataElement
-            };
-
-            var json = JsonSerializer.Serialize(payload);
-            var bytes = Encoding.UTF8.GetBytes(json);
 
             await sendLock.WaitAsync();
             try
             {
                 var socket = webSocket;
                 if (socket?.State != WebSocketState.Open) return;
-                await socket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None);
+
+                sendBuffer.ResetWrittenCount();
+                WritePayload(sendBuffer, data, targetId, targetIds);
+
+                await socket.SendAsync(sendBuffer.WrittenMemory, WebSocketMessageType.Text, true, CancellationToken.None);
             }
             catch (WebSocketException) { }
             catch (ObjectDisposedException) { }
@@ -194,6 +186,35 @@ namespace MultiUserEdit.Networking
             {
                 sendLock.Release();
             }
+        }
+
+        private void WritePayload(IBufferWriter<byte> target, object data, string? targetId, IReadOnlyList<string>? targetIds)
+        {
+            using var writer = new Utf8JsonWriter(target);
+
+            writer.WriteStartObject();
+            writer.WriteString("senderId", userId);
+
+            if (targetId == null) writer.WriteNull("targetId");
+            else writer.WriteString("targetId", targetId);
+
+            if (targetIds == null)
+            {
+                writer.WriteNull("targetIds");
+            }
+            else
+            {
+                writer.WriteStartArray("targetIds");
+                foreach (var id in targetIds) writer.WriteStringValue(id);
+                writer.WriteEndArray();
+            }
+
+            writer.WritePropertyName("data");
+
+            if (data is EditEvent editEvent) JsonSerializer.Serialize(writer, editEvent);
+            else JsonSerializer.Serialize(writer, data, data.GetType());
+
+            writer.WriteEndObject();
         }
 
         private async Task ReceiveLoopAsync(ClientWebSocket socket, CancellationTokenSource source, int myGeneration)

@@ -1,4 +1,4 @@
-namespace MultiUserEdit.Commons.Models
+﻿namespace MultiUserEdit.Commons.Models
 {
     public class UserPermission
     {
@@ -7,8 +7,11 @@ namespace MultiUserEdit.Commons.Models
         public bool CanAddItems { get; set; } = true;
         public bool CanMoveItems { get; set; } = true;
         public bool CanDeleteItems { get; set; } = true;
+        public bool CanDeleteOthersItems { get; set; } = true;
         public bool CanEditProperties { get; set; } = true;
-        public bool CanManageScenes { get; set; } = true;
+        public bool CanAddScenes { get; set; } = true;
+        public bool CanDeleteScenes { get; set; } = true;
+        public bool CanShareFiles { get; set; } = true;
         public bool CanSyncSeekPosition { get; set; } = false;
 
         public static UserPermission CreateFromLevel(PermissionLevel level)
@@ -21,8 +24,11 @@ namespace MultiUserEdit.Commons.Models
                     CanAddItems = true,
                     CanMoveItems = true,
                     CanDeleteItems = true,
+                    CanDeleteOthersItems = true,
                     CanEditProperties = true,
-                    CanManageScenes = true,
+                    CanAddScenes = true,
+                    CanDeleteScenes = true,
+                    CanShareFiles = true,
                     CanSyncSeekPosition = false
                 },
                 PermissionLevel.Standard => new UserPermission
@@ -31,8 +37,11 @@ namespace MultiUserEdit.Commons.Models
                     CanAddItems = true,
                     CanMoveItems = true,
                     CanDeleteItems = true,
+                    CanDeleteOthersItems = true,
                     CanEditProperties = true,
-                    CanManageScenes = false,
+                    CanAddScenes = false,
+                    CanDeleteScenes = false,
+                    CanShareFiles = true,
                     CanSyncSeekPosition = false
                 },
                 PermissionLevel.ReadOnly => new UserPermission
@@ -41,8 +50,11 @@ namespace MultiUserEdit.Commons.Models
                     CanAddItems = false,
                     CanMoveItems = false,
                     CanDeleteItems = false,
+                    CanDeleteOthersItems = false,
                     CanEditProperties = false,
-                    CanManageScenes = false,
+                    CanAddScenes = false,
+                    CanDeleteScenes = false,
+                    CanShareFiles = false,
                     CanSyncSeekPosition = false
                 },
                 PermissionLevel.LiveMirror => new UserPermission
@@ -51,8 +63,11 @@ namespace MultiUserEdit.Commons.Models
                     CanAddItems = false,
                     CanMoveItems = false,
                     CanDeleteItems = false,
+                    CanDeleteOthersItems = false,
                     CanEditProperties = false,
-                    CanManageScenes = false,
+                    CanAddScenes = false,
+                    CanDeleteScenes = false,
+                    CanShareFiles = false,
                     CanSyncSeekPosition = true
                 },
                 _ => new UserPermission()

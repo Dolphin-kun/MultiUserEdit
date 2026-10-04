@@ -11,7 +11,7 @@ namespace MultiUserEdit.Commons
 {
     internal class FileTransferManager
     {
-        private const int ChunkSize = 8 * 1024 * 1024;
+        private const int ChunkSize = 1024 * 1024;
         private static readonly TimeSpan TransferTimeout = TimeSpan.FromMinutes(3);
 
         private static readonly TimeSpan RequestWindow = TimeSpan.FromSeconds(15);
@@ -21,9 +21,37 @@ namespace MultiUserEdit.Commons
         private class FileTask
         {
             public string FileName { get; set; } = string.Empty;
+            public Guid TransferId { get; set; }
             public long TotalBytes { get; set; }
             public long TransferredBytes { get; set; }
+            public string OwnerName { get; set; } = string.Empty;
+
+            private DateTime sampledAt = DateTime.UtcNow;
+            private long sampledBytes;
+            private double speed;
+
+            public double BytesPerSecond
+            {
+                get
+                {
+                    var now = DateTime.UtcNow;
+                    var elapsed = (now - sampledAt).TotalSeconds;
+                    if (elapsed < 0.5) return speed;
+
+                    var delta = TransferredBytes - sampledBytes;
+                    var sample = delta / elapsed;
+                    speed = speed <= 0 ? sample : speed * 0.6 + sample * 0.4;
+
+                    sampledAt = now;
+                    sampledBytes = TransferredBytes;
+                    return speed;
+                }
+            }
         }
+
+        public Func<Guid, string>? GetUserName { get; set; }
+
+        public Func<bool>? CanShareFiles { get; set; }
 
         private class Announcement
         {
@@ -151,6 +179,15 @@ namespace MultiUserEdit.Commons
 
             if (sendDecisions.TryGetValue(filePath, out var remembered)) return Task.FromResult(remembered);
 
+            if (CanShareFiles?.Invoke() == false)
+            {
+                sendDecisions[filePath] = false;
+                ErrorNotifier.NotifyOnce(
+                    "素材を送信できませんでした",
+                    "ホストの設定により、この部屋では素材ファイルを送信できません。");
+                return Task.FromResult(false);
+            }
+
             if (!MultiUserEditSettings.Default.IsExtensionAllowed(filePath))
             {
                 sendDecisions[filePath] = false;
@@ -246,7 +283,10 @@ namespace MultiUserEdit.Commons
         internal Task TransferAsync(string filePath, SessionClient sessionClient, Guid executorId) =>
             TransferAsync(new SharedFile(filePath, Path.GetFileName(filePath)), null, sessionClient, executorId);
 
-        internal async Task TransferAsync(SharedFile file, string? characterName, SessionClient sessionClient, Guid executorId)
+        internal Task TransferAsync(SharedFile file, string? characterName, SessionClient sessionClient, Guid executorId) =>
+            Task.Run(() => TransferCoreAsync(file, characterName, sessionClient, executorId));
+
+        private async Task TransferCoreAsync(SharedFile file, string? characterName, SessionClient sessionClient, Guid executorId)
         {
             var filePath = file.FullPath;
             var fileName = file.Name;
@@ -323,10 +363,52 @@ namespace MultiUserEdit.Commons
 
         private bool IsAlreadyAnnounced(string filePath)
         {
-            if (!announcedFiles.TryGetValue(filePath, out var announced)) return false;
-
             var info = new FileInfo(filePath);
-            return announced.WriteTime == info.LastWriteTimeUtc && announced.Size == info.Length;
+
+            if (announcedFiles.TryGetValue(filePath, out var announced)
+                && announced.WriteTime == info.LastWriteTimeUtc
+                && announced.Size == info.Length)
+            {
+                return true;
+            }
+
+            var key = SharedFileKey(Path.GetFileName(filePath), info.Length);
+            return sharedFileKeys.ContainsKey(key);
+        }
+
+        private static string SharedFileKey(string fileName, long size) => $"{fileName}|{size}";
+
+        private readonly ConcurrentDictionary<string, byte> sharedFileKeys = new(StringComparer.OrdinalIgnoreCase);
+
+        private readonly ConcurrentDictionary<string, byte> cancelledTargets = new();
+
+        private static string CancelKey(Guid transferId, Guid userId) => $"{transferId}|{userId}";
+
+        public void NoteCancelledByPeer(Guid transferId, Guid userId) =>
+            cancelledTargets.TryAdd(CancelKey(transferId, userId), 0);
+
+        public Guid CancelIncoming(Guid transferId)
+        {
+            if (!incomingTransfers.TryRemove(transferId, out var transfer)) return Guid.Empty;
+
+            activeDownloads.TryRemove(transferId, out _);
+            transfer.Abort();
+            NotifySummary();
+
+            return transfer.SenderId;
+        }
+
+        internal void NoteSharedFile(string fileName, long size) =>
+            sharedFileKeys.TryAdd(SharedFileKey(fileName, size), 0);
+
+        private static readonly ConcurrentDictionary<string, string> fileOwners = new(StringComparer.OrdinalIgnoreCase);
+
+        public static string GetOwnerName(string path) =>
+            fileOwners.TryGetValue(path, out var name) ? name : string.Empty;
+
+        private static void RememberOwner(string path, string ownerName)
+        {
+            if (!string.IsNullOrEmpty(ownerName)) fileOwners[path] = ownerName;
         }
 
         private void RememberAnnounced(string filePath)
@@ -335,11 +417,16 @@ namespace MultiUserEdit.Commons
             {
                 var info = new FileInfo(filePath);
                 announcedFiles[filePath] = (info.LastWriteTimeUtc, info.Length);
+                NoteSharedFile(Path.GetFileName(filePath), info.Length);
             }
             catch { }
         }
 
-        public void ForgetAnnouncedFiles() => announcedFiles.Clear();
+        public void ForgetAnnouncedFiles()
+        {
+            announcedFiles.Clear();
+            sharedFileKeys.Clear();
+        }
 
         private static void NotifyBlocked(string fileName)
         {
@@ -368,7 +455,11 @@ namespace MultiUserEdit.Commons
         private static Task SendToTargetsAsync(SessionClient sessionClient, IReadOnlyList<string>? targetIds, object data) =>
             targetIds == null ? sessionClient.SendAsync(null, data) : sessionClient.SendToManyAsync(targetIds, data);
 
-        private async Task SendChunksAsync(string filePath, string fileName, Guid transferId,
+        private Task SendChunksAsync(string filePath, string fileName, Guid transferId,
+            SessionClient sessionClient, Guid executorId, IReadOnlyList<string>? targetIds) =>
+            Task.Run(() => SendChunksCoreAsync(filePath, fileName, transferId, sessionClient, executorId, targetIds));
+
+        private async Task SendChunksCoreAsync(string filePath, string fileName, Guid transferId,
             SessionClient sessionClient, Guid executorId, IReadOnlyList<string>? targetIds)
         {
             if (!File.Exists(filePath)) return;
@@ -377,6 +468,7 @@ namespace MultiUserEdit.Commons
             var fileTask = new FileTask
             {
                 FileName = fileName,
+                TransferId = transferId,
                 TotalBytes = fileInfo.Length,
                 TransferredBytes = 0
             };
@@ -398,10 +490,20 @@ namespace MultiUserEdit.Commons
                 await SendToTargetsAsync(sessionClient, targetIds, startEvt);
 
                 var buffer = new byte[ChunkSize];
-                await using var stream = File.OpenRead(filePath);
+                await using var stream = OpenForSequentialReadAsync(filePath);
+
+                var targetGuids = targetIds?
+                    .Select(id => Guid.TryParse(id, out var parsed) ? parsed : Guid.Empty)
+                    .ToArray();
 
                 for (int chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++)
                 {
+                    if (IsCancelledByEveryone(transferId, targetGuids))
+                    {
+                        Debug.WriteLine($"[MultiUserEdit] Every receiver cancelled: {fileName}");
+                        return;
+                    }
+
                     var read = await stream.ReadAtLeastAsync(buffer, buffer.Length, throwOnEndOfStream: false);
                     if (read <= 0) break;
 
@@ -413,9 +515,7 @@ namespace MultiUserEdit.Commons
                     await SendToTargetsAsync(sessionClient, targetIds, chunkEvt);
 
                     fileTask.TransferredBytes = Math.Min(fileTask.TotalBytes, fileTask.TransferredBytes + read);
-                    NotifySummary();
-
-                    await Task.Yield();
+                    NotifyProgress();
                 }
 
                 RecordSent(filePath, wasTransferred: true);
@@ -469,14 +569,60 @@ namespace MultiUserEdit.Commons
                 if (string.IsNullOrEmpty(localPath)) continue;
 
                 if (!File.Exists(localPath) || new FileInfo(localPath).Length != evt.FileSize) continue;
-                if (await ComputeHashAsync(localPath) != evt.Hash) continue;
 
-                Debug.WriteLine($"[MultiUserEdit] Reused local file (same content): {localPath}");
+                Debug.WriteLine($"[MultiUserEdit] Reused local file (same name and size): {localPath}");
                 TransferCompleted?.Invoke(evt.TransferId.ToString(), localPath);
                 return false;
             }
 
-            return true;
+            return await ConfirmReceiveAsync(evt);
+        }
+
+        private readonly ConcurrentDictionary<string, bool> receiveDecisions = new(StringComparer.OrdinalIgnoreCase);
+
+        private Task<bool> ConfirmReceiveAsync(FileAvailableEvent evt)
+        {
+            var settings = MultiUserEditSettings.Default;
+            if (!settings.ConfirmLargeFileReceive) return Task.FromResult(true);
+
+            var threshold = Math.Max(1, settings.LargeFileConfirmMegaBytes) * 1024L * 1024L;
+            if (evt.FileSize < threshold) return Task.FromResult(true);
+
+            var key = SharedFileKey(evt.FileName, evt.FileSize);
+            if (receiveDecisions.TryGetValue(key, out var remembered)) return Task.FromResult(remembered);
+
+            var accepted = AskReceive(evt.FileName, evt.FileSize, GetUserName?.Invoke(evt.ExecutorId) ?? string.Empty);
+            receiveDecisions[key] = accepted;
+
+            return Task.FromResult(accepted);
+        }
+
+        private static bool AskReceive(string fileName, long fileSize, string ownerName)
+        {
+            var sender = string.IsNullOrEmpty(ownerName) ? "ほかの参加者" : $"{ownerName} さん";
+            var message = $"{sender} から、サイズの大きい素材ファイルが届こうとしています。\n\n"
+                + $"ファイル名: {Path.GetFileName(fileName)}\n"
+                + $"サイズ: {FormatSize(fileSize)}\n\n"
+                + "受け取りますか？\n"
+                + "「いいえ」を選ぶと、このファイルは受信しません。";
+
+            var accepted = false;
+            System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+            {
+                accepted = System.Windows.MessageBox.Show(
+                    message,
+                    "大きい素材ファイルの受け取り",
+                    System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.Yes;
+            });
+
+            return accepted;
+        }
+
+        private static string FormatSize(long bytes)
+        {
+            if (bytes >= 1024L * 1024L * 1024L) return $"{bytes / (1024.0 * 1024.0 * 1024.0):F2} GB";
+            if (bytes >= 1024L * 1024L) return $"{bytes / (1024.0 * 1024.0):F1} MB";
+            return $"{bytes / 1024.0:F0} KB";
         }
 
         private async Task<string?> ComputeHashAsync(string filePath)
@@ -492,7 +638,7 @@ namespace MultiUserEdit.Commons
                     return cached.Hash;
                 }
 
-                await using var stream = File.OpenRead(filePath);
+                await using var stream = OpenForSequentialReadAsync(filePath);
                 var hashBytes = await System.Security.Cryptography.SHA256.HashDataAsync(stream);
                 var hash = Convert.ToHexStringLower(hashBytes);
 
@@ -525,17 +671,28 @@ namespace MultiUserEdit.Commons
                 return;
             }
 
+            if (receiveDecisions.TryGetValue(SharedFileKey(evt.FileName, evt.FileSize), out var accepted) && !accepted)
+            {
+                Debug.WriteLine($"[MultiUserEdit] Declined earlier, not receiving: {evt.FileName}");
+                return;
+            }
+
             var finalPath = MediaFileResolver.ResolveLocalTempPath(evt.FileName);
             var tempPath = Path.Combine(GetSaveDirectory(), $"{evt.TransferId}.tmp");
 
             var chunkSize = evt.ChunkSize > 0 ? evt.ChunkSize : ChunkSize;
 
-            incomingTransfers[evt.TransferId] = new IncomingTransfer(evt.FileName, finalPath, tempPath, evt.TotalChunks, chunkSize);
+            incomingTransfers[evt.TransferId] = new IncomingTransfer(evt.FileName, finalPath, tempPath, evt.TotalChunks, chunkSize)
+            {
+                SenderId = evt.ExecutorId
+            };
             activeDownloads[evt.TransferId] = new FileTask
             {
                 FileName = evt.FileName,
+                TransferId = evt.TransferId,
                 TotalBytes = evt.FileSize,
-                TransferredBytes = 0
+                TransferredBytes = 0,
+                OwnerName = GetUserName?.Invoke(evt.ExecutorId) ?? string.Empty
             };
 
             NotifySummary();
@@ -553,35 +710,56 @@ namespace MultiUserEdit.Commons
 
             transfer.LastActivityAt = DateTime.UtcNow;
 
-            int chunkLength;
+            byte[] chunkBytes;
             try
             {
-                var chunkBytes = Convert.FromBase64String(evt.Data);
-                chunkLength = chunkBytes.Length;
+                chunkBytes = Convert.FromBase64String(evt.Data);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] FileTransfer decode failed: {ex.Message}");
+                AbortTransfer(evt.TransferId, transfer);
+                return;
+            }
 
-                var stream = transfer.OpenStream();
-                stream.Position = (long)evt.ChunkIndex * transfer.ChunkSize;
-                stream.Write(chunkBytes, 0, chunkBytes.Length);
+            var transferId = evt.TransferId;
+            var chunkIndex = evt.ChunkIndex;
+
+            transfer.QueueWrite(() => WriteChunk(transferId, transfer, chunkIndex, chunkBytes));
+        }
+
+        private void WriteChunk(Guid transferId, IncomingTransfer transfer, int chunkIndex, byte[] chunkBytes)
+        {
+            try
+            {
+                if (!transfer.WriteChunk(chunkIndex, chunkBytes, chunkBytes.Length)) return;
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[MultiUserEdit] FileTransfer write failed: {ex.Message}");
-                AbortTransfer(evt.TransferId, transfer);
+                AbortTransfer(transferId, transfer);
                 return;
             }
 
             transfer.ReceivedChunks++;
 
-            if (activeDownloads.TryGetValue(evt.TransferId, out var downTask))
+            if (activeDownloads.TryGetValue(transferId, out var downTask))
             {
-                downTask.TransferredBytes = Math.Min(downTask.TotalBytes, downTask.TransferredBytes + chunkLength);
+                downTask.TransferredBytes = Math.Min(downTask.TotalBytes, downTask.TransferredBytes + chunkBytes.Length);
             }
-            NotifySummary();
+            NotifyProgress();
 
             if (transfer.ReceivedChunks < transfer.TotalChunks) return;
 
-            incomingTransfers.TryRemove(evt.TransferId, out _);
-            activeDownloads.TryRemove(evt.TransferId, out _);
+            FinishTransfer(transferId, transfer);
+        }
+
+        private void FinishTransfer(Guid transferId, IncomingTransfer transfer)
+        {
+            var ownerName = activeDownloads.TryGetValue(transferId, out var task) ? task.OwnerName : string.Empty;
+
+            incomingTransfers.TryRemove(transferId, out _);
+            activeDownloads.TryRemove(transferId, out _);
             NotifySummary();
 
             try
@@ -593,8 +771,10 @@ namespace MultiUserEdit.Commons
 
                 File.Move(transfer.TempPath, transfer.SavePath, overwrite: true);
                 receivedFiles[transfer.SavePath] = 0;
+                NoteSharedFile(Path.GetFileName(transfer.SavePath), new FileInfo(transfer.SavePath).Length);
+                RememberOwner(transfer.SavePath, ownerName);
 
-                TransferCompleted?.Invoke(evt.TransferId.ToString(), transfer.SavePath);
+                TransferCompleted?.Invoke(transferId.ToString(), transfer.SavePath);
             }
             catch (Exception ex)
             {
@@ -607,8 +787,33 @@ namespace MultiUserEdit.Commons
             incomingTransfers.TryRemove(transferId, out _);
             activeDownloads.TryRemove(transferId, out _);
 
-            transfer.CloseStream();
-            try { File.Delete(transfer.TempPath); } catch { }
+            transfer.Abort();
+
+            NotifySummary();
+        }
+
+        private bool IsCancelledByEveryone(Guid transferId, Guid[]? targetGuids)
+        {
+            if (targetGuids == null || targetGuids.Length == 0) return false;
+
+            return targetGuids.All(id => cancelledTargets.ContainsKey(CancelKey(transferId, id)));
+        }
+
+        private static FileStream OpenForSequentialReadAsync(string filePath) =>
+            new(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, ChunkSize,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
+
+        private static readonly TimeSpan ProgressNotifyInterval = TimeSpan.FromMilliseconds(200);
+
+        private long lastProgressNotifiedTicks;
+
+        private void NotifyProgress()
+        {
+            var now = DateTime.UtcNow.Ticks;
+            var previous = Interlocked.Read(ref lastProgressNotifiedTicks);
+
+            if (now - previous < ProgressNotifyInterval.Ticks) return;
+            if (Interlocked.CompareExchange(ref lastProgressNotifiedTicks, now, previous) != previous) return;
 
             NotifySummary();
         }
@@ -616,7 +821,7 @@ namespace MultiUserEdit.Commons
         private void NotifySummary()
         {
             var uploads = activeUploads.Values.ToList();
-            var downloads = activeDownloads.Values.ToList();
+            var downloads = activeDownloads.ToList();
 
             if (uploads.Count == 0 && downloads.Count == 0)
             {
@@ -624,12 +829,12 @@ namespace MultiUserEdit.Commons
                 return;
             }
 
-            var allTransfers = uploads.Concat(downloads).ToList();
+            var allTransfers = uploads.Concat(downloads.Select(pair => pair.Value)).ToList();
             long totalBytes = allTransfers.Sum(t => t.TotalBytes);
             long transferredBytes = allTransfers.Sum(t => t.TransferredBytes);
             double progress = totalBytes > 0 ? (double)transferredBytes / totalBytes * 100.0 : 0.0;
 
-            var rawName = (uploads.Count > 0 ? uploads : downloads).FirstOrDefault()?.FileName ?? string.Empty;
+            var rawName = allTransfers.FirstOrDefault()?.FileName ?? string.Empty;
             var currentFile = string.IsNullOrEmpty(rawName) ? string.Empty : Path.GetFileName(rawName.Replace('/', Path.DirectorySeparatorChar));
 
             var summary = new TransferSummary
@@ -642,17 +847,23 @@ namespace MultiUserEdit.Commons
                 [
                     .. uploads.Select(t => new TransferItemInfo
                     {
+                        TransferId = t.TransferId,
                         Name = t.FileName,
                         IsUpload = true,
+                        BytesPerSecond = t.BytesPerSecond,
+                        OwnerName = t.OwnerName,
                         TotalBytes = t.TotalBytes,
                         TransferredBytes = t.TransferredBytes
                     }),
-                    .. downloads.Select(t => new TransferItemInfo
+                    .. downloads.Select(pair => new TransferItemInfo
                     {
-                        Name = t.FileName,
+                        TransferId = pair.Key,
+                        Name = pair.Value.FileName,
                         IsUpload = false,
-                        TotalBytes = t.TotalBytes,
-                        TransferredBytes = t.TransferredBytes
+                        BytesPerSecond = pair.Value.BytesPerSecond,
+                        OwnerName = pair.Value.OwnerName,
+                        TotalBytes = pair.Value.TotalBytes,
+                        TransferredBytes = pair.Value.TransferredBytes
                     })
                 ]
             };
@@ -668,17 +879,14 @@ namespace MultiUserEdit.Commons
 
         public void CancelAll()
         {
-            foreach (var transfer in incomingTransfers.Values)
-            {
-                transfer.CloseStream();
-                try { File.Delete(transfer.TempPath); } catch { }
-            }
+            foreach (var transfer in incomingTransfers.Values) transfer.Abort();
 
             incomingTransfers.Clear();
             activeUploads.Clear();
             activeDownloads.Clear();
             announcements.Clear();
             announcingPaths.Clear();
+            cancelledTargets.Clear();
             NotifySummary();
         }
     }
