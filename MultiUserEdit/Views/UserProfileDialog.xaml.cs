@@ -37,8 +37,11 @@ namespace MultiUserEdit.Views
                 CanAddItems = participant.Permission.CanAddItems,
                 CanMoveItems = participant.Permission.CanMoveItems,
                 CanDeleteItems = participant.Permission.CanDeleteItems,
+                CanDeleteOthersItems = participant.Permission.CanDeleteOthersItems,
                 CanEditProperties = participant.Permission.CanEditProperties,
-                CanManageScenes = participant.Permission.CanManageScenes,
+                CanAddScenes = participant.Permission.CanAddScenes,
+                CanDeleteScenes = participant.Permission.CanDeleteScenes,
+                CanShareFiles = participant.Permission.CanShareFiles,
                 CanSyncSeekPosition = participant.Permission.CanSyncSeekPosition
             };
 
@@ -121,10 +124,13 @@ namespace MultiUserEdit.Views
             LiveMirrorRadio.IsChecked = perm.Level == PermissionLevel.LiveMirror;
 
             AddItemsCheck.IsChecked = perm.CanAddItems;
-            MoveItemsCheck.IsChecked = perm.CanMoveItems;
             DeleteItemsCheck.IsChecked = perm.CanDeleteItems;
+            DeleteOthersCheck.IsChecked = perm.CanDeleteOthersItems;
+            MoveItemsCheck.IsChecked = perm.CanMoveItems;
             EditPropsCheck.IsChecked = perm.CanEditProperties;
-            ManageScenesCheck.IsChecked = perm.CanManageScenes;
+            AddScenesCheck.IsChecked = perm.CanAddScenes;
+            DeleteScenesCheck.IsChecked = perm.CanDeleteScenes;
+            ShareFilesCheck.IsChecked = perm.CanShareFiles;
             SyncSeekCheck.IsChecked = perm.CanSyncSeekPosition;
         }
 
@@ -138,13 +144,9 @@ namespace MultiUserEdit.Views
 
         private void OnPresetChecked(object sender, RoutedEventArgs e)
         {
-            var preset = UserPermission.CreateFromLevel(GetSelectedLevel());
-            AddItemsCheck.IsChecked = preset.CanAddItems;
-            MoveItemsCheck.IsChecked = preset.CanMoveItems;
-            DeleteItemsCheck.IsChecked = preset.CanDeleteItems;
-            EditPropsCheck.IsChecked = preset.CanEditProperties;
-            ManageScenesCheck.IsChecked = preset.CanManageScenes;
-            SyncSeekCheck.IsChecked = preset.CanSyncSeekPosition;
+            if (AddItemsCheck == null) return;
+
+            LoadPermissionToUi(UserPermission.CreateFromLevel(GetSelectedLevel()));
         }
 
         private void OnSyncFromClick(object sender, RoutedEventArgs e)
@@ -183,8 +185,11 @@ namespace MultiUserEdit.Views
                 ResultPermission.CanAddItems = AddItemsCheck.IsChecked == true;
                 ResultPermission.CanMoveItems = MoveItemsCheck.IsChecked == true;
                 ResultPermission.CanDeleteItems = DeleteItemsCheck.IsChecked == true;
+                ResultPermission.CanDeleteOthersItems = DeleteOthersCheck.IsChecked == true;
                 ResultPermission.CanEditProperties = EditPropsCheck.IsChecked == true;
-                ResultPermission.CanManageScenes = ManageScenesCheck.IsChecked == true;
+                ResultPermission.CanAddScenes = AddScenesCheck.IsChecked == true;
+                ResultPermission.CanDeleteScenes = DeleteScenesCheck.IsChecked == true;
+                ResultPermission.CanShareFiles = ShareFilesCheck.IsChecked == true;
                 ResultPermission.CanSyncSeekPosition = SyncSeekCheck.IsChecked == true;
             }
 

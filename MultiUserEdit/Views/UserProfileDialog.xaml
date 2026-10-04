@@ -88,10 +88,15 @@
 
                             <TextBlock Text="詳細ルールのカスタマイズ" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
                             <CheckBox x:Name="AddItemsCheck" Content="アイテムの追加を許可" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="MoveItemsCheck" Content="アイテムの移動・サイズ変更を許可" Cursor="Hand" Margin="0,3" />
                             <CheckBox x:Name="DeleteItemsCheck" Content="アイテムの削除を許可" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="EditPropsCheck" Content="プロパティの編集を許可" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="ManageScenesCheck" Content="シーン（タイムライン）の作成・削除を許可" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="DeleteOthersCheck" Content="他の人が追加したアイテムも削除を許可"
+                                      IsEnabled="{Binding IsChecked, ElementName=DeleteItemsCheck}"
+                                      Cursor="Hand" Margin="18,2,0,3" FontSize="11" />
+                            <CheckBox x:Name="MoveItemsCheck" Content="アイテムの移動・長さの変更を許可" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="EditPropsCheck" Content="アイテムの編集を許可" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="AddScenesCheck" Content="シーン（タイムライン）の追加を許可" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="DeleteScenesCheck" Content="シーン（タイムライン）の削除を許可" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="ShareFilesCheck" Content="素材ファイルの送信を許可" Cursor="Hand" Margin="0,3" />
                             <CheckBox x:Name="SyncSeekCheck" Content="ホストのシーク位置・画面に自動追従する" Cursor="Hand" Margin="0,3" />
                         </StackPanel>
                     </ScrollViewer>

@@ -15,12 +15,27 @@ namespace MultiUserEdit.Commons
         private static readonly FieldInfo? CommandsField =
             CollectorField?.FieldType.GetField("commands", InstanceMembers);
 
+        private static readonly FieldInfo? IsUndoRedoingField =
+            typeof(UndoRedoManager).GetField("isUndoRedoing", InstanceMembers);
+
         public static bool IsAvailable => CollectorField != null && CommandsField != null;
 
-        public readonly struct Scope(UndoRedoManager? manager, object? collector, List<object>? snapshot) : IDisposable
+        public readonly struct Scope(UndoRedoManager? manager, object? collector, List<object>? snapshot, bool silenced = false) : IDisposable
         {
             public void Dispose()
             {
+                if (silenced && manager != null)
+                {
+                    try
+                    {
+                        IsUndoRedoingField?.SetValue(manager, false);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[MultiUserEdit] UndoRecordSuppressor unsilence failed: {ex.Message}");
+                    }
+                }
+
                 if (manager == null || collector == null || snapshot == null) return;
 
                 try
@@ -38,6 +53,22 @@ namespace MultiUserEdit.Commons
                 {
                     Debug.WriteLine($"[MultiUserEdit] UndoRecordSuppressor restore failed: {ex.Message}");
                 }
+            }
+        }
+
+        public static Scope SuppressSilently(UndoRedoManager? manager)
+        {
+            if (manager == null || IsUndoRedoingField == null) return Suppress(manager);
+
+            try
+            {
+                IsUndoRedoingField.SetValue(manager, true);
+                return new Scope(manager, null, null, silenced: true);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] UndoRecordSuppressor silence failed: {ex.Message}");
+                return Suppress(manager);
             }
         }
 

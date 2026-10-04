@@ -32,6 +32,7 @@ namespace MultiUserEdit.Commons.Events
     [JsonDerivedType(typeof(MissingResourceEvent), 36)]
     [JsonDerivedType(typeof(RoomMigrationEvent), 37)]
     [JsonDerivedType(typeof(RoomMigrationAckEvent), 38)]
+    [JsonDerivedType(typeof(FileTransferCancelEvent), 39)]
     public abstract record EditEvent
     {
         public DateTime DateTime { get; init; }

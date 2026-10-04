@@ -30,6 +30,23 @@
                                  IsChecked="{Binding Source={x:Static settings:MultiUserEditSettings.Default}, Path=StorageMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static models:FileStorageMode.Storage}}"
                                  Cursor="Hand" FontSize="12" Margin="0,4" 
                                  ToolTip="一時フォルダに保存して、次回以降もそこから読み込みます"/>
+
+                    <Separator Margin="0,8" />
+
+                    <CheckBox x:Name="ConfirmLargeReceiveCheck" Content="サイズの大きい素材ファイルを受け取る前に確認する"
+                              IsChecked="{Binding Source={x:Static settings:MultiUserEditSettings.Default}, Path=ConfirmLargeFileReceive}"
+                              Cursor="Hand" FontSize="12" Margin="0,4"
+                              ToolTip="大きいファイルが送られてきたとき、受け取るかどうかを先に確認します" />
+
+                    <StackPanel Orientation="Horizontal" Margin="18,2,0,0"
+                                IsEnabled="{Binding IsChecked, ElementName=ConfirmLargeReceiveCheck}">
+                        <TextBlock Text="確認するサイズ" FontSize="11" Opacity="0.75" VerticalAlignment="Center" />
+                        <TextBox Text="{Binding Source={x:Static settings:MultiUserEditSettings.Default}, Path=LargeFileConfirmMegaBytes, UpdateSourceTrigger=PropertyChanged}"
+                                 PreviewMouseWheel="OnInputPreviewMouseWheel"
+                                 Width="56" Height="24" Margin="8,0,4,0" Padding="4,2" FontSize="11"
+                                 VerticalContentAlignment="Center" TextAlignment="Right" MaxLength="6" />
+                        <TextBlock Text="MB 以上" FontSize="11" Opacity="0.75" VerticalAlignment="Center" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -45,9 +62,24 @@
                     <Grid Margin="0,8,0,4">
                         <TextBlock Text="共有可能な拡張子" FontSize="11" Opacity="0.75" VerticalAlignment="Center" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Button Click="OnCheckAllClick" Cursor="Hand" Padding="6,2" Margin="0" Content="すべて選択" FontSize="10" />
-                            <Button Click="OnUncheckAllClick" Cursor="Hand" Padding="6,2" Margin="0" Content="すべて解除" FontSize="10" />
-                            <Button Click="OnResetToDefaultClick" Cursor="Hand" Padding="6,2" Content="既定に戻す" FontSize="10" />
+                            <Button Click="OnCheckAllClick" Cursor="Hand" ToolTip="すべて選択"
+                                    Background="Transparent" BorderThickness="0" Padding="5,2" Margin="0">
+                                <Path Data="{DynamicResource {x:Static icons:GeometryKeys.CheckboxMultipleMarkedOutline}}"
+                                      Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
+                                      Width="14" Height="14" Stretch="Uniform" />
+                            </Button>
+                            <Button Click="OnUncheckAllClick" Cursor="Hand" ToolTip="すべて解除"
+                                    Background="Transparent" BorderThickness="0" Padding="5,2" Margin="0">
+                                <Path Data="{DynamicResource {x:Static icons:GeometryKeys.CheckboxMultipleBlankOutline}}"
+                                      Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
+                                      Width="14" Height="14" Stretch="Uniform" />
+                            </Button>
+                            <Button Click="OnResetToDefaultClick" Cursor="Hand" ToolTip="既定に戻す"
+                                    Background="Transparent" BorderThickness="0" Padding="5,2" Margin="0">
+                                <Path Data="{DynamicResource {x:Static icons:GeometryKeys.Restore}}"
+                                      Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
+                                      Width="14" Height="14" Stretch="Uniform" />
+                            </Button>
                         </StackPanel>
                     </Grid>
 

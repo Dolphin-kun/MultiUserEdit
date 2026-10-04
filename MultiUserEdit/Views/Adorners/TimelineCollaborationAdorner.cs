@@ -20,6 +20,7 @@ namespace MultiUserEdit.Views.Adorners
         private static readonly TimeSpan CanvasOffsetLifetime = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan MaxPlayheadExtrapolation = TimeSpan.FromSeconds(8);
         private static readonly TimeSpan PlayheadCorrectionDuration = TimeSpan.FromMilliseconds(400);
+        private static readonly TimeSpan RenderInterval = TimeSpan.FromMilliseconds(33);
         private const double RateSmoothing = 0.3;
 
         private Point? canvasOffset;
@@ -87,8 +88,12 @@ namespace MultiUserEdit.Views.Adorners
         private void UpdatePlaybackRefresh()
         {
             var localUserId = _session.LocalUserId;
+            var now = DateTime.UtcNow;
             var playing = _session.Participants.Any(p =>
-                p.UserId != localUserId && p.IsPlaying && p.Status != UserStatus.Disconnected);
+                p.UserId != localUserId
+                && p.IsPlaying
+                && p.Status != UserStatus.Disconnected
+                && now - p.FrameUpdatedAt < MaxPlayheadExtrapolation);
 
             if (playing == followingRendering) return;
             followingRendering = playing;
@@ -105,7 +110,17 @@ namespace MultiUserEdit.Views.Adorners
             }
         }
 
-        private void CompositionTarget_Rendering(object? sender, EventArgs e) => InvalidateVisual();
+        private DateTime lastRenderedAt;
+
+        private void CompositionTarget_Rendering(object? sender, EventArgs e)
+        {
+            var now = DateTime.UtcNow;
+            if (now - lastRenderedAt < RenderInterval) return;
+
+            lastRenderedAt = now;
+            UpdatePlaybackRefresh();
+            InvalidateVisual();
+        }
 
         private sealed class ChangeObserver<T>(Action onChanged) : IObserver<T>
         {

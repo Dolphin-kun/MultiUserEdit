@@ -323,7 +323,12 @@ namespace MultiUserEdit.Commons
         }
 
         public bool IsSpectator =>
-            !IsHost && CurrentUserPermission.Level is PermissionLevel.ReadOnly or PermissionLevel.LiveMirror;
+            !IsHost
+            && CurrentUserPermission.Level is PermissionLevel.ReadOnly or PermissionLevel.LiveMirror
+            && !CurrentUserPermission.CanAddItems
+            && !CurrentUserPermission.CanMoveItems
+            && !CurrentUserPermission.CanDeleteItems
+            && !CurrentUserPermission.CanEditProperties;
 
         private bool isHost;
         public bool IsHost
@@ -376,14 +381,21 @@ namespace MultiUserEdit.Commons
             adornerManager = new AdornerManager();
             fileTransferManager = new FileTransferManager
             {
-                GetPeerCount = () => Participants.Count(p => p.UserId != LocalUserId)
+                GetPeerCount = () => Participants.Count(p => p.UserId != LocalUserId),
+                GetUserName = GetParticipantName,
+                CanShareFiles = () => IsHost || CurrentUserPermission.CanShareFiles
             };
             eventSender = new EditEventSender(sessionClient, fileTransferManager, () => LocalUserId)
             {
                 IsItemAlive = item => Scenes?.Timelines.Any(timeline => timeline.Items.Contains(item)) ?? false,
                 IsSendingSuppressed = () => IsSpectator
             };
-            timelineSyncManager = new TimelineSyncManager(eventSender, () => isApplyingRemoteEvent, IsItemEditableLocally);
+            timelineSyncManager = new TimelineSyncManager(eventSender, () => isApplyingRemoteEvent, IsItemEditableLocally)
+            {
+                RejectAddition = RejectRestrictedAddition,
+                RejectRemoval = RejectRestrictedRemoval,
+                NoteLocalAddition = NoteLocallyAddedItem
+            };
             characterShareManager = new CharacterShareManager(
                 sessionClient,
                 fileTransferManager,
@@ -607,6 +619,8 @@ namespace MultiUserEdit.Commons
         private void PresenceTimer_Tick(object? sender, EventArgs e)
         {
             UpdateRoomMigration();
+            ExpireStalePlayback();
+            CheckForSilentConnection();
 
             var now = DateTime.Now;
             foreach (var p in Participants)
@@ -714,7 +728,7 @@ namespace MultiUserEdit.Commons
 
             var currentTimelines = Scenes.Timelines.ToList();
 
-            if (!CurrentUserPermission.CanManageScenes && currentTimelines.Count > scenesSnapshot.Count)
+            if (!CurrentUserPermission.CanAddScenes && currentTimelines.Count > scenesSnapshot.Count)
             {
                 var newlyAdded = currentTimelines.Except(scenesSnapshot).ToList();
                 var previous = isApplyingRemoteEvent;
@@ -773,13 +787,13 @@ namespace MultiUserEdit.Commons
 
         private async void SendSceneAddedAsync(int index, string name)
         {
-            if (!CurrentUserPermission.CanManageScenes) return;
+            if (!CurrentUserPermission.CanAddScenes) return;
             await eventSender.SendSceneAddedAsync(index, name);
         }
 
         private async void SendSceneRemovedAsync(int index)
         {
-            if (!CurrentUserPermission.CanManageScenes) return;
+            if (!CurrentUserPermission.CanDeleteScenes) return;
             await eventSender.SendSceneRemovedAsync(index);
         }
 
@@ -789,8 +803,11 @@ namespace MultiUserEdit.Commons
             GlobalDefaultPermission.CanAddItems = newPerm.CanAddItems;
             GlobalDefaultPermission.CanMoveItems = newPerm.CanMoveItems;
             GlobalDefaultPermission.CanDeleteItems = newPerm.CanDeleteItems;
+            GlobalDefaultPermission.CanDeleteOthersItems = newPerm.CanDeleteOthersItems;
             GlobalDefaultPermission.CanEditProperties = newPerm.CanEditProperties;
-            GlobalDefaultPermission.CanManageScenes = newPerm.CanManageScenes;
+            GlobalDefaultPermission.CanAddScenes = newPerm.CanAddScenes;
+            GlobalDefaultPermission.CanDeleteScenes = newPerm.CanDeleteScenes;
+            GlobalDefaultPermission.CanShareFiles = newPerm.CanShareFiles;
 
             foreach (var p in Participants)
             {
@@ -826,8 +843,11 @@ namespace MultiUserEdit.Commons
                 GlobalDefaultPermission.CanAddItems = evt.Permission.CanAddItems;
                 GlobalDefaultPermission.CanMoveItems = evt.Permission.CanMoveItems;
                 GlobalDefaultPermission.CanDeleteItems = evt.Permission.CanDeleteItems;
+                GlobalDefaultPermission.CanDeleteOthersItems = evt.Permission.CanDeleteOthersItems;
                 GlobalDefaultPermission.CanEditProperties = evt.Permission.CanEditProperties;
-                GlobalDefaultPermission.CanManageScenes = evt.Permission.CanManageScenes;
+                GlobalDefaultPermission.CanAddScenes = evt.Permission.CanAddScenes;
+                GlobalDefaultPermission.CanDeleteScenes = evt.Permission.CanDeleteScenes;
+                GlobalDefaultPermission.CanShareFiles = evt.Permission.CanShareFiles;
 
                 if (!IsHost)
                 {
@@ -1058,7 +1078,8 @@ namespace MultiUserEdit.Commons
                     }
                 }
 
-                var itemJson = MediaFileResolver.ResolveJsonFileReferences(onlineItem.ItemJson, itemType, onlineItem.MediaFileNames);
+                var itemJson = ItemJsonSanitizer.RemoveUnknownEnumValues(
+                    MediaFileResolver.ResolveJsonFileReferences(onlineItem.ItemJson, itemType, onlineItem.MediaFileNames));
 
                 if (JsonConvert.DeserializeObject(itemJson, itemType, ItemSerializerOptions.Default) is not IItem item) return;
 
@@ -1149,19 +1170,20 @@ namespace MultiUserEdit.Commons
 
         public bool IsLargeRoom => SessionClient.IsLargeRoom(RoomId);
 
-        private const string RelayConnectionFailedMessage =
+        private static string RelayConnectionFailedMessage(string detail) =>
             "大きい部屋用の中継サーバーに接続できませんでした。\n\n"
-            + "サーバーが停止しているか、通信が遮断されている可能性があります。\n"
-            + "ホストに状況を確認してください。";
+            + $"原因: {detail}\n\n"
+            + "小さい部屋は別のサーバーを使うため、こちらだけつながらない場合はお使いの回線やセキュリティソフトが原因のことが多いです。\n"
+            + "この画面をホストに伝えてください。";
 
         private static async Task<bool> ConfirmLargeRoomAsync()
         {
-            var reachable = await RelayAvailabilityChecker.IsAvailableAsync();
+            var (reachable, detail) = await RelayAvailabilityChecker.CheckAsync();
             if (reachable) return true;
 
             return MessageBox.Show(
-                "大きい部屋用の中継サーバーに接続できませんでした。\n"
-                + "サーバーが停止しているか、通信が遮断されている可能性があります。\n\n"
+                "大きい部屋用の中継サーバーに接続できませんでした。\n\n"
+                + $"原因: {detail}\n\n"
                 + "このまま作成しますか？（参加者も接続できない可能性があります）",
                 "中継サーバーに接続できません",
                 MessageBoxButton.YesNo) == MessageBoxResult.Yes;
@@ -1247,8 +1269,10 @@ namespace MultiUserEdit.Commons
 
                 if (IsCurrent() && SessionClient.IsLargeRoom(targetRoomId))
                 {
+                    var detail = RelayAvailabilityChecker.Describe(ex);
+
                     Application.Current?.Dispatcher.InvokeAsync(() => MessageBox.Show(
-                        RelayConnectionFailedMessage,
+                        RelayConnectionFailedMessage(detail),
                         "接続エラー",
                         MessageBoxButton.OK));
                 }
@@ -1307,6 +1331,7 @@ namespace MultiUserEdit.Commons
                 InputRoomId = string.Empty;
                 Participants.Clear();
                 locallyLockedItems.Clear();
+                lock (locallyAddedItems) locallyAddedItems.Clear();
                 lockedItemsReceivedAt.Clear();
                 LockedItems.Clear();
                 OperatingItems.Clear();
@@ -1363,27 +1388,46 @@ namespace MultiUserEdit.Commons
 
         private void DrainReceivedEvents()
         {
-            while (true)
+            try
             {
-                EditEvent next;
+                while (true)
+                {
+                    EditEvent next;
+                    bool more;
+                    lock (receivedEvents)
+                    {
+                        if (receivedEvents.Count == 0) return;
+                        next = receivedEvents.Dequeue();
+                        more = receivedEvents.Count > 0;
+                    }
+
+                    try
+                    {
+                        ApplyEvent(next, suppressRedraw: more);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[MultiUserEdit] apply event failed: {ex.Message}");
+                    }
+                }
+            }
+            finally
+            {
+                bool rerun;
                 lock (receivedEvents)
                 {
-                    if (receivedEvents.Count == 0)
-                    {
-                        receivedFlushScheduled = false;
-                        return;
-                    }
-                    next = receivedEvents.Dequeue();
+                    rerun = receivedEvents.Count > 0;
+                    receivedFlushScheduled = rerun;
                 }
 
-                ApplyEvent(next);
+                if (rerun) Application.Current?.Dispatcher.InvokeAsync(DrainReceivedEvents);
             }
         }
 
-        private void ApplyEvent(EditEvent editEvent)
+        private void ApplyEvent(EditEvent editEvent, bool suppressRedraw = false)
         {
             UpdateParticipantActivity(editEvent.ExecutorId);
-            DispatchEvent(editEvent);
+            DispatchEvent(editEvent, suppressRedraw);
             NoteRemoteOperation(editEvent);
         }
 
@@ -1457,6 +1501,16 @@ namespace MultiUserEdit.Commons
             {
                 HandleHostVersionMismatch(evt.Version);
                 return;
+            }
+
+            if (IsHost && !evt.IsReply)
+            {
+                var permissionEvt = new PermissionUpdatedEvent(null, GlobalDefaultPermission)
+                {
+                    DateTime = DateTime.UtcNow,
+                    ExecutorId = LocalUserId
+                };
+                _ = sessionClient.SendAsync(evt.UserId.ToString(), permissionEvt);
             }
 
             if (!evt.IsReply)
@@ -1575,13 +1629,17 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        private void DispatchEvent(EditEvent editEvent)
+        private void DispatchEvent(EditEvent editEvent) => DispatchEvent(editEvent, suppressRedraw: false);
+
+        private void DispatchEvent(EditEvent editEvent, bool suppressRedraw)
         {
             if (activeViewModel == null) return;
 
             var previous = isApplyingRemoteEvent;
             isApplyingRemoteEvent = true;
-            using var undoScope = UndoRecordSuppressor.Suppress(undoRedoManager);
+            using var undoScope = suppressRedraw
+                ? UndoRecordSuppressor.SuppressSilently(undoRedoManager)
+                : UndoRecordSuppressor.Suppress(undoRedoManager);
             try
             {
                 eventDispatcher.Dispatch(editEvent, activeViewModel);
@@ -1702,6 +1760,78 @@ namespace MultiUserEdit.Commons
                 DateTime = DateTime.UtcNow,
                 ExecutorId = LocalUserId
             });
+        }
+
+        private static readonly TimeSpan SilentConnectionThreshold = TimeSpan.FromSeconds(90);
+
+        private DateTime lastSilentCheckAt = DateTime.UtcNow;
+
+        private void CheckForSilentConnection()
+        {
+            if (!IsConnected || isSwitchingRoom || isReconnecting) return;
+            if (Participants.Count <= 1) return;
+
+            var now = DateTime.UtcNow;
+            if (now - lastSilentCheckAt < SilentConnectionThreshold) return;
+
+            var silence = DateTime.Now - sessionClient.LastReceivedAt;
+            if (silence < SilentConnectionThreshold) return;
+
+            lastSilentCheckAt = now;
+            Debug.WriteLine($"[MultiUserEdit] no traffic for {silence.TotalSeconds:F0}s, reconnecting");
+
+            _ = ForceReconnectAsync();
+        }
+
+        private async Task ForceReconnectAsync()
+        {
+            var targetRoomId = RoomId;
+            if (string.IsNullOrEmpty(targetRoomId)) return;
+
+            try
+            {
+                isSwitchingRoom = true;
+                await sessionClient.StopAsync();
+                await sessionClient.StartAsync(targetRoomId, localUserRole == UserRole.Host, hostKey);
+                IsConnected = sessionClient.IsConnected;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] forced reconnect failed: {ex.Message}");
+            }
+            finally
+            {
+                isSwitchingRoom = false;
+                lastSilentCheckAt = DateTime.UtcNow;
+            }
+
+            if (!sessionClient.IsConnected) return;
+
+            BroadcastLocalPresence();
+
+            if (localUserRole == UserRole.Guest)
+            {
+                var host = Participants.FirstOrDefault(p => p.Role == UserRole.Host && p.UserId != LocalUserId);
+                _ = sessionClient.SendAsync(host?.UserId.ToString(), new StateDigestRequestEvent
+                {
+                    DateTime = DateTime.UtcNow,
+                    ExecutorId = LocalUserId
+                });
+            }
+        }
+
+        private static readonly TimeSpan PlayingStaleAfter = TimeSpan.FromSeconds(3);
+
+        private void ExpireStalePlayback()
+        {
+            var now = DateTime.UtcNow;
+            foreach (var participant in Participants)
+            {
+                if (!participant.IsPlaying) continue;
+                if (now - participant.FrameUpdatedAt < PlayingStaleAfter) continue;
+
+                participant.IsPlaying = false;
+            }
         }
 
         private void UpdateRoomMigration()
@@ -2097,7 +2227,7 @@ namespace MultiUserEdit.Commons
                 if (!keepWaiting)
                 {
                     watchedHostId = Guid.Empty;
-                    await StopNetworkAsync();
+                    AskWhatToKeepAfterHostLeft("ホストとの接続が復帰しなかったため、切断します。");
                     return;
                 }
             }
@@ -2111,8 +2241,7 @@ namespace MultiUserEdit.Commons
             {
                 if (evt.IsHost)
                 {
-                    MessageBox.Show("ホストがルームを終了したため、接続が切断されました。", "ルーム終了", MessageBoxButton.OK);
-                    _ = StopNetworkAsync();
+                    AskWhatToKeepAfterHostLeft("ホストがルームを終了したため、接続が切断されました。");
                 }
                 else
                 {
@@ -2124,6 +2253,46 @@ namespace MultiUserEdit.Commons
                     }
                 }
             });
+        }
+
+        private void AskWhatToKeepAfterHostLeft(string reason)
+        {
+            var keep = MessageBox.Show(
+                reason + "\n\n"
+                + "共同編集で作ったタイムラインを、このプロジェクトに残しますか？\n\n"
+                + "「はい」…… そのまま残して編集を続けます。\n"
+                + "「いいえ」… 共同編集で追加されたアイテムをすべて削除します。",
+                "ルーム終了",
+                MessageBoxButton.YesNo) == MessageBoxResult.Yes;
+
+            if (!keep) ClearAllTimelines();
+
+            _ = StopNetworkAsync();
+        }
+
+        private void ClearAllTimelines()
+        {
+            if (Scenes == null) return;
+
+            var previous = isApplyingRemoteEvent;
+            isApplyingRemoteEvent = true;
+            try
+            {
+                using var undoScope = UndoRecordSuppressor.Suppress(undoRedoManager);
+                foreach (var timeline in Scenes.Timelines)
+                {
+                    var items = timeline.Items.ToArray();
+                    if (items.Length > 0) timeline.DeleteItems(items);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] could not clear the timeline: {ex.Message}");
+            }
+            finally
+            {
+                isApplyingRemoteEvent = previous;
+            }
         }
 
         internal void HandleItemLockedEvent(ItemLockedEvent evt)
@@ -2168,8 +2337,58 @@ namespace MultiUserEdit.Commons
 
             if (!IsHost && CurrentUserPermission.CanSyncSeekPosition && p.Role == UserRole.Host)
             {
-                _ = SyncPlaybackStateAsync(evt.CurrentFrame, evt.IsPlaying);
+                QueuePlaybackSync(evt.CurrentFrame, evt.IsPlaying);
             }
+        }
+
+        private static readonly TimeSpan SeekApplyInterval = TimeSpan.FromMilliseconds(120);
+
+        private readonly System.Threading.Lock seekLock = new();
+        private (int Frame, bool IsPlaying)? pendingSeek;
+        private DateTime lastSeekAppliedAt = DateTime.MinValue;
+        private bool seekFlushScheduled;
+
+        private void QueuePlaybackSync(int frame, bool isPlaying)
+        {
+            lock (seekLock)
+            {
+                pendingSeek = (frame, isPlaying);
+
+                var now = DateTime.UtcNow;
+                var waited = now - lastSeekAppliedAt;
+
+                if (waited >= SeekApplyInterval)
+                {
+                    lastSeekAppliedAt = now;
+                    pendingSeek = null;
+                    _ = SyncPlaybackStateAsync(frame, isPlaying);
+                    return;
+                }
+
+                if (seekFlushScheduled) return;
+                seekFlushScheduled = true;
+
+                var delay = SeekApplyInterval - waited;
+                _ = Task.Delay(delay).ContinueWith(
+                    _ => Application.Current?.Dispatcher.InvokeAsync(FlushPendingSeek),
+                    TaskScheduler.Default);
+            }
+        }
+
+        private void FlushPendingSeek()
+        {
+            (int Frame, bool IsPlaying) target;
+            lock (seekLock)
+            {
+                seekFlushScheduled = false;
+                if (pendingSeek == null) return;
+
+                target = pendingSeek.Value;
+                pendingSeek = null;
+                lastSeekAppliedAt = DateTime.UtcNow;
+            }
+
+            _ = SyncPlaybackStateAsync(target.Frame, target.IsPlaying);
         }
 
         private int lastAppliedRemoteFrame = -1;
@@ -2249,6 +2468,25 @@ namespace MultiUserEdit.Commons
         internal void HandleFileChunk(FileChunkEvent evt)
         {
             fileTransferManager.HandleChunk(evt);
+        }
+
+        internal void HandleFileTransferCancel(FileTransferCancelEvent evt)
+        {
+            fileTransferManager.NoteCancelledByPeer(evt.TransferId, evt.CancelledBy);
+        }
+
+        public void CancelIncomingTransfer(Guid transferId)
+        {
+            var senderId = fileTransferManager.CancelIncoming(transferId);
+            if (senderId == Guid.Empty) return;
+
+            var evt = new FileTransferCancelEvent(transferId, LocalUserId)
+            {
+                DateTime = DateTime.UtcNow,
+                ExecutorId = LocalUserId
+            };
+
+            _ = sessionClient.SendAsync(senderId.ToString(), evt);
         }
 
         public Task SendFileAsync(string filePath) =>
@@ -2338,6 +2576,96 @@ namespace MultiUserEdit.Commons
         }
 
         internal bool IsReceivingFiles() => fileTransferManager.IsReceivingAny();
+
+        private readonly HashSet<Guid> locallyAddedItems = [];
+
+        private void NoteLocallyAddedItem(IItem item)
+        {
+            try
+            {
+                lock (locallyAddedItems) locallyAddedItems.Add(ItemIdManager.GetOrCreateId(item));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] could not remember a local addition: {ex.Message}");
+            }
+        }
+
+        private bool WasAddedLocally(IItem item)
+        {
+            var itemId = ItemIdManager.GetOrCreateId(item);
+
+            lock (locallyAddedItems) return locallyAddedItems.Contains(itemId);
+        }
+
+        private bool RejectRestrictedRemoval(IReadOnlyList<IItem> removed, Timeline timeline)
+        {
+            if (!IsConnected || IsHost) return false;
+
+            var othersOnly = CurrentUserPermission.CanDeleteItems
+                && !CurrentUserPermission.CanDeleteOthersItems
+                && removed.Any(item => !WasAddedLocally(item));
+
+            if (CurrentUserPermission.CanDeleteItems && !othersOnly) return false;
+
+            var previous = isApplyingRemoteEvent;
+            isApplyingRemoteEvent = true;
+            try
+            {
+                using var undoScope = UndoRecordSuppressor.Suppress(undoRedoManager);
+                foreach (var item in removed) timeline.TryAddItems([item], item.Frame, item.Layer, false);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] could not restore a restricted removal: {ex.Message}");
+            }
+            finally
+            {
+                isApplyingRemoteEvent = previous;
+            }
+
+            if (othersOnly)
+            {
+                ErrorNotifier.NotifyOnce(
+                    "アイテムを削除できません",
+                    "ホストの設定により、自分が追加したアイテムだけを削除できます。\n削除したアイテムは元に戻されました。");
+            }
+            else
+            {
+                ErrorNotifier.NotifyOnce(
+                    "アイテムを削除できません",
+                    "ホストの設定により、この部屋ではアイテムを削除できません。\n削除したアイテムは元に戻されました。");
+            }
+
+            return true;
+        }
+
+        private bool RejectRestrictedAddition(IReadOnlyList<IItem> added, Timeline timeline)
+        {
+            if (!IsConnected || IsHost || CurrentUserPermission.CanAddItems) return false;
+
+            var previous = isApplyingRemoteEvent;
+            isApplyingRemoteEvent = true;
+            try
+            {
+                using var undoScope = UndoRecordSuppressor.Suppress(undoRedoManager);
+                timeline.DeleteItems([.. added]);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] could not revert a restricted addition: {ex.Message}");
+            }
+            finally
+            {
+                isApplyingRemoteEvent = previous;
+            }
+
+            ErrorNotifier.NotifyOnce(
+                "アイテムを追加できません",
+                "ホストの設定により、この部屋ではアイテムを追加できません。\n追加したアイテムは取り消されました。");
+
+            return true;
+        }
 
         internal bool IsItemEditableLocally(Guid itemId) =>
             locallyLockedItems.ContainsKey(itemId) || !LockedItems.ContainsKey(itemId);

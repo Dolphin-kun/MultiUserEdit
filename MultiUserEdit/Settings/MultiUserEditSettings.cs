@@ -47,6 +47,20 @@ namespace MultiUserEdit.Settings
             set => Set(ref confirmBeforeFileSend, value);
         }
 
+        private bool confirmLargeFileReceive = true;
+        public bool ConfirmLargeFileReceive
+        {
+            get => confirmLargeFileReceive;
+            set => Set(ref confirmLargeFileReceive, value);
+        }
+
+        private int largeFileConfirmMegaBytes = 100;
+        public int LargeFileConfirmMegaBytes
+        {
+            get => largeFileConfirmMegaBytes;
+            set => Set(ref largeFileConfirmMegaBytes, Math.Clamp(value, 1, 100000));
+        }
+
         private string allowedExtensions = Commons.Models.FileExtensionCatalog.DefaultCsv;
         public string AllowedExtensions
         {

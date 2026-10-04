@@ -37,7 +37,12 @@ namespace MultiUserEdit.Commons
                 pending.Clear();
                 reportedFonts.Clear();
                 reportedPlugins.Clear();
+                reportedFontOwners.Clear();
+                reportedPluginOwners.Clear();
+                alreadyToldAboutFont.Clear();
+                alreadyToldAboutPlugin.Clear();
                 scheduleGeneration++;
+                reportGeneration++;
             }
         }
 
@@ -173,22 +178,97 @@ namespace MultiUserEdit.Commons
                 MessageBoxButton.OK);
         }
 
-        public static void NotifyReportedByPeer(string peerName, IReadOnlyList<string> fonts, IReadOnlyList<string> plugins)
+        private static readonly Dictionary<string, SortedSet<string>> reportedFontOwners = [];
+        private static readonly Dictionary<string, SortedSet<string>> reportedPluginOwners = [];
+        private static readonly HashSet<string> alreadyToldAboutFont = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly HashSet<string> alreadyToldAboutPlugin = new(StringComparer.OrdinalIgnoreCase);
+        private static int reportGeneration;
+
+        public static void NotifyReportedByPeer(string peerName, string[] fonts, string[] plugins)
         {
-            if (fonts.Count == 0 && plugins.Count == 0) return;
+            if (fonts.Length == 0 && plugins.Length == 0) return;
+
+            lock (gate)
+            {
+                Collect(reportedFontOwners, fonts, peerName, alreadyToldAboutFont);
+                Collect(reportedPluginOwners, plugins, peerName, alreadyToldAboutPlugin);
+
+                if (reportedFontOwners.Count == 0 && reportedPluginOwners.Count == 0) return;
+
+                var generation = ++reportGeneration;
+                _ = Task.Delay(QuietPeriod).ContinueWith(
+                    _ => Application.Current?.Dispatcher.InvokeAsync(() => FlushReports(generation)),
+                    TaskScheduler.Default);
+            }
+        }
+
+        private static void Collect(Dictionary<string, SortedSet<string>> target, string[] names, string peerName, HashSet<string> alreadyTold)
+        {
+            foreach (var name in names)
+            {
+                if (alreadyTold.Contains(name)) continue;
+
+                if (!target.TryGetValue(name, out var owners))
+                {
+                    owners = new SortedSet<string>(StringComparer.Ordinal);
+                    target[name] = owners;
+                }
+
+                if (!string.IsNullOrWhiteSpace(peerName)) owners.Add(peerName);
+            }
+        }
+
+        private static void FlushReports(int generation)
+        {
+            List<string> fontLines;
+            List<string> pluginLines;
+
+            lock (gate)
+            {
+                if (generation != reportGeneration) return;
+
+                fontLines = BuildLines(reportedFontOwners, alreadyToldAboutFont);
+                pluginLines = BuildLines(reportedPluginOwners, alreadyToldAboutPlugin);
+                reportedFontOwners.Clear();
+                reportedPluginOwners.Clear();
+            }
+
+            if (fontLines.Count == 0 && pluginLines.Count == 0) return;
 
             var sections = new List<string>();
-            if (plugins.Count > 0) sections.Add($"【プラグイン】\n{Format(plugins)}");
-            if (fonts.Count > 0) sections.Add($"【フォント】\n{Format(fonts)}");
+            if (pluginLines.Count > 0) sections.Add($"【プラグイン】\n{string.Join("\n", pluginLines)}");
+            if (fontLines.Count > 0) sections.Add($"【フォント】\n{string.Join("\n", fontLines)}");
 
             MessageBox.Show(
-                $"{peerName} さんの環境に、あなたが使用しているものがありません。\n\n{string.Join("\n\n", sections)}\n"
-                + "相手の画面では、表示が異なるか、アイテムが表示されていません。",
+                $"あなたが使用しているものが、相手の環境にありません。\n\n{string.Join("\n\n", sections)}\n"
+                + "その参加者の画面では、表示が異なるか、アイテムが表示されていません。",
                 "相手の環境にないものがあります",
                 MessageBoxButton.OK);
         }
 
-        private static string Format(IReadOnlyList<string> names)
+        private static List<string> BuildLines(Dictionary<string, SortedSet<string>> source, HashSet<string> alreadyTold)
+        {
+            var lines = new List<string>();
+
+            foreach (var (name, owners) in source.OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
+            {
+                if (!alreadyTold.Add(name)) continue;
+
+                var who = owners.Count switch
+                {
+                    0 => string.Empty,
+                    1 => $"（{owners.First()} さん）",
+                    <= 3 => $"（{string.Join("、", owners)} さん）",
+                    _ => $"（{owners.First()} さん ほか {owners.Count - 1} 人）"
+                };
+
+                lines.Add("・" + name + who);
+            }
+
+            return lines;
+        }
+
+        private static string Format(List<string> names)
         {
             var list = string.Join("\n", names.Take(MaxListed).Select(name => "・" + name));
             if (names.Count > MaxListed) list += $"\n ほか {names.Count - MaxListed} 件";
