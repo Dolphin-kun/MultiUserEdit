@@ -69,8 +69,9 @@ namespace MultiUserEdit.Commons.EventHandlers
                     return;
                 }
 
-                var itemJson = ItemJsonSanitizer.RemoveUnknownEnumValues(
-                    MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, itemType, editEvent.MediaFileNames, tachieBaseDirectory));
+                var itemJson = LocalMediaGuard.StripVoiceCache(
+                    ItemJsonSanitizer.RemoveUnknownEnumValues(
+                        MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, itemType, editEvent.MediaFileNames, tachieBaseDirectory)));
 
                 ResourceAvailabilityChecker.Notify(editEvent.ItemId, editEvent.ExecutorId,
                     viewModel.GetUserName(editEvent.ExecutorId), itemJson, null);
@@ -78,12 +79,16 @@ namespace MultiUserEdit.Commons.EventHandlers
                 var item = AddItem(editEvent, viewModel, timeline, itemType, itemJson);
                 if (item == null) return;
 
+                VoiceSynthesizer.Request(item);
+
                 var pendingFiles = MediaFileResolver.GetMissingFileNames(editEvent.MediaFileNames, tachieBaseDirectory);
                 if (canWait && pendingFiles.Count > 0)
                 {
                     TransferWaiter.WhenFilesReady(viewModel, pendingFiles, () =>
                         Newtonsoft.Json.JsonConvert.PopulateObject(
-                            MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, itemType, editEvent.MediaFileNames, tachieBaseDirectory),
+                            LocalMediaGuard.StripVoiceCache(LocalMediaGuard.Apply(
+                                MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, itemType, editEvent.MediaFileNames, tachieBaseDirectory),
+                                item)),
                             item,
                             ItemSerializerOptions.Default));
                 }

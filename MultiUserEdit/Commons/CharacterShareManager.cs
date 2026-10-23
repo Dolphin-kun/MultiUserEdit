@@ -3,6 +3,7 @@ using MultiUserEdit.Commons.Events;
 using MultiUserEdit.Networking;
 using MultiUserEdit.ViewModels;
 using MultiUserEdit.Views;
+using Microsoft.Win32;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.IO;
@@ -161,6 +162,52 @@ namespace MultiUserEdit.Commons
             Decide(evt.CharacterName, linked?.Name ?? evt.CharacterName);
         }
 
+        private static void ApplyCustomVoiceDirectory(Character character, string sharedName)
+        {
+            if (!character.CustomVoiceIsEnabled) return;
+            if (!string.IsNullOrEmpty(character.CustomVoiceDirectory)) return;
+
+            if (CustomVoiceDirectoryStore.Get(sharedName) is { } remembered)
+            {
+                character.CustomVoiceDirectory = remembered;
+                return;
+            }
+
+            var chosen = AskForCustomVoiceDirectory(character.Name);
+            if (string.IsNullOrEmpty(chosen)) return;
+
+            character.CustomVoiceDirectory = chosen;
+            CustomVoiceDirectoryStore.Set(sharedName, chosen);
+        }
+
+        private static string? AskForCustomVoiceDirectory(string characterName)
+        {
+            var answer = MessageBox.Show(
+                $"キャラクター「{characterName}」はカスタムボイスを使用しています。\n"
+                + "音声ファイルは共有されないため、お使いの環境にある音声フォルダを指定してください。\n\n"
+                + "一度指定すると、次からは自動で設定されます。\n"
+                + "今すぐ指定しますか？（あとから YMM4 のキャラクター設定でも変更できます）",
+                "カスタムボイスのフォルダ",
+                MessageBoxButton.YesNo);
+
+            if (answer != MessageBoxResult.Yes) return null;
+
+            try
+            {
+                var dialog = new OpenFolderDialog
+                {
+                    Title = $"「{characterName}」の音声フォルダを選択"
+                };
+
+                return dialog.ShowDialog() == true ? dialog.FolderName : null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] Custom voice folder dialog failed: {ex.Message}");
+                return null;
+            }
+        }
+
         private static bool TryAskNewName(string suggestedName, IReadOnlyList<Character> characters, out string newName)
         {
             var existingNames = characters.Select(c => c.Name).ToList();
@@ -250,6 +297,8 @@ namespace MultiUserEdit.Commons
                     character.Name = GetUniqueName(
                         string.IsNullOrWhiteSpace(requestedName) ? evt.CharacterName : requestedName,
                         characters.Select(c => c.Name));
+
+                    ApplyCustomVoiceDirectory(character, evt.CharacterName);
 
                     characters.Add(character);
                     CharacterSettingsAccessor.Save();

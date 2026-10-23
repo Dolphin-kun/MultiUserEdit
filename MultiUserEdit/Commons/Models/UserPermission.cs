@@ -12,6 +12,9 @@
         public bool CanAddScenes { get; set; } = true;
         public bool CanDeleteScenes { get; set; } = true;
         public bool CanShareFiles { get; set; } = true;
+        public bool CanShareVideos { get; set; } = true;
+        public bool CanShareImages { get; set; } = true;
+        public bool CanShareAudio { get; set; } = true;
         public bool CanSyncSeekPosition { get; set; } = false;
 
         public static UserPermission CreateFromLevel(PermissionLevel level)
@@ -29,6 +32,9 @@
                     CanAddScenes = true,
                     CanDeleteScenes = true,
                     CanShareFiles = true,
+                    CanShareVideos = true,
+                    CanShareImages = true,
+                    CanShareAudio = true,
                     CanSyncSeekPosition = false
                 },
                 PermissionLevel.Standard => new UserPermission
@@ -42,6 +48,9 @@
                     CanAddScenes = false,
                     CanDeleteScenes = false,
                     CanShareFiles = true,
+                    CanShareVideos = true,
+                    CanShareImages = true,
+                    CanShareAudio = true,
                     CanSyncSeekPosition = false
                 },
                 PermissionLevel.ReadOnly => new UserPermission
@@ -55,6 +64,9 @@
                     CanAddScenes = false,
                     CanDeleteScenes = false,
                     CanShareFiles = false,
+                    CanShareVideos = false,
+                    CanShareImages = false,
+                    CanShareAudio = false,
                     CanSyncSeekPosition = false
                 },
                 PermissionLevel.LiveMirror => new UserPermission
@@ -68,6 +80,9 @@
                     CanAddScenes = false,
                     CanDeleteScenes = false,
                     CanShareFiles = false,
+                    CanShareVideos = false,
+                    CanShareImages = false,
+                    CanShareAudio = false,
                     CanSyncSeekPosition = true
                 },
                 _ => new UserPermission()

@@ -199,6 +199,7 @@ namespace MultiUserEdit.Commons
             void handler(object? s, PropertyChangedEventArgs e)
             {
                 if (getIsApplyingRemoteEventFunc()) return;
+                if (VoiceSynthesizer.IsSynthesizing(item)) return;
 
                 var timelineIndex = viewModel.Scenes?.Timelines.IndexOf(timeline) ?? 0;
                 var itemId = ItemIdManager.GetOrCreateId(item);

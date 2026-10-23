@@ -73,6 +73,9 @@ namespace MultiUserEdit.Views
             GlobalAddScenesCheck.IsChecked = perm.CanAddScenes;
             GlobalDeleteScenesCheck.IsChecked = perm.CanDeleteScenes;
             GlobalShareFilesCheck.IsChecked = perm.CanShareFiles;
+            GlobalShareVideosCheck.IsChecked = perm.CanShareVideos;
+            GlobalShareImagesCheck.IsChecked = perm.CanShareImages;
+            GlobalShareAudioCheck.IsChecked = perm.CanShareAudio;
             GlobalSyncSeekCheck.IsChecked = perm.CanSyncSeekPosition;
         }
 
@@ -97,6 +100,9 @@ namespace MultiUserEdit.Views
             GuestAddSceneText.Text = StateText(perm.CanAddScenes);
             GuestDeleteSceneText.Text = StateText(perm.CanDeleteScenes);
             GuestShareFilesText.Text = StateText(perm.CanShareFiles);
+            GuestShareVideosText.Text = StateText(perm.CanShareFiles && perm.CanShareVideos);
+            GuestShareImagesText.Text = StateText(perm.CanShareFiles && perm.CanShareImages);
+            GuestShareAudioText.Text = StateText(perm.CanShareFiles && perm.CanShareAudio);
             GuestSyncSeekText.Text = perm.CanSyncSeekPosition ? "オン" : "オフ";
         }
 
@@ -130,6 +136,9 @@ namespace MultiUserEdit.Views
                 CanAddScenes = GlobalAddScenesCheck.IsChecked == true,
                 CanDeleteScenes = GlobalDeleteScenesCheck.IsChecked == true,
                 CanShareFiles = GlobalShareFilesCheck.IsChecked == true,
+                CanShareVideos = GlobalShareVideosCheck.IsChecked == true,
+                CanShareImages = GlobalShareImagesCheck.IsChecked == true,
+                CanShareAudio = GlobalShareAudioCheck.IsChecked == true,
                 CanSyncSeekPosition = GlobalSyncSeekCheck.IsChecked == true
             };
 

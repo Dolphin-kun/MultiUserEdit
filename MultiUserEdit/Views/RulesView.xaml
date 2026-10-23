@@ -80,6 +80,15 @@
                     <StackPanel>
                         <TextBlock Text="その他" Style="{StaticResource SectionTitle}" />
                         <CheckBox x:Name="GlobalShareFilesCheck" Content="素材ファイルの送信" Style="{StaticResource RuleCheck}" />
+                        <CheckBox x:Name="GlobalShareVideosCheck" Content="動画"
+                                  IsEnabled="{Binding IsChecked, ElementName=GlobalShareFilesCheck}"
+                                  Style="{StaticResource RuleCheck}" Margin="18,2,0,2" FontSize="11" />
+                        <CheckBox x:Name="GlobalShareImagesCheck" Content="画像"
+                                  IsEnabled="{Binding IsChecked, ElementName=GlobalShareFilesCheck}"
+                                  Style="{StaticResource RuleCheck}" Margin="18,2,0,2" FontSize="11" />
+                        <CheckBox x:Name="GlobalShareAudioCheck" Content="音声"
+                                  IsEnabled="{Binding IsChecked, ElementName=GlobalShareFilesCheck}"
+                                  Style="{StaticResource RuleCheck}" Margin="18,2,0,4" FontSize="11" />
                         <CheckBox x:Name="GlobalSyncSeekCheck" Content="ホストの再生位置に追従する" Style="{StaticResource RuleCheck}" />
                     </StackPanel>
                 </Border>
@@ -144,6 +153,18 @@
                         <Grid Style="{StaticResource RuleRow}">
                             <TextBlock Text="　素材ファイルの送信" FontSize="12" />
                             <TextBlock x:Name="GuestShareFilesText" Text="許可" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right" />
+                        </Grid>
+                        <Grid Style="{StaticResource RuleRow}">
+                            <TextBlock Text="　　動画" FontSize="11" Opacity="0.85" />
+                            <TextBlock x:Name="GuestShareVideosText" Text="許可" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right" />
+                        </Grid>
+                        <Grid Style="{StaticResource RuleRow}">
+                            <TextBlock Text="　　画像" FontSize="11" Opacity="0.85" />
+                            <TextBlock x:Name="GuestShareImagesText" Text="許可" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right" />
+                        </Grid>
+                        <Grid Style="{StaticResource RuleRow}">
+                            <TextBlock Text="　　音声" FontSize="11" Opacity="0.85" />
+                            <TextBlock x:Name="GuestShareAudioText" Text="許可" FontWeight="SemiBold" FontSize="11" HorizontalAlignment="Right" />
                         </Grid>
                         <Grid Style="{StaticResource RuleRow}">
                             <TextBlock Text="　ホストの再生位置に追従" FontSize="12" />

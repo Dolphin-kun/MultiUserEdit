@@ -128,7 +128,8 @@ namespace MultiUserEdit.Commons
 
                 var itemId = ItemIdManager.GetOrCreateId(item);
 
-                var (itemJson, filesToSend) = MediaFileResolver.SerializeForSync(item);
+                var (rawJson, filesToSend) = MediaFileResolver.SerializeForSync(item);
+                var itemJson = LocalMediaGuard.StripVoiceCache(rawJson);
                 var mediaFileNames = filesToSend.Count > 0 ? filesToSend.Where(file => file.ShouldTransfer).Select(file => file.Name).ToList() : null;
                 var characterName = CharacterResolver.GetCharacter(item)?.Name;
 
@@ -270,6 +271,7 @@ namespace MultiUserEdit.Commons
                 {
                     if (property.Name == TypeProperty) continue;
                     if (current[property.Name] != null) continue;
+                    if (MediaFileResolver.IsFilePathProperty(property.Name)) continue;
 
                     payload[property.Name] = JValue.CreateNull();
                     changed = true;
@@ -301,7 +303,8 @@ namespace MultiUserEdit.Commons
 
                 if (!await ConfirmAllAsync(MediaFileResolver.GetTransferableFilePaths(item))) return;
 
-                var (itemJson, files) = MediaFileResolver.SerializeForSync(item, filter: fileTransferManager.IsSendAllowed);
+                var (rawJson, files) = MediaFileResolver.SerializeForSync(item, filter: fileTransferManager.IsSendAllowed);
+                var itemJson = LocalMediaGuard.StripVoiceCache(rawJson);
                 var mediaFileNames = files.Count > 0 ? files.Where(file => file.ShouldTransfer).Select(file => file.Name).ToList() : null;
                 var characterName = CharacterResolver.GetCharacter(item)?.Name;
                 var itemId = ItemIdManager.GetOrCreateId(item);
@@ -343,6 +346,7 @@ namespace MultiUserEdit.Commons
         public Task SendItemUpdatedThrottledAsync(IItem item, int timelineIndex)
         {
             if (Suppressed) return Task.CompletedTask;
+            if (VoiceSynthesizer.IsSynthesizing(item)) return Task.CompletedTask;
 
             var itemId = ItemIdManager.GetOrCreateId(item);
             var state = itemUpdateThrottles.GetOrAdd(itemId, static _ => new UpdateThrottleState());

@@ -19,15 +19,21 @@ namespace MultiUserEdit.Commons.EventHandlers
 
             try
             {
-                var itemJson = ItemJsonSanitizer.RemoveUnknownEnumValues(
-                    MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, item, editEvent.MediaFileNames));
+                var itemJson = LocalMediaGuard.StripVoiceCache(LocalMediaGuard.Apply(
+                    ItemJsonSanitizer.RemoveUnknownEnumValues(
+                        MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, item, editEvent.MediaFileNames)),
+                    item));
                 ResourceAvailabilityChecker.Notify(editEvent.ItemId, editEvent.ExecutorId,
                     viewModel.GetUserName(editEvent.ExecutorId), itemJson, null);
+                var previousSerif = VoiceSynthesizer.GetSerif(item);
+
                 JsonConvert.PopulateObject(itemJson, item, ItemSerializerOptions.Default);
                 viewModel.EventSender?.ClearBaseline(editEvent.ItemId);
 
                 CharacterResolver.TryResolveCharacter(item);
                 SceneResolver.ResolveSceneId(item, viewModel.Scenes);
+
+                VoiceSynthesizer.RequestIfSerifChanged(item, previousSerif);
 
                 var missingFiles = MediaFileResolver.GetMissingFileNames(
                     editEvent.MediaFileNames, TachieFileResolver.GetBaseDirectory(item));

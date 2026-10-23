@@ -383,7 +383,7 @@ namespace MultiUserEdit.Commons
             {
                 GetPeerCount = () => Participants.Count(p => p.UserId != LocalUserId),
                 GetUserName = GetParticipantName,
-                CanShareFiles = () => IsHost || CurrentUserPermission.CanShareFiles
+                FileSendBlockedReason = DescribeFileSendBlock
             };
             eventSender = new EditEventSender(sessionClient, fileTransferManager, () => LocalUserId)
             {
@@ -462,7 +462,7 @@ namespace MultiUserEdit.Commons
                     {
                         var target = Participants.FirstOrDefault(p => p.UserId == targetUserId);
                         var name = target?.UserName ?? "指定ユーザー";
-                        var result = MessageBox.Show($"{name} をルームからキックしてもよろしいですか？", "キックの確認", MessageBoxButton.OKCancel);
+                        var result = MessageBox.Show($"{name} を部屋からキックしてもよろしいですか？", "キックの確認", MessageBoxButton.OKCancel);
                         if (result == MessageBoxResult.OK)
                         {
                             await KickUserAsync(targetUserId);
@@ -808,6 +808,10 @@ namespace MultiUserEdit.Commons
             GlobalDefaultPermission.CanAddScenes = newPerm.CanAddScenes;
             GlobalDefaultPermission.CanDeleteScenes = newPerm.CanDeleteScenes;
             GlobalDefaultPermission.CanShareFiles = newPerm.CanShareFiles;
+            GlobalDefaultPermission.CanShareVideos = newPerm.CanShareVideos;
+            GlobalDefaultPermission.CanShareImages = newPerm.CanShareImages;
+            GlobalDefaultPermission.CanShareAudio = newPerm.CanShareAudio;
+            GlobalDefaultPermission.CanSyncSeekPosition = newPerm.CanSyncSeekPosition;
 
             foreach (var p in Participants)
             {
@@ -848,6 +852,10 @@ namespace MultiUserEdit.Commons
                 GlobalDefaultPermission.CanAddScenes = evt.Permission.CanAddScenes;
                 GlobalDefaultPermission.CanDeleteScenes = evt.Permission.CanDeleteScenes;
                 GlobalDefaultPermission.CanShareFiles = evt.Permission.CanShareFiles;
+                GlobalDefaultPermission.CanShareVideos = evt.Permission.CanShareVideos;
+                GlobalDefaultPermission.CanShareImages = evt.Permission.CanShareImages;
+                GlobalDefaultPermission.CanShareAudio = evt.Permission.CanShareAudio;
+                GlobalDefaultPermission.CanSyncSeekPosition = evt.Permission.CanSyncSeekPosition;
 
                 if (!IsHost)
                 {
@@ -964,7 +972,7 @@ namespace MultiUserEdit.Commons
             if (!isManual && Scenes.Timelines.Any(t => t.Items.Count > 0))
             {
                 var result = MessageBox.Show(
-                    "ルームに参加するため、現在のタイムライン上のアイテムをすべて削除してホストの状態と同期します。\n削除して同期を開始してもよろしいですか？",
+                    "部屋に参加するため、現在のタイムライン上のアイテムをすべて削除してホストの状態と同期します。\n削除して同期を開始してもよろしいですか？",
                     "初期同期の確認",
                     MessageBoxButton.OKCancel);
 
@@ -1078,8 +1086,9 @@ namespace MultiUserEdit.Commons
                     }
                 }
 
-                var itemJson = ItemJsonSanitizer.RemoveUnknownEnumValues(
-                    MediaFileResolver.ResolveJsonFileReferences(onlineItem.ItemJson, itemType, onlineItem.MediaFileNames));
+                var itemJson = LocalMediaGuard.StripVoiceCache(
+                    ItemJsonSanitizer.RemoveUnknownEnumValues(
+                        MediaFileResolver.ResolveJsonFileReferences(onlineItem.ItemJson, itemType, onlineItem.MediaFileNames)));
 
                 if (JsonConvert.DeserializeObject(itemJson, itemType, ItemSerializerOptions.Default) is not IItem item) return;
 
@@ -1088,13 +1097,17 @@ namespace MultiUserEdit.Commons
                 ItemIdManager.RegisterId(item, onlineItem.ItemId);
                 timeline.TryAddItems([item], onlineItem.Frame, onlineItem.Layer, false);
 
+                VoiceSynthesizer.Request(item);
+
                 var missingFiles = MediaFileResolver.GetMissingFileNames(
                     onlineItem.MediaFileNames, TachieFileResolver.GetBaseDirectory(item));
                 if (missingFiles.Count > 0 && activeViewModel != null)
                 {
                     TransferWaiter.WhenFilesReady(activeViewModel, missingFiles, () =>
                         JsonConvert.PopulateObject(
-                            MediaFileResolver.ResolveJsonFileReferences(onlineItem.ItemJson, itemType, onlineItem.MediaFileNames),
+                            LocalMediaGuard.StripVoiceCache(LocalMediaGuard.Apply(
+                                MediaFileResolver.ResolveJsonFileReferences(onlineItem.ItemJson, itemType, onlineItem.MediaFileNames),
+                                item)),
                             item,
                             ItemSerializerOptions.Default),
                         TransferWaiter.DefaultTimeout);
@@ -1594,12 +1607,12 @@ namespace MultiUserEdit.Commons
                 foreach (var item in timeline.Items)
                 {
                     var itemType = item.GetType();
-                    var (itemJson, files) = MediaFileResolver.SerializeForSync(item, itemType);
+                    var (rawJson, files) = MediaFileResolver.SerializeForSync(item, itemType);
                     onlineTimeline.Items.Add(new OnlineItem
                     {
                         ItemId = ItemIdManager.GetOrCreateId(item),
                         ItemTypeName = ItemTypeResolver.GetTypeName(itemType),
-                        ItemJson = itemJson,
+                        ItemJson = LocalMediaGuard.StripVoiceCache(rawJson),
                         MediaFileNames = files.Count > 0 ? [.. files.Where(file => file.ShouldTransfer).Select(file => file.Name)] : null,
                         Frame = item.Frame,
                         Layer = item.Layer
@@ -1713,7 +1726,7 @@ namespace MultiUserEdit.Commons
                 ErrorNotifier.NotifyOnce(
                     "接続が切断されました",
                     "共同編集サーバーとの接続が切れ、繋ぎ直せませんでした。\n" +
-                    "通信環境を確認して、もう一度ルームに参加してください。");
+                    "通信環境を確認して、もう一度部屋に参加してください。");
                 ResetNetworkState();
             }
             finally
@@ -2087,9 +2100,9 @@ namespace MultiUserEdit.Commons
 
             var message = reason switch
             {
-                "expired" => "このルームは一定時間やり取りが無かったため、自動的に閉じられました。\nホストに新しいルームを作り直してもらってください。",
-                "host_key" => "このルームにはホストとして接続できません。\n新しいルームを作成してください。",
-                _ => "ルームが存在しません。ルームIDを確認してください。"
+                "expired" => "この部屋は一定時間やり取りが無かったため、自動的に閉じられました。\nホストに新しい部屋を作り直してもらってください。",
+                "host_key" => "この部屋にはホストとして接続できません。\n新しい部屋を作成してください。",
+                _ => "部屋が存在しません。部屋IDを確認してください。"
             };
 
             Application.Current?.Dispatcher.InvokeAsync(() =>
@@ -2138,7 +2151,7 @@ namespace MultiUserEdit.Commons
             {
                 Application.Current?.Dispatcher.InvokeAsync(async () =>
                 {
-                    MessageBox.Show("ホストによってルームからキックされたため、接続が切断されました。", "キック通知", MessageBoxButton.OK);
+                    MessageBox.Show("ホストによって部屋からキックされたため、接続が切断されました。", "キック通知", MessageBoxButton.OK);
                     await StopNetworkAsync();
                 });
             }
@@ -2217,7 +2230,7 @@ namespace MultiUserEdit.Commons
                 var keepWaiting = MessageBox.Show(
                     $"{hostName} との接続が切れたまま約1分が経過し、応答がありません。\n" +
                     "YMM4が落ちたか、通信が途切れている可能性があります。\n\n" +
-                    "ルーム自体はまだ開いているため、復帰を待つこともできます。\n" +
+                    "部屋自体はまだ開いているため、復帰を待つこともできます。\n" +
                     "待機を続けますか？（いいえ を選ぶと切断します）",
                     "ホストの応答がありません",
                     MessageBoxButton.YesNo) == MessageBoxResult.Yes;
@@ -2241,7 +2254,7 @@ namespace MultiUserEdit.Commons
             {
                 if (evt.IsHost)
                 {
-                    AskWhatToKeepAfterHostLeft("ホストがルームを終了したため、接続が切断されました。");
+                    AskWhatToKeepAfterHostLeft("ホストが部屋を終了したため、接続が切断されました。");
                 }
                 else
                 {
@@ -2262,7 +2275,7 @@ namespace MultiUserEdit.Commons
                 + "共同編集で作ったタイムラインを、このプロジェクトに残しますか？\n\n"
                 + "「はい」…… そのまま残して編集を続けます。\n"
                 + "「いいえ」… 共同編集で追加されたアイテムをすべて削除します。",
-                "ルーム終了",
+                "部屋を終了しました",
                 MessageBoxButton.YesNo) == MessageBoxResult.Yes;
 
             if (!keep) ClearAllTimelines();
@@ -2531,12 +2544,22 @@ namespace MultiUserEdit.Commons
                 SendCursorMovedAsync(FirstOrDefaultTimeline!.CurrentFrame);
         }
 
-        public async void SendCursorMovedAsync(int currentFrame)
+        public void NotifyPlaybackStateChanged()
+        {
+            if (!IsConnected || FirstOrDefaultTimeline == null) return;
+
+            SendCursorMovedAsync(FirstOrDefaultTimeline.CurrentFrame, force: true);
+        }
+
+        public void SendCursorMovedAsync(int currentFrame) => SendCursorMovedAsync(currentFrame, force: false);
+
+        public async void SendCursorMovedAsync(int currentFrame, bool force)
         {
             try
             {
                 var isPlaying = getIsPlayingFunc?.Invoke() ?? false;
-                if (!isPlaying
+                if (!force
+                    && !isPlaying
                     && currentFrame == lastAppliedRemoteFrame
                     && DateTime.UtcNow - lastAppliedRemoteFrameAt < CursorEchoWindow) return;
 
@@ -2596,6 +2619,26 @@ namespace MultiUserEdit.Commons
             var itemId = ItemIdManager.GetOrCreateId(item);
 
             lock (locallyAddedItems) return locallyAddedItems.Contains(itemId);
+        }
+
+        private string? DescribeFileSendBlock(string filePath)
+        {
+            if (IsHost) return null;
+
+            var permission = CurrentUserPermission;
+            if (!permission.CanShareFiles)
+                return "ホストの設定により、この部屋では素材ファイルを送信できません。";
+
+            var group = FileExtensionCatalog.GetGroupNameForFile(filePath);
+            var allowed = group switch
+            {
+                FileExtensionCatalog.VideoGroupName => permission.CanShareVideos,
+                FileExtensionCatalog.ImageGroupName => permission.CanShareImages,
+                FileExtensionCatalog.AudioGroupName => permission.CanShareAudio,
+                _ => true
+            };
+
+            return allowed ? null : $"ホストの設定により、この部屋では{group}ファイルを送信できません。";
         }
 
         private bool RejectRestrictedRemoval(IReadOnlyList<IItem> removed, Timeline timeline)
