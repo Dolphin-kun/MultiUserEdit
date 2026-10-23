@@ -97,6 +97,9 @@
                             <CheckBox x:Name="AddScenesCheck" Content="シーン（タイムライン）の追加を許可" Cursor="Hand" Margin="0,3" />
                             <CheckBox x:Name="DeleteScenesCheck" Content="シーン（タイムライン）の削除を許可" Cursor="Hand" Margin="0,3" />
                             <CheckBox x:Name="ShareFilesCheck" Content="素材ファイルの送信を許可" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="ShareVideosCheck" Content="動画" IsEnabled="{Binding IsChecked, ElementName=ShareFilesCheck}" Cursor="Hand" Margin="18,2,0,2" FontSize="11" />
+                            <CheckBox x:Name="ShareImagesCheck" Content="画像" IsEnabled="{Binding IsChecked, ElementName=ShareFilesCheck}" Cursor="Hand" Margin="18,2,0,2" FontSize="11" />
+                            <CheckBox x:Name="ShareAudioCheck" Content="音声" IsEnabled="{Binding IsChecked, ElementName=ShareFilesCheck}" Cursor="Hand" Margin="18,2,0,3" FontSize="11" />
                             <CheckBox x:Name="SyncSeekCheck" Content="ホストのシーク位置・画面に自動追従する" Cursor="Hand" Margin="0,3" />
                         </StackPanel>
                     </ScrollViewer>

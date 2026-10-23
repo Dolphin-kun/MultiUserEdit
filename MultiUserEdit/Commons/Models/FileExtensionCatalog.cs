@@ -25,6 +25,15 @@
 
         public const string CustomGroupName = "追加した形式";
 
+        public const string VideoGroupName = "動画";
+
+        public const string ImageGroupName = "画像";
+
+        public const string AudioGroupName = "音声";
+
+        public static string GetGroupNameForFile(string filePath) =>
+            GetGroupName(Normalize(System.IO.Path.GetExtension(filePath)) ?? string.Empty);
+
         public static string GetGroupName(string extension) =>
             Groups.FirstOrDefault(group => group.Extensions.Contains(extension))?.Name ?? CustomGroupName;
 

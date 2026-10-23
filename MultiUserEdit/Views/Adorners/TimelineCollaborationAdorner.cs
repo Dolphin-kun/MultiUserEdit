@@ -300,7 +300,12 @@ namespace MultiUserEdit.Views.Adorners
                 ? state.Correction * (1 - correctionAge / PlayheadCorrectionDuration)
                 : 0;
 
-            state.LastDisplayed = estimated + correction;
+            var displayed = estimated + correction;
+
+            var length = timelines?[timelineIndex].Length ?? 0;
+            if (length > 0 && displayed > length) displayed = length;
+
+            state.LastDisplayed = displayed;
             return state.LastDisplayed;
         }
 

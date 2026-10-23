@@ -51,7 +51,7 @@ namespace MultiUserEdit.Commons
 
         public Func<Guid, string>? GetUserName { get; set; }
 
-        public Func<bool>? CanShareFiles { get; set; }
+        public Func<string, string?>? FileSendBlockedReason { get; set; }
 
         private class Announcement
         {
@@ -179,12 +179,10 @@ namespace MultiUserEdit.Commons
 
             if (sendDecisions.TryGetValue(filePath, out var remembered)) return Task.FromResult(remembered);
 
-            if (CanShareFiles?.Invoke() == false)
+            if (FileSendBlockedReason?.Invoke(filePath) is { } blockedReason)
             {
                 sendDecisions[filePath] = false;
-                ErrorNotifier.NotifyOnce(
-                    "素材を送信できませんでした",
-                    "ホストの設定により、この部屋では素材ファイルを送信できません。");
+                ErrorNotifier.NotifyOnce("素材を送信できませんでした", blockedReason);
                 return Task.FromResult(false);
             }
 
@@ -198,7 +196,7 @@ namespace MultiUserEdit.Commons
                 return Task.FromResult(false);
             }
 
-            if (!MultiUserEditSettings.Default.ConfirmBeforeFileSend)
+            if (!MultiUserEditSettings.Default.ConfirmBeforeFileSend || MediaFileResolver.IsReceivedCopy(filePath))
             {
                 sendDecisions[filePath] = true;
                 return Task.FromResult(true);
@@ -401,6 +399,8 @@ namespace MultiUserEdit.Commons
         internal void NoteSharedFile(string fileName, long size) =>
             sharedFileKeys.TryAdd(SharedFileKey(fileName, size), 0);
 
+
+
         private static readonly ConcurrentDictionary<string, string> fileOwners = new(StringComparer.OrdinalIgnoreCase);
 
         public static string GetOwnerName(string path) =>
@@ -552,8 +552,29 @@ namespace MultiUserEdit.Commons
             SentFilesChanged?.Invoke();
         }
 
+        private bool ReuseLocalCopy(Guid transferId, string? localPath, long expectedSize)
+        {
+            if (string.IsNullOrEmpty(localPath)) return false;
+
+            try
+            {
+                var info = new FileInfo(localPath);
+                if (!info.Exists || info.Length != expectedSize) return false;
+            }
+            catch
+            {
+                return false;
+            }
+
+            Debug.WriteLine($"[MultiUserEdit] Reused a local file instead of receiving: {localPath}");
+            TransferCompleted?.Invoke(transferId.ToString(), localPath);
+            return true;
+        }
+
         internal async Task<bool> NeedsTransferAsync(FileAvailableEvent evt)
         {
+            MediaFileResolver.NoteRemoteFile(evt.FileName, evt.FileSize);
+
             if (!MultiUserEditSettings.Default.IsExtensionAllowed(evt.FileName))
             {
                 Debug.WriteLine($"[MultiUserEdit] Security Block: Rejected file announcement with disallowed extension: {evt.FileName}");
@@ -564,15 +585,14 @@ namespace MultiUserEdit.Commons
             var characterPath = TachieFileResolver.ResolveLocalPath(
                 TachieFileResolver.GetBaseDirectory(evt.CharacterName), evt.FileName);
 
-            foreach (var localPath in new[] { MediaFileResolver.ResolveLocalTempPath(evt.FileName), characterPath })
+            foreach (var localPath in new[]
             {
-                if (string.IsNullOrEmpty(localPath)) continue;
-
-                if (!File.Exists(localPath) || new FileInfo(localPath).Length != evt.FileSize) continue;
-
-                Debug.WriteLine($"[MultiUserEdit] Reused local file (same name and size): {localPath}");
-                TransferCompleted?.Invoke(evt.TransferId.ToString(), localPath);
-                return false;
+                MediaFileResolver.ResolveLocalOriginal(evt.FileName),
+                MediaFileResolver.ResolveLocalTempPath(evt.FileName),
+                characterPath
+            })
+            {
+                if (ReuseLocalCopy(evt.TransferId, localPath, evt.FileSize)) return false;
             }
 
             return await ConfirmReceiveAsync(evt);
@@ -676,6 +696,8 @@ namespace MultiUserEdit.Commons
                 Debug.WriteLine($"[MultiUserEdit] Declined earlier, not receiving: {evt.FileName}");
                 return;
             }
+
+            if (ReuseLocalCopy(evt.TransferId, MediaFileResolver.ResolveLocalOriginal(evt.FileName), evt.FileSize)) return;
 
             var finalPath = MediaFileResolver.ResolveLocalTempPath(evt.FileName);
             var tempPath = Path.Combine(GetSaveDirectory(), $"{evt.TransferId}.tmp");
@@ -877,6 +899,26 @@ namespace MultiUserEdit.Commons
             return incomingTransfers.Values.Any(transfer => now - transfer.LastActivityAt <= TransferTimeout);
         }
 
+        public static void CleanUpIncompleteTransfers()
+        {
+            try
+            {
+                var dir = GetSaveDirectory();
+                if (!Directory.Exists(dir)) return;
+
+                foreach (var path in Directory.GetFiles(dir, "*.tmp", SearchOption.AllDirectories))
+                {
+                    try { File.Delete(path); } catch { }
+                }
+
+                RemoveEmptyDirectories();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] Could not clean up incomplete transfers: {ex.Message}");
+            }
+        }
+
         public void CancelAll()
         {
             foreach (var transfer in incomingTransfers.Values) transfer.Abort();
@@ -888,6 +930,8 @@ namespace MultiUserEdit.Commons
             announcingPaths.Clear();
             cancelledTargets.Clear();
             NotifySummary();
+
+            CleanUpIncompleteTransfers();
         }
     }
 }

@@ -42,6 +42,9 @@ namespace MultiUserEdit.Views
                 CanAddScenes = participant.Permission.CanAddScenes,
                 CanDeleteScenes = participant.Permission.CanDeleteScenes,
                 CanShareFiles = participant.Permission.CanShareFiles,
+                CanShareVideos = participant.Permission.CanShareVideos,
+                CanShareImages = participant.Permission.CanShareImages,
+                CanShareAudio = participant.Permission.CanShareAudio,
                 CanSyncSeekPosition = participant.Permission.CanSyncSeekPosition
             };
 
@@ -131,6 +134,9 @@ namespace MultiUserEdit.Views
             AddScenesCheck.IsChecked = perm.CanAddScenes;
             DeleteScenesCheck.IsChecked = perm.CanDeleteScenes;
             ShareFilesCheck.IsChecked = perm.CanShareFiles;
+            ShareVideosCheck.IsChecked = perm.CanShareVideos;
+            ShareImagesCheck.IsChecked = perm.CanShareImages;
+            ShareAudioCheck.IsChecked = perm.CanShareAudio;
             SyncSeekCheck.IsChecked = perm.CanSyncSeekPosition;
         }
 
@@ -159,7 +165,7 @@ namespace MultiUserEdit.Views
         private void OnKickClick(object sender, RoutedEventArgs e)
         {
             var result = MessageBox.Show(
-                $"「{participant.UserName}」をルームから退出させますか？",
+                $"「{participant.UserName}」を部屋から退出させますか？",
                 "ユーザーのキック",
                 MessageBoxButton.OKCancel);
 
@@ -190,6 +196,9 @@ namespace MultiUserEdit.Views
                 ResultPermission.CanAddScenes = AddScenesCheck.IsChecked == true;
                 ResultPermission.CanDeleteScenes = DeleteScenesCheck.IsChecked == true;
                 ResultPermission.CanShareFiles = ShareFilesCheck.IsChecked == true;
+                ResultPermission.CanShareVideos = ShareVideosCheck.IsChecked == true;
+                ResultPermission.CanShareImages = ShareImagesCheck.IsChecked == true;
+                ResultPermission.CanShareAudio = ShareAudioCheck.IsChecked == true;
                 ResultPermission.CanSyncSeekPosition = SyncSeekCheck.IsChecked == true;
             }
 

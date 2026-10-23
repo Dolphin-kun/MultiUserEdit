@@ -47,6 +47,13 @@ namespace MultiUserEdit.Settings
             set => Set(ref confirmBeforeFileSend, value);
         }
 
+        private string customVoiceDirectories = string.Empty;
+        public string CustomVoiceDirectories
+        {
+            get => customVoiceDirectories;
+            set => Set(ref customVoiceDirectories, value);
+        }
+
         private bool confirmLargeFileReceive = true;
         public bool ConfirmLargeFileReceive
         {

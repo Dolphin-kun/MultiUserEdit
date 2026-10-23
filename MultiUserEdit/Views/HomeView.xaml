@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:icons="clr-namespace:YukkuriMovieMaker.Resources.Icons;assembly=YukkuriMovieMaker.Plugin"
+             xmlns:vm="clr-namespace:MultiUserEdit.ViewModels"
              mc:Ignorable="d"
              d:DesignHeight="500" d:DesignWidth="400">
 
@@ -91,7 +92,7 @@
 
             <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,0,0,12">
                 <StackPanel>
-                    <TextBlock Text="ルーム" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
+                    <TextBlock Text="部屋" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
 
                     <StackPanel>
                         <StackPanel.Style>
@@ -114,13 +115,13 @@
                             <RadioButton Grid.Column="0" GroupName="RoomSize" Cursor="Hand"
                                          IsChecked="{Binding IsSmallRoomSelected, Mode=TwoWay}"
                                          ToolTip="少人数向け。すぐに繋がります。">
-                                <TextBlock Text="小さい部屋" FontSize="12" VerticalAlignment="Center" />
+                                <TextBlock Text="{x:Static vm:MultiUserEditViewModel.SmallRoomLabel}" FontSize="12" VerticalAlignment="Center" />
                             </RadioButton>
 
                             <RadioButton Grid.Column="1" GroupName="RoomSize" Cursor="Hand"
                                          IsChecked="{Binding IsLargeRoomSelected, Mode=TwoWay}"
                                          ToolTip="多人数向け。専用の中継サーバーを使います。人数が少ない状態が続くと自動で小さい部屋へ移ります。">
-                                <TextBlock Text="大きい部屋" FontSize="12" VerticalAlignment="Center" />
+                                <TextBlock Text="{x:Static vm:MultiUserEditViewModel.LargeRoomLabel}" FontSize="12" VerticalAlignment="Center" />
                             </RadioButton>
                         </Grid>
 
@@ -131,7 +132,7 @@
                             </StackPanel>
                         </Button>
 
-                        <TextBlock Text="既存のルームに参加" FontSize="12" Margin="0,10,0,6" Opacity="0.85" />
+                        <TextBlock Text="既存の部屋に参加" FontSize="12" Margin="0,10,0,6" Opacity="0.85" />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />

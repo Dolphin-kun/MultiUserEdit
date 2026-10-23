@@ -13,6 +13,8 @@ namespace MultiUserEdit.Commons
 
         private static readonly HashSet<string> PathPropertyNames = new(PropertyNames, StringComparer.OrdinalIgnoreCase);
 
+        internal static bool IsFilePathProperty(string propertyName) => PathPropertyNames.Contains(propertyName);
+
         [ThreadStatic]
         private static string? serializationBaseDirectory;
         [ThreadStatic]
@@ -24,6 +26,75 @@ namespace MultiUserEdit.Commons
 
             return TachieFileResolver.ToPortableName(serializationBaseDirectory, serializationCharacterName, filePath)
                 ?? Path.GetFileName(filePath);
+        }
+
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (string Path, long Length)> localOriginals =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte> ambiguousNames =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        private static string OriginalKey(string name) => TachieFileResolver.ToLocalSeparators(name.Trim());
+
+        internal static void NoteLocalOriginal(string name, string fullPath)
+        {
+            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(fullPath)) return;
+            if (IsReceivedCopy(fullPath)) return;
+
+            try
+            {
+                var info = new FileInfo(fullPath);
+                if (!info.Exists) return;
+
+                localOriginals[OriginalKey(name)] = (fullPath, info.Length);
+            }
+            catch
+            {
+            }
+        }
+
+        internal static void NoteRemoteFile(string name, long length)
+        {
+            if (string.IsNullOrEmpty(name)) return;
+
+            var key = OriginalKey(name);
+            if (localOriginals.TryGetValue(key, out var own) && own.Length != length) ambiguousNames.TryAdd(key, 0);
+        }
+
+        internal static string? ResolveLocalOriginal(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return null;
+
+            var key = OriginalKey(name);
+            if (ambiguousNames.ContainsKey(key)) return null;
+
+            return localOriginals.TryGetValue(key, out var own) && File.Exists(own.Path) ? own.Path : null;
+        }
+
+        private static bool HasSameLength(string left, string right)
+        {
+            try
+            {
+                return new FileInfo(left).Length == new FileInfo(right).Length;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        internal static bool IsReceivedCopy(string path)
+        {
+            try
+            {
+                var shared = FileTransferManager.GetSaveDirectory();
+                return !string.IsNullOrEmpty(shared)
+                    && Path.GetFullPath(path).StartsWith(Path.GetFullPath(shared), StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         public static string ResolveLocalTempPath(string name)
@@ -49,6 +120,7 @@ namespace MultiUserEdit.Commons
             return [.. mediaFileNames
                 .Where(name => !string.IsNullOrEmpty(name)
                             && TachieFileResolver.ResolveLocalPath(tachieBaseDirectory, name) == null
+                            && ResolveLocalOriginal(name) == null
                             && !File.Exists(ResolveLocalTempPath(name))
                             && IsReceivable(name))
                 .Distinct(StringComparer.OrdinalIgnoreCase)];
@@ -130,6 +202,13 @@ namespace MultiUserEdit.Commons
                 if (!targets.Contains(fileName)) return tachieBaseDirectory != null;
 
                 var resolvedPath = ResolveLocalTempPath(fileName);
+                var ownPath = ResolveLocalOriginal(fileName);
+
+                if (ownPath != null && (!File.Exists(resolvedPath) || HasSameLength(ownPath, resolvedPath)))
+                {
+                    property.Value = ownPath;
+                    return false;
+                }
 
                 if (File.Exists(resolvedPath))
                 {
@@ -287,6 +366,8 @@ namespace MultiUserEdit.Commons
                     .ToList();
                 files.AddRange(GetTachieSiblingImages(files));
 
+                foreach (var file in files) NoteLocalOriginal(file.Name, file.FullPath);
+
                 var characterJson = Newtonsoft.Json.JsonConvert.SerializeObject(character, ItemSerializerOptions.CharacterNullPath);
                 characterJson = ReplaceFullPathsInJson(characterJson, files);
 
@@ -295,7 +376,7 @@ namespace MultiUserEdit.Commons
                     .ToList();
                 if (skipped.Count > 0) characterJson = ClearFileReferences(characterJson, skipped);
 
-                return (characterJson, files);
+                return (ClearCustomVoiceDirectory(characterJson), files);
             }
             finally
             {
@@ -315,6 +396,8 @@ namespace MultiUserEdit.Commons
                 .Select(fp => new SharedFile(fp, ToPortableName(fp), ShouldTransfer(item, fp)))
                 .ToList();
             shared.AddRange(GetTachieSiblingImages(shared));
+
+            foreach (var file in shared) NoteLocalOriginal(file.Name, file.FullPath);
 
             var itemJson = SerializeWithNullPath(item, itemType);
             itemJson = ReplaceFullPathsInJson(itemJson, shared);
@@ -418,6 +501,34 @@ namespace MultiUserEdit.Commons
             catch
             {
                 return itemJson;
+            }
+        }
+
+        internal const string CustomVoiceDirectoryProperty = "CustomVoiceDirectory";
+
+        private static string ClearCustomVoiceDirectory(string characterJson)
+        {
+            if (characterJson.IndexOf(CustomVoiceDirectoryProperty, StringComparison.Ordinal) < 0) return characterJson;
+
+            try
+            {
+                var root = JObject.Parse(characterJson);
+                var filled = root.Descendants()
+                    .OfType<JProperty>()
+                    .Where(property => property.Name == CustomVoiceDirectoryProperty
+                        && property.Value.Type == JTokenType.String
+                        && !string.IsNullOrEmpty((string?)property.Value))
+                    .ToList();
+
+                if (filled.Count == 0) return characterJson;
+
+                foreach (var property in filled) property.Value = string.Empty;
+
+                return root.ToString(Newtonsoft.Json.Formatting.None);
+            }
+            catch
+            {
+                return characterJson;
             }
         }
 

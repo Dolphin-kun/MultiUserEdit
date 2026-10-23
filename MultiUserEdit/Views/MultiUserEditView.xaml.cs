@@ -63,6 +63,8 @@ namespace MultiUserEdit.Views
             var previewVm = (VisualTreeHelperExtensions.FindVisualChild<PreviewView>(parentWindow) as FrameworkElement)?.DataContext;
             var isPlayingProp = previewVm?.GetType().GetProperty("IsPlaying");
 
+            Commons.PlaybackStateWatcher.Watch(previewVm, viewModel);
+
             bool GetCurrentPlaying()
             {
                 try
