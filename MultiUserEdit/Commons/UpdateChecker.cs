@@ -9,7 +9,7 @@ namespace MultiUserEdit.Commons
 {
     internal sealed class UpdateChecker : Bindable
     {
-        private const string PostId = "1789275383618793";
+        public const string PostId = "1789275383618793";
 
         private const string FallbackUrl = "https://ymm4-info.net/";
 
@@ -72,6 +72,60 @@ namespace MultiUserEdit.Commons
             catch { }
         }
 
+        public static bool IsNewer(string? candidate, string? current)
+            => TryParse(candidate, out var next) && TryParse(current, out var now) && Compare(next, now) > 0;
+
+        private static bool TryParse(string? text, out (Version Core, string[] PreRelease) parsed)
+        {
+            parsed = default;
+            if (string.IsNullOrWhiteSpace(text)) return false;
+
+            var trimmed = text.Trim().TrimStart('v', 'V');
+            var plus = trimmed.IndexOf('+');
+            if (plus >= 0) trimmed = trimmed[..plus];
+
+            var dash = trimmed.IndexOf('-');
+            var core = dash >= 0 ? trimmed[..dash] : trimmed;
+
+            if (!Version.TryParse(core.Contains('.') ? core : core + ".0", out var version)) return false;
+
+            parsed = (Normalize(version), dash >= 0 ? trimmed[(dash + 1)..].Split('.') : []);
+            return true;
+        }
+
+        private static Version Normalize(Version version)
+            => new(version.Major, version.Minor, Math.Max(0, version.Build), Math.Max(0, version.Revision));
+
+        private static int Compare((Version Core, string[] PreRelease) left, (Version Core, string[] PreRelease) right)
+        {
+            var core = left.Core.CompareTo(right.Core);
+            if (core != 0) return core;
+
+            if (left.PreRelease.Length == 0 || right.PreRelease.Length == 0)
+                return (left.PreRelease.Length == 0).CompareTo(right.PreRelease.Length == 0);
+
+            for (var i = 0; i < Math.Min(left.PreRelease.Length, right.PreRelease.Length); i++)
+            {
+                var a = left.PreRelease[i];
+                var b = right.PreRelease[i];
+
+                var aIsNumber = int.TryParse(a, out var aNumber);
+                var bIsNumber = int.TryParse(b, out var bNumber);
+
+                var order = (aIsNumber, bIsNumber) switch
+                {
+                    (true, true) => aNumber.CompareTo(bNumber),
+                    (true, false) => -1,
+                    (false, true) => 1,
+                    _ => string.CompareOrdinal(a, b),
+                };
+
+                if (order != 0) return order;
+            }
+
+            return left.PreRelease.Length.CompareTo(right.PreRelease.Length);
+        }
+
         private async Task CheckAsync()
         {
             if (string.IsNullOrEmpty(PostId))
@@ -109,11 +163,7 @@ namespace MultiUserEdit.Commons
                 if (root.TryGetProperty("downloadURL", out var urlElement))
                     downloadUrl = urlElement.GetString() ?? string.Empty;
 
-                if (Version.TryParse(latest?.TrimStart('v', 'V'), out var latestParsed) &&
-                    Version.TryParse(CurrentVersion, out var currentParsed))
-                {
-                    HasUpdate = latestParsed > currentParsed;
-                }
+                HasUpdate = IsNewer(latest, CurrentVersion);
             }
             catch
             {

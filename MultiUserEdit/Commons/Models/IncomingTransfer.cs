@@ -34,6 +34,7 @@ namespace MultiUserEdit.Commons.Models
                     _ =>
                     {
                         try { work(); }
+                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[MultiUserEdit] chunk write failed: {ex.Message}"); }
                         finally { writeSlots.Release(); }
                     },
                     CancellationToken.None,

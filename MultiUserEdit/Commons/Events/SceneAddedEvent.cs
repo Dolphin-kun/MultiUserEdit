@@ -1,4 +1,4 @@
-namespace MultiUserEdit.Commons.Events
+﻿namespace MultiUserEdit.Commons.Events
 {
-    public record SceneAddedEvent(int Index, string Name) : EditEvent;
+    public record SceneAddedEvent(int Index, string Name, Guid SceneId = default) : EditEvent;
 }

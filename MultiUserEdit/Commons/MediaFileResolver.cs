@@ -357,8 +357,15 @@ namespace MultiUserEdit.Commons
             {
                 var referenced = ((IFileItem)character).GetFiles()
                     .Where(path => !string.IsNullOrEmpty(path))
+                    .Concat(TachieFileResolver.CollectDeclaredPaths(character.TachieCharacterParameter))
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .ToList();
+
+                if (!referenced.Any(File.Exists) && baseDirectory != null)
+                {
+                    referenced.AddRange(TachieFileResolver.EnumerateSharedFiles(baseDirectory));
+                    referenced = [.. referenced.Distinct(StringComparer.OrdinalIgnoreCase)];
+                }
 
                 var files = referenced
                     .Where(File.Exists)

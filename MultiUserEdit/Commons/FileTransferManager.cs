@@ -782,7 +782,15 @@ namespace MultiUserEdit.Commons
 
             incomingTransfers.TryRemove(transferId, out _);
             activeDownloads.TryRemove(transferId, out _);
-            NotifySummary();
+
+            try
+            {
+                NotifySummary();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] progress update failed: {ex.Message}");
+            }
 
             try
             {
@@ -842,8 +850,8 @@ namespace MultiUserEdit.Commons
 
         private void NotifySummary()
         {
-            var uploads = activeUploads.Values.ToList();
-            var downloads = activeDownloads.ToList();
+            var uploads = activeUploads.ToArray().Select(pair => pair.Value).Where(task => task != null).ToList();
+            var downloads = activeDownloads.ToArray().Where(pair => pair.Value != null).ToList();
 
             if (uploads.Count == 0 && downloads.Count == 0)
             {

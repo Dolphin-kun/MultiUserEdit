@@ -752,7 +752,7 @@ namespace MultiUserEdit.Commons
                     if (!scenesSnapshot.Contains(t))
                     {
                         timelineSyncManager.RegisterTimeline(t, activeViewModel);
-                        SendSceneAddedAsync(i, t.Name);
+                        SendSceneAddedAsync(i, t.Name, t.ID);
                     }
                 }
             }
@@ -785,10 +785,10 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        private async void SendSceneAddedAsync(int index, string name)
+        private async void SendSceneAddedAsync(int index, string name, Guid sceneId)
         {
             if (!CurrentUserPermission.CanAddScenes) return;
-            await eventSender.SendSceneAddedAsync(index, name);
+            await eventSender.SendSceneAddedAsync(index, name, sceneId);
         }
 
         private async void SendSceneRemovedAsync(int index)
@@ -877,12 +877,16 @@ namespace MultiUserEdit.Commons
 
             try
             {
+                if (evt.SceneId != Guid.Empty && Scenes.Timelines.Any(t => t.ID == evt.SceneId)) return;
+
                 if (evt.Index <= Scenes.Timelines.Count)
                 {
-                    var videoInfo = FirstOrDefaultTimeline?.VideoInfo ?? new VideoInfo();
-                    var verticalLine = FirstOrDefaultTimeline?.VerticalLine ?? new TimelineVerticalLine();
-                    Scenes.CreateScene(evt.Index, videoInfo, verticalLine);
-                    var timeline = Scenes.Timelines.ElementAtOrDefault(evt.Index);
+                    var timeline = CreateSceneForSync(new OnlineTimeline
+                    {
+                        Id = evt.SceneId,
+                        Name = evt.Name
+                    }, evt.Index);
+
                     if (timeline != null && !string.IsNullOrEmpty(evt.Name))
                         timeline.Name = evt.Name;
 
@@ -996,22 +1000,19 @@ namespace MultiUserEdit.Commons
                     var timeline = Scenes.Timelines.FirstOrDefault(t => t.ID == onlineTimeline.Id)
                                 ?? Scenes.Timelines.ElementAtOrDefault(i);
 
+                    timeline ??= CreateSceneForSync(onlineTimeline, i);
+
                     if (timeline == null)
                     {
-                        try
-                        {
-                            var videoInfo = FirstOrDefaultTimeline?.VideoInfo ?? new VideoInfo();
-                            var verticalLine = FirstOrDefaultTimeline?.VerticalLine ?? new TimelineVerticalLine();
-                            Scenes.CreateScene(i, videoInfo, verticalLine);
-                            timeline = Scenes.Timelines.ElementAtOrDefault(i);
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine($"[MultiUserEdit] CreateScene failed: {ex.Message}");
-                        }
+                        ErrorNotifier.NotifyOnce(
+                            "シーンを作成できませんでした",
+                            $"ホストのシーン「{onlineTimeline.Name}」をこの環境に用意できませんでした。\n"
+                            + "そのシーンの内容は表示されません。");
+                        continue;
                     }
 
-                    if (timeline == null) continue;
+                    if (timeline.ID != onlineTimeline.Id && onlineTimeline.Id != Guid.Empty)
+                        timeline.ID = onlineTimeline.Id;
 
                     timeline.Name = onlineTimeline.Name;
 
@@ -1039,6 +1040,34 @@ namespace MultiUserEdit.Commons
                 {
                     adornerManager.AttachAdorner(activeViewModel);
                 }
+            }
+        }
+
+        private Timeline? CreateSceneForSync(OnlineTimeline onlineTimeline, int index)
+        {
+            if (Scenes == null) return null;
+
+            try
+            {
+                var videoInfo = new VideoInfo();
+                if (FirstOrDefaultTimeline?.VideoInfo is { } source)
+                {
+                    VideoInfoSerializer.Apply(videoInfo, source.Width, source.Height, source.FPS, source.Hz, null);
+                    videoInfo.BackgroundColor = source.BackgroundColor;
+                }
+
+                var name = string.IsNullOrWhiteSpace(onlineTimeline.Name) ? $"シーン{index + 1}" : onlineTimeline.Name;
+                var sceneId = onlineTimeline.Id == Guid.Empty ? (Guid?)null : onlineTimeline.Id;
+
+                Scenes.CreateScene(name, index, videoInfo, new TimelineVerticalLine(), sceneId);
+
+                return (sceneId != null ? Scenes.Timelines.FirstOrDefault(t => t.ID == sceneId) : null)
+                    ?? Scenes.Timelines.ElementAtOrDefault(index);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] CreateScene failed: {ex.Message}");
+                return null;
             }
         }
 
