@@ -380,13 +380,13 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        public async Task SendSceneAddedAsync(int index, string name = "")
+        public async Task SendSceneAddedAsync(int index, string name = "", Guid sceneId = default)
         {
             if (Suppressed) return;
 
             try
             {
-                var evt = new SceneAddedEvent(index, name)
+                var evt = new SceneAddedEvent(index, name, sceneId)
                 {
                     DateTime = DateTime.UtcNow,
                     ExecutorId = LocalUserId

@@ -2,6 +2,7 @@
 using MultiUserEdit.Views;
 using System.Reflection;
 using YukkuriMovieMaker.Plugin;
+using YukkuriMovieMaker.Plugin.Update;
 
 namespace MultiUserEdit
 {
@@ -15,5 +16,7 @@ namespace MultiUserEdit
         public Type ViewType => typeof(MultiUserEditView);
 
         public PluginDetailsAttribute Details => GetType().GetCustomAttribute<PluginDetailsAttribute>() ?? new();
+
+        public IPluginUpdater? Updater { get; } = new Commons.Ymm4InfoPluginUpdater<MultiUserEditPlugin>(Commons.UpdateChecker.PostId);
     }
 }

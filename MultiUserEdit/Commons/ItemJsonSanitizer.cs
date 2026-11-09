@@ -1,16 +1,17 @@
 using Newtonsoft.Json.Linq;
+using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace MultiUserEdit.Commons
 {
     internal static class ItemJsonSanitizer
     {
-        private const long MaxPlausibleEnumValue = 10000;
+        private const string TypeProperty = "$type";
 
-        private static readonly string[] EnumPropertyNames =
-        [
-            "Type", "AnimationType", "EasingType", "BlendMode", "DrawingMode", "Direction"
-        ];
+        private static readonly ConcurrentDictionary<string, Type?> typeCache = new(StringComparer.Ordinal);
+
+        private static readonly ConcurrentDictionary<(Type Owner, string Property), Type?> enumCache = new();
 
         public static string RemoveUnknownEnumValues(string itemJson)
         {
@@ -20,9 +21,7 @@ namespace MultiUserEdit.Commons
 
                 var removed = root.DescendantsAndSelf()
                     .OfType<JProperty>()
-                    .Where(property => property.Value.Type == JTokenType.Integer
-                        && EnumPropertyNames.Contains(property.Name, StringComparer.Ordinal)
-                        && Math.Abs((long)property.Value) >= MaxPlausibleEnumValue)
+                    .Where(IsUnknownEnumValue)
                     .ToList();
 
                 if (removed.Count == 0) return itemJson;
@@ -40,6 +39,53 @@ namespace MultiUserEdit.Commons
                 Debug.WriteLine($"[MultiUserEdit] sanitize failed: {ex.Message}");
                 return itemJson;
             }
+        }
+
+        private static bool IsUnknownEnumValue(JProperty property)
+        {
+            if (property.Value.Type != JTokenType.Integer) return false;
+            if (property.Parent is not JObject owner) return false;
+
+            var enumType = ResolveEnumType(owner, property.Name);
+            if (enumType == null) return false;
+
+            try
+            {
+                var value = Convert.ChangeType((long)property.Value, Enum.GetUnderlyingType(enumType));
+                return !Enum.IsDefined(enumType, value);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static Type? ResolveEnumType(JObject owner, string propertyName)
+        {
+            if ((string?)owner[TypeProperty] is not { Length: > 0 } typeName) return null;
+
+            var ownerType = typeCache.GetOrAdd(typeName, static name =>
+            {
+                try { return Type.GetType(name, throwOnError: false); }
+                catch { return null; }
+            });
+
+            if (ownerType == null) return null;
+
+            return enumCache.GetOrAdd((ownerType, propertyName), static key =>
+            {
+                try
+                {
+                    var property = key.Owner.GetProperty(key.Property, BindingFlags.Public | BindingFlags.Instance);
+                    if (property?.PropertyType is not { IsEnum: true } type) return null;
+
+                    return type.GetCustomAttribute<FlagsAttribute>() == null ? type : null;
+                }
+                catch
+                {
+                    return null;
+                }
+            });
         }
 
         public static string? GetMissingPluginName(Exception exception)

@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using YukkuriMovieMaker.Project;
+using YukkuriMovieMaker.Project.Items;
 
 namespace MultiUserEdit.Commons
 {
@@ -160,6 +161,30 @@ namespace MultiUserEdit.Commons
 
             var linked = dialog.LinkedCharacter ?? characters.FirstOrDefault(c => c.Name == evt.CharacterName);
             Decide(evt.CharacterName, linked?.Name ?? evt.CharacterName);
+        }
+
+        private void SynthesizeWaitingVoices(string remoteName)
+        {
+            try
+            {
+                var timelines = getViewModel()?.Scenes?.Timelines;
+                if (timelines == null) return;
+
+                foreach (var item in timelines.SelectMany(timeline => timeline.Items))
+                {
+                    if (item is not VoiceItem voice) continue;
+                    if (!string.Equals(voice.CharacterName, remoteName, StringComparison.Ordinal)) continue;
+
+                    CharacterResolver.TryResolveCharacter(voice);
+                    if (voice.Character == null) continue;
+
+                    VoiceSynthesizer.Request(voice);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] Could not synthesize voices after the character was decided: {ex.Message}");
+            }
         }
 
         private static void ApplyCustomVoiceDirectory(Character character, string sharedName)
@@ -348,6 +373,8 @@ namespace MultiUserEdit.Commons
                 received.Remove(remoteName);
                 deciding.Remove(remoteName);
             }
+
+            SynthesizeWaitingVoices(remoteName);
 
             if (actions == null) return;
 

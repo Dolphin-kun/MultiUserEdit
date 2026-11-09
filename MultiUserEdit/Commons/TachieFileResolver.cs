@@ -17,11 +17,14 @@ namespace MultiUserEdit.Commons
 
         public static string? GetBaseDirectory(Character? character)
         {
-            if (character?.TachieCharacterParameter is not IFileItem fileItem) return null;
+            var parameter = character?.TachieCharacterParameter;
+            if (parameter == null) return null;
 
             try
             {
-                foreach (var path in fileItem.GetFiles())
+                var declared = parameter is IFileItem fileItem ? fileItem.GetFiles() : CollectDeclaredPaths(parameter);
+
+                foreach (var path in declared)
                 {
                     if (string.IsNullOrWhiteSpace(path)) continue;
 
@@ -34,6 +37,56 @@ namespace MultiUserEdit.Commons
             catch { }
 
             return null;
+        }
+
+        public static IReadOnlyList<string> CollectDeclaredPaths(object? parameter)
+        {
+            if (parameter == null) return [];
+
+            try
+            {
+                if (parameter is IFileItem fileItem)
+                    return [.. fileItem.GetFiles().Where(path => !string.IsNullOrWhiteSpace(path))];
+
+                var found = new List<string>();
+
+                foreach (var property in parameter.GetType().GetProperties(
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                {
+                    if (property.PropertyType != typeof(string)) continue;
+                    if (property.GetIndexParameters().Length > 0) continue;
+                    if (!MediaFileResolver.IsFilePathProperty(property.Name)) continue;
+
+                    if (property.GetValue(parameter) is not string value || string.IsNullOrWhiteSpace(value)) continue;
+                    if (!File.Exists(value) && !Directory.Exists(value)) continue;
+
+                    found.Add(value);
+                }
+
+                return found;
+            }
+            catch
+            {
+                return [];
+            }
+        }
+
+        public static IReadOnlyList<string> EnumerateSharedFiles(string directory)
+        {
+            const int Limit = 4000;
+
+            try
+            {
+                if (!Directory.Exists(directory)) return [];
+
+                return [.. Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories)
+                    .Where(path => Settings.MultiUserEditSettings.Default.IsExtensionAllowed(path))
+                    .Take(Limit)];
+            }
+            catch
+            {
+                return [];
+            }
         }
 
         public static string? ToPortableName(string? baseDirectory, string? characterName, string filePath)
