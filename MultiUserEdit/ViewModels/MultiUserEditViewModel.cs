@@ -146,6 +146,8 @@ namespace MultiUserEdit.ViewModels
             set => CurrentSession?.TransferProgress = value;
         }
 
+        public string TransferSpeedText => CurrentSession?.TransferSpeedText ?? string.Empty;
+
         public UserPermission GlobalDefaultPermission => CurrentSession?.GlobalDefaultPermission ?? new();
 
         public UserPermission CurrentUserPermission
@@ -288,9 +290,14 @@ namespace MultiUserEdit.ViewModels
             return input;
         }
 
-        public void ApplySyncScenes(OnlineScenes onlineScenes, Guid ownerId, bool isManual)
+        internal void HandleSyncScenesBegin(SyncScenesBeginEvent evt)
         {
-            CurrentSession?.ApplySyncScenes(onlineScenes, ownerId, isManual);
+            CurrentSession?.HandleSyncScenesBegin(evt);
+        }
+
+        internal void HandleSyncScenesChunk(SyncScenesChunkEvent evt)
+        {
+            CurrentSession?.HandleSyncScenesChunk(evt);
         }
 
         internal void HandlePresenceEvent(PresenceEvent evt)
@@ -404,11 +411,6 @@ namespace MultiUserEdit.ViewModels
         internal void HandleFileChunk(FileChunkEvent evt)
         {
             CurrentSession?.HandleFileChunk(evt);
-        }
-
-        internal void HandleFileTransferCancel(FileTransferCancelEvent evt)
-        {
-            CurrentSession?.HandleFileTransferCancel(evt);
         }
 
         public Task SendFileAsync(string filePath) =>

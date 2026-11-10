@@ -5,6 +5,7 @@
         string FileName,
         long FileSize,
         int TotalChunks,
-        int ChunkSize = 0
+        int ChunkSize = 0,
+        string? Hash = null
     ) : EditEvent;
 }

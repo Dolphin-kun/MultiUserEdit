@@ -9,7 +9,8 @@ namespace MultiUserEdit.Commons
     internal static class ResourceAvailabilityChecker
     {
         private static readonly TimeSpan QuietPeriod = TimeSpan.FromSeconds(1.5);
-        private const int MaxListed = 10;
+        public const string MissingHereTitle = "プラグイン・フォントが見つかりません";
+        public const string MissingThereTitle = "相手の環境にないものがあります";
 
         private static readonly HashSet<string> FontPropertyNames =
             new(["Font", "FontName", "FontFamily"], StringComparer.OrdinalIgnoreCase);
@@ -156,26 +157,24 @@ namespace MultiUserEdit.Commons
             }
 
             var who = senders.Count == 1 ? senders.First() : "共同編集相手";
-            var sections = new List<string>();
 
-            if (newPlugins.Count > 0)
+            foreach (var plugin in newPlugins)
             {
-                sections.Add($"【プラグイン】\n{Format(newPlugins)}\n該当するアイテムや効果は、この環境では表示されません。");
+                ErrorNotifier.NotifyList(MissingHereTitle,
+                    $"{who} が使用している以下のプラグインが、この環境にありません。",
+                    ErrorNotifier.Quote(plugin),
+                    "該当するアイテムや効果は、この環境では表示されません。",
+                    once: false);
             }
 
-            if (newFonts.Count > 0)
+            foreach (var font in newFonts)
             {
-                sections.Add($"【フォント】\n{Format(newFonts)}\n代わりのフォントで表示されるため、見た目が異なります。");
+                ErrorNotifier.NotifyList(MissingHereTitle,
+                    $"{who} が使用している以下のフォントが、この環境にありません。",
+                    ErrorNotifier.Quote(font),
+                    "代わりのフォントで表示されるため、見た目が異なります。",
+                    once: false);
             }
-
-            var title = newPlugins.Count > 0
-                ? newFonts.Count > 0 ? "プラグイン・フォントが見つかりません" : "プラグインが見つかりません"
-                : "フォントが見つかりません";
-
-            MessageBox.Show(
-                $"{who} が使用しているものが、この環境にありません。\n\n{string.Join("\n\n", sections)}",
-                title,
-                MessageBoxButton.OK);
         }
 
         private static readonly Dictionary<string, SortedSet<string>> reportedFontOwners = [];
@@ -233,17 +232,13 @@ namespace MultiUserEdit.Commons
                 reportedPluginOwners.Clear();
             }
 
-            if (fontLines.Count == 0 && pluginLines.Count == 0) return;
+            const string note = "その参加者の画面では、表示が異なるか、アイテムが表示されていません。";
 
-            var sections = new List<string>();
-            if (pluginLines.Count > 0) sections.Add($"【プラグイン】\n{string.Join("\n", pluginLines)}");
-            if (fontLines.Count > 0) sections.Add($"【フォント】\n{string.Join("\n", fontLines)}");
+            foreach (var line in pluginLines)
+                ErrorNotifier.NotifyList(MissingThereTitle, "あなたが使用している以下のプラグインが、相手の環境にありません。", line, note, once: false);
 
-            MessageBox.Show(
-                $"あなたが使用しているものが、相手の環境にありません。\n\n{string.Join("\n\n", sections)}\n"
-                + "その参加者の画面では、表示が異なるか、アイテムが表示されていません。",
-                "相手の環境にないものがあります",
-                MessageBoxButton.OK);
+            foreach (var line in fontLines)
+                ErrorNotifier.NotifyList(MissingThereTitle, "あなたが使用している以下のフォントが、相手の環境にありません。", line, note, once: false);
         }
 
         private static List<string> BuildLines(Dictionary<string, SortedSet<string>> source, HashSet<string> alreadyTold)
@@ -262,17 +257,10 @@ namespace MultiUserEdit.Commons
                     _ => $"（{owners.First()} さん ほか {owners.Count - 1} 人）"
                 };
 
-                lines.Add("・" + name + who);
+                lines.Add(ErrorNotifier.Quote(name) + who);
             }
 
             return lines;
-        }
-
-        private static string Format(List<string> names)
-        {
-            var list = string.Join("\n", names.Take(MaxListed).Select(name => "・" + name));
-            if (names.Count > MaxListed) list += $"\n ほか {names.Count - MaxListed} 件";
-            return list;
         }
 
         private static string ToDisplayName(string typeName)

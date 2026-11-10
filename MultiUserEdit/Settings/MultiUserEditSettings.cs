@@ -54,6 +54,27 @@ namespace MultiUserEdit.Settings
             set => Set(ref customVoiceDirectories, value);
         }
 
+        private bool showOperatorNames = true;
+        public bool ShowOperatorNames
+        {
+            get => showOperatorNames;
+            set => Set(ref showOperatorNames, value);
+        }
+
+        private double sidebarWidth = 124;
+        public double SidebarWidth
+        {
+            get => sidebarWidth;
+            set => Set(ref sidebarWidth, value);
+        }
+
+        private bool showActiveTransfers = true;
+        public bool ShowActiveTransfers
+        {
+            get => showActiveTransfers;
+            set => Set(ref showActiveTransfers, value);
+        }
+
         private bool confirmLargeFileReceive = true;
         public bool ConfirmLargeFileReceive
         {

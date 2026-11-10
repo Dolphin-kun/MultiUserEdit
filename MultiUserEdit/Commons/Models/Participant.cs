@@ -20,6 +20,9 @@ namespace MultiUserEdit.Commons.Models
         private DateTime joinedAt = DateTime.Now;
         public DateTime JoinedAt { get => joinedAt; set => Set(ref joinedAt, value); }
 
+        private bool hasFileChannel;
+        public bool HasFileChannel { get => hasFileChannel; set => Set(ref hasFileChannel, value); }
+
         private UserRole role;
         public UserRole Role { get => role; set => Set(ref role, value); }
 

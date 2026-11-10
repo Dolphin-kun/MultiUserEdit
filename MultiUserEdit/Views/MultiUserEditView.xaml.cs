@@ -17,15 +17,22 @@ namespace MultiUserEdit.Views
 
         private SettingsPages.ProfileSettingsView? profileSettingsView;
         private SettingsPages.FileSettingsView? fileSettingsView;
+        private SettingsPages.DisplaySettingsView? displaySettingsView;
         private SettingsPages.LinkSettingsView? linkSettingsView;
         private SettingsPages.AboutSettingsView? aboutSettingsView;
 
         private object? lastMainContent;
         private SidebarButton? lastMainNavButton;
 
+        private const double CompactSidebarThreshold = 96;
+
         public MultiUserEditView()
         {
             InitializeComponent();
+
+            var savedWidth = Settings.MultiUserEditSettings.Default.SidebarWidth;
+            if (savedWidth > 0)
+                SidebarColumn.Width = new GridLength(Math.Clamp(savedWidth, SidebarColumn.MinWidth, SidebarColumn.MaxWidth));
 
             DataContextChanged += MultiUserEditView_DataContextChanged;
             Loaded += MultiUserEditView_Loaded;
@@ -38,6 +45,7 @@ namespace MultiUserEdit.Views
 
             profileSettingsView = new SettingsPages.ProfileSettingsView { DataContext = DataContext };
             fileSettingsView = new SettingsPages.FileSettingsView { DataContext = DataContext };
+            displaySettingsView = new SettingsPages.DisplaySettingsView { DataContext = DataContext };
             linkSettingsView = new SettingsPages.LinkSettingsView { DataContext = DataContext };
             aboutSettingsView = new SettingsPages.AboutSettingsView { DataContext = DataContext };
 
@@ -46,6 +54,21 @@ namespace MultiUserEdit.Views
             filesView = new FilesView { DataContext = filesViewModel };
 
             MainContentControl.Content = homeView;
+        }
+
+        private void OnSidebarSizeChanged(object sender, SizeChangedEventArgs e) =>
+            SidebarButton.SetIsCompact(SidebarBorder, e.NewSize.Width < CompactSidebarThreshold);
+
+        private void OnSidebarSplitterDragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            var width = SidebarColumn.ActualWidth;
+            if (width < CompactSidebarThreshold)
+            {
+                width = SidebarColumn.MinWidth;
+                SidebarColumn.Width = new GridLength(width);
+            }
+
+            Settings.MultiUserEditSettings.Default.SidebarWidth = width;
         }
 
         private void MultiUserEditView_Loaded(object sender, RoutedEventArgs e)
@@ -176,6 +199,11 @@ namespace MultiUserEdit.Views
         private void OnNavFileSettingsClick(object sender, RoutedEventArgs e)
         {
             MainContentControl.Content = fileSettingsView;
+        }
+
+        private void OnNavDisplaySettingsClick(object sender, RoutedEventArgs e)
+        {
+            MainContentControl.Content = displaySettingsView;
         }
 
         private void OnNavLinkSettingsClick(object sender, RoutedEventArgs e)

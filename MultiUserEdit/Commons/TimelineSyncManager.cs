@@ -192,6 +192,10 @@ namespace MultiUserEdit.Commons
             }
         }
 
+        public Func<bool, bool>? IsLocalChangeAllowed { get; set; }
+
+        public Action<Guid>? RejectLocalChange { get; set; }
+
         private void SubscribeItem(IItem item, Timeline timeline, MultiUserEditViewModel viewModel)
         {
             if (itemSubscription.ContainsKey(item)) return;
@@ -206,7 +210,15 @@ namespace MultiUserEdit.Commons
 
                 if (!isItemEditableFunc(itemId)) return;
 
-                if (e.PropertyName == nameof(IItem.Frame) || e.PropertyName == nameof(IItem.Layer) || e.PropertyName == nameof(IItem.Length))
+                var isMove = e.PropertyName == nameof(IItem.Frame) || e.PropertyName == nameof(IItem.Layer) || e.PropertyName == nameof(IItem.Length);
+
+                if (IsLocalChangeAllowed?.Invoke(isMove) == false)
+                {
+                    RejectLocalChange?.Invoke(itemId);
+                    return;
+                }
+
+                if (isMove)
                 {
                     _ = eventSender.SendItemMovedThrottledAsync(itemId, timelineIndex, item.Frame, item.Length, item.Layer);
                 }

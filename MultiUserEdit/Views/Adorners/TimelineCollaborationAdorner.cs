@@ -330,6 +330,7 @@ namespace MultiUserEdit.Views.Adorners
             if (offset == null) return;
 
             var viewport = timelineViewModel.Viewport.Value;
+            var byOwner = new Dictionary<Participant, List<Rect>>();
 
             foreach (var itemViewModel in timelineViewModel.Items)
             {
@@ -346,19 +347,93 @@ namespace MultiUserEdit.Views.Adorners
                     Math.Max(0, itemViewModel.Height));
                 if (bounds.Width <= 0 || bounds.Height <= 0) continue;
 
+                if (!byOwner.TryGetValue(owner, out var rects))
+                {
+                    rects = [];
+                    byOwner[owner] = rects;
+                }
+                rects.Add(bounds);
+            }
+
+            var showNames = Settings.MultiUserEditSettings.Default.ShowOperatorNames;
+
+            foreach (var (owner, rects) in byOwner)
+            {
                 var brush = CreateBrush(owner.ThemeColor, 1.0);
                 var pen = new Pen(brush, 2);
                 pen.Freeze();
-                drawingContext.DrawRectangle(null, pen, bounds);
 
-                var text = CreateText($"{owner.UserName} が操作中", 11, GetReadableForeground(owner.ThemeColor), dpi);
-                var tagHeight = text.Height + 2;
-                var tagTop = bounds.Top - tagHeight >= 0 ? bounds.Top - tagHeight : bounds.Top;
-                var tag = new Rect(bounds.Left, tagTop, text.Width + 8, tagHeight);
+                foreach (var group in GroupTouching(rects))
+                {
+                    drawingContext.DrawGeometry(null, pen, Outline(group));
 
-                drawingContext.DrawRectangle(brush, null, tag);
-                drawingContext.DrawText(text, new Point(tag.Left + 4, tag.Top + 1));
+                    if (!showNames) continue;
+
+                    var top = group.Min(r => r.Top);
+                    var left = group.Where(r => r.Top <= top + 0.5).Min(r => r.Left);
+
+                    var text = CreateText($"{owner.UserName} が操作中", 11, GetReadableForeground(owner.ThemeColor), dpi);
+                    var tagHeight = text.Height + 2;
+                    var tagTop = top - tagHeight >= 0 ? top - tagHeight : top;
+                    var tag = new Rect(left, tagTop, text.Width + 8, tagHeight);
+
+                    drawingContext.DrawRectangle(brush, null, tag);
+                    drawingContext.DrawText(text, new Point(tag.Left + 4, tag.Top + 1));
+                }
             }
+        }
+
+        private static bool AreTouching(Rect a, Rect b)
+        {
+            var horizontalOverlap = Math.Min(a.Right, b.Right) - Math.Max(a.Left, b.Left);
+            var verticalOverlap = Math.Min(a.Bottom, b.Bottom) - Math.Max(a.Top, b.Top);
+
+            return (horizontalOverlap > 1 && verticalOverlap > -1) || (verticalOverlap > 1 && horizontalOverlap > -1);
+        }
+
+        private static List<List<Rect>> GroupTouching(List<Rect> rects)
+        {
+            var groups = new List<List<Rect>>();
+            var assigned = new bool[rects.Count];
+
+            for (var i = 0; i < rects.Count; i++)
+            {
+                if (assigned[i]) continue;
+
+                var group = new List<Rect>();
+                var pending = new Stack<int>();
+                pending.Push(i);
+                assigned[i] = true;
+
+                while (pending.Count > 0)
+                {
+                    var current = pending.Pop();
+                    group.Add(rects[current]);
+
+                    for (var j = 0; j < rects.Count; j++)
+                    {
+                        if (assigned[j] || !AreTouching(rects[current], rects[j])) continue;
+
+                        assigned[j] = true;
+                        pending.Push(j);
+                    }
+                }
+
+                groups.Add(group);
+            }
+
+            return groups;
+        }
+
+        private static Geometry Outline(List<Rect> group)
+        {
+            Geometry outline = new RectangleGeometry(group[0]);
+
+            for (var i = 1; i < group.Count; i++)
+                outline = Geometry.Combine(outline, new RectangleGeometry(group[i]), GeometryCombineMode.Union, null);
+
+            outline.Freeze();
+            return outline;
         }
 
         private Point? GetCanvasOffset(TimelineViewModel timelineViewModel, Dictionary<Guid, OperatingItem> operating)

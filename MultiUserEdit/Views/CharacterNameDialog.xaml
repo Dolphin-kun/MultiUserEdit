@@ -1,9 +1,13 @@
-<Window x:Class="MultiUserEdit.Views.CharacterNameDialog"
+﻿<Window x:Class="MultiUserEdit.Views.CharacterNameDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="キャラクター名" Height="100" Width="360"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         ShowInTaskbar="False">
+
+    <Window.Style>
+        <Style TargetType="{x:Type Window}" BasedOn="{StaticResource {x:Type Window}}" />
+    </Window.Style>
 
     <Grid Margin="0">
         <Grid.RowDefinitions>

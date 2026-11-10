@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:icons="clr-namespace:YukkuriMovieMaker.Resources.Icons;assembly=YukkuriMovieMaker.Plugin"
+             xmlns:settings="clr-namespace:MultiUserEdit.Settings"
              mc:Ignorable="d"
              d:DesignHeight="450" d:DesignWidth="400">
 
@@ -25,9 +26,33 @@
                 CornerRadius="4" Padding="8" Margin="0,0,0,8"
                 Visibility="{Binding HasActiveTransfers, Converter={StaticResource BoolToVisConverter}}">
             <StackPanel>
-                <TextBlock Text="{Binding TransferHeaderText}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
+                <ToggleButton x:Name="TransfersToggle" Cursor="Hand" Focusable="False"
+                              ToolTip="送受信中のファイルの一覧を開く／閉じる"
+                              IsChecked="{Binding Source={x:Static settings:MultiUserEditSettings.Default}, Path=ShowActiveTransfers}">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="{x:Type ToggleButton}">
+                            <Border Background="Transparent">
+                                <DockPanel>
+                                    <Path x:Name="chevron" DockPanel.Dock="Left" Width="10" Height="10" Stretch="Uniform" Margin="0,0,6,0"
+                                          VerticalAlignment="Center"
+                                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          Data="{DynamicResource {x:Static icons:GeometryKeys.ChevronRight}}" />
+                                    <TextBlock Text="{Binding TransferHeaderText}" FontWeight="SemiBold" FontSize="12"
+                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                </DockPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="chevron" Property="Data" Value="{DynamicResource {x:Static icons:GeometryKeys.ChevronDown}}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                </ToggleButton>
 
-                <ItemsControl ItemsSource="{Binding ActiveTransfers}">
+                <ScrollViewer MaxHeight="180" Margin="0,6,0,0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                              Visibility="{Binding IsChecked, ElementName=TransfersToggle, Converter={StaticResource BoolToVisConverter}}">
+                <ItemsControl ItemsSource="{Binding ActiveTransfers}" Margin="0,0,4,0">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid Margin="0,2">
@@ -73,6 +98,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                </ScrollViewer>
             </StackPanel>
         </Border>
 
