@@ -8,6 +8,17 @@
         public double OverallProgress { get; set; }
         public IReadOnlyList<TransferItemInfo> Items { get; set; } = [];
         public bool IsActive => UploadCount > 0 || DownloadCount > 0;
+
+        public double BytesPerSecond => Items.Sum(item => item.BytesPerSecond);
+
+        public string SpeedText => BytesPerSecond <= 0 ? string.Empty : FormatSpeed(BytesPerSecond);
+
+        private static string FormatSpeed(double bytesPerSecond)
+        {
+            if (bytesPerSecond >= 1024 * 1024) return $"{bytesPerSecond / (1024 * 1024):F1} MB/秒";
+            if (bytesPerSecond >= 1024) return $"{bytesPerSecond / 1024:F0} KB/秒";
+            return $"{bytesPerSecond:F0} B/秒";
+        }
         public bool IsUploading => UploadCount > 0;
 
         public string DisplayText

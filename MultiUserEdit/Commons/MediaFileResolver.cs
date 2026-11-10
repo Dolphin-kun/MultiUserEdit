@@ -130,10 +130,10 @@ namespace MultiUserEdit.Commons
         {
             if (Settings.MultiUserEditSettings.Default.IsExtensionAllowed(name)) return true;
 
-            var extension = Path.GetExtension(name);
-            ErrorNotifier.NotifyOnce(
+            ErrorNotifier.NotifyList(
                 "素材を受け取れませんでした",
-                $"拡張子 [{extension}] のファイルは共有設定で許可されていないため受け取れません。\n" +
+                "以下のファイルは、拡張子が共有設定で許可されていないため受け取れません。",
+                ErrorNotifier.Quote(Path.GetFileName(name)),
                 "設定 → ファイル → 共有可能なファイル形式 から許可してください。");
 
             return false;

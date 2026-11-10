@@ -48,46 +48,32 @@
             <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1"
                     CornerRadius="4" Padding="12" Margin="0,0,0,12"
                     Visibility="{Binding HasDivergenceWarning, Converter={StaticResource BoolToVisConverter}}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="{Binding DivergenceWarningText}" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    <TextBlock FontSize="11" Opacity="0.8" Margin="0,4,0,0" TextWrapping="Wrap"
+                               Text="気になる場合は同期してください。同期すると、届いていない自分の変更は失われます。" />
 
-                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding DivergenceWarningText}" FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap" />
-                        <TextBlock FontSize="11" Opacity="0.8" Margin="0,4,0,0" TextWrapping="Wrap"
-                                   Text="気になる場合は同期してください。同期すると、届いていない自分の変更は失われます。" />
-                    </StackPanel>
-
-                    <Button Grid.Column="1" Content="データを同期する" Command="{Binding SyncNowCommand}"
-                            Cursor="Hand" Padding="10,4" Margin="8,0,0,0" VerticalAlignment="Center" />
-
-                    <Button Grid.Column="2" Content="閉じる" Command="{Binding DismissDivergenceWarningCommand}"
-                            Cursor="Hand" Padding="10,4" Margin="6,0,0,0" VerticalAlignment="Center" />
-                </Grid>
+                    <WrapPanel HorizontalAlignment="Right" Margin="0,10,0,0">
+                        <Button Content="データを同期する" Command="{Binding SyncNowCommand}"
+                                Cursor="Hand" Padding="10,4" Margin="0,0,6,0" />
+                        <Button Content="閉じる" Command="{Binding DismissDivergenceWarningCommand}"
+                                Cursor="Hand" Padding="10,4" />
+                    </WrapPanel>
+                </StackPanel>
             </Border>
 
             <Border x:Name="UpdateNotice" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1"
                     CornerRadius="4" Padding="12" Margin="0,0,0,12"
                     Visibility="{Binding HasUpdate, Converter={StaticResource BoolToVisConverter}}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"
+                               Text="{Binding LatestVersion, Mode=OneWay, StringFormat=新しいバージョン {0} が公開されています}" />
+                    <TextBlock FontSize="11" Opacity="0.8" Margin="0,4,0,0" TextWrapping="Wrap"
+                               Text="共同編集は最新のプラグイン同士でのみ利用できます。更新してください。" />
 
-                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                        <TextBlock FontSize="13" FontWeight="SemiBold" TextWrapping="Wrap"
-                                   Text="{Binding LatestVersion, Mode=OneWay, StringFormat=新しいバージョン {0} が公開されています}" />
-                        <TextBlock FontSize="11" Opacity="0.8" Margin="0,4,0,0" TextWrapping="Wrap"
-                                   Text="共同編集は最新のプラグイン同士でのみ利用できます。更新してください。" />
-                    </StackPanel>
-
-                    <Button Grid.Column="1" Content="更新ページを開く" Command="{Binding OpenUpdateUrlCommand}"
-                            Cursor="Hand" Padding="10,4" Margin="8,0,0,0" VerticalAlignment="Center" />
-                </Grid>
+                    <Button Content="更新ページを開く" Command="{Binding OpenUpdateUrlCommand}"
+                            Cursor="Hand" Padding="10,4" Margin="0,10,0,0" HorizontalAlignment="Right" />
+                </StackPanel>
             </Border>
 
             <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1" CornerRadius="4" Padding="12" Margin="0,0,0,12">
@@ -106,24 +92,19 @@
                             </Style>
                         </StackPanel.Style>
 
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <RadioButton Grid.Column="0" GroupName="RoomSize" Cursor="Hand"
+                        <WrapPanel Margin="0,0,0,8">
+                            <RadioButton GroupName="RoomSize" Cursor="Hand" Margin="0,0,12,4"
                                          IsChecked="{Binding IsSmallRoomSelected, Mode=TwoWay}"
                                          ToolTip="少人数向け。すぐに繋がります。">
                                 <TextBlock Text="{x:Static vm:MultiUserEditViewModel.SmallRoomLabel}" FontSize="12" VerticalAlignment="Center" />
                             </RadioButton>
 
-                            <RadioButton Grid.Column="1" GroupName="RoomSize" Cursor="Hand"
+                            <RadioButton GroupName="RoomSize" Cursor="Hand" Margin="0,0,0,4"
                                          IsChecked="{Binding IsLargeRoomSelected, Mode=TwoWay}"
                                          ToolTip="多人数向け。専用の中継サーバーを使います。人数が少ない状態が続くと自動で小さい部屋へ移ります。">
                                 <TextBlock Text="{x:Static vm:MultiUserEditViewModel.LargeRoomLabel}" FontSize="12" VerticalAlignment="Center" />
                             </RadioButton>
-                        </Grid>
+                        </WrapPanel>
 
                         <Button Command="{Binding CreateRoomCommand}" Cursor="Hand" Height="32">
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">

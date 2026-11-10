@@ -1,4 +1,4 @@
-using YukkuriMovieMaker.Project;
+﻿using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
 
 namespace MultiUserEdit.Commons
@@ -9,11 +9,16 @@ namespace MultiUserEdit.Commons
         {
             if (scenes == null || item is not SceneItem sceneItem) return;
 
-            var currentSceneId = sceneItem.SceneId;
-            if (currentSceneId == Guid.Empty) return;
+            if (sceneItem.SceneId == Guid.Empty) return;
+
+            var currentSceneId = SceneIdMap.ToLocal(sceneItem.SceneId);
 
             var matchingTimelineById = scenes.Timelines.FirstOrDefault(t => t.ID == currentSceneId);
-            if (matchingTimelineById != null) return;
+            if (matchingTimelineById != null)
+            {
+                if (sceneItem.SceneId != currentSceneId) sceneItem.SceneId = currentSceneId;
+                return;
+            }
 
             var fallbackTimeline = scenes.Timelines.FirstOrDefault();
             if (fallbackTimeline != null)

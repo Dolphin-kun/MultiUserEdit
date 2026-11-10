@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons.Events;
+﻿using MultiUserEdit.Commons.Events;
 using MultiUserEdit.Networking;
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -26,6 +26,16 @@ namespace MultiUserEdit.Commons
         private readonly HashSet<Guid> acked = [];
         private readonly HashSet<Guid> failed = [];
         private DateTime startedAt;
+
+        public void Reset()
+        {
+            quietSince = DateTime.UtcNow;
+            running = false;
+            PendingRoomId = null;
+            PendingHostKey = null;
+            acked.Clear();
+            failed.Clear();
+        }
 
         public void NoteParticipantCount(int count)
         {

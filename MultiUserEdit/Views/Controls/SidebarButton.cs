@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -25,6 +25,16 @@ namespace MultiUserEdit.Views.Controls
             get => (Geometry)GetValue(IconDataProperty);
             set => SetValue(IconDataProperty, value);
         }
+
+        public static readonly DependencyProperty IsCompactProperty =
+            DependencyProperty.RegisterAttached("IsCompact", typeof(bool), typeof(SidebarButton),
+                new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.Inherits));
+
+        public static bool GetIsCompact(DependencyObject element) => (bool)element.GetValue(IsCompactProperty);
+
+        public static void SetIsCompact(DependencyObject element, bool value) => element.SetValue(IsCompactProperty, value);
+
+        public bool IsCompact => (bool)GetValue(IsCompactProperty);
 
         public static readonly DependencyProperty LabelProperty =
             DependencyProperty.Register(nameof(Label), typeof(string), typeof(SidebarButton), new PropertyMetadata(string.Empty));

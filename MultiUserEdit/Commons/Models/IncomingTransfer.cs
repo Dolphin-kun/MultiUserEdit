@@ -2,9 +2,10 @@
 
 namespace MultiUserEdit.Commons.Models
 {
-    public sealed class IncomingTransfer(string fileName, string savePath, string tempPath, int totalChunks, int chunkSize)
+    public sealed class IncomingTransfer(string fileName, string savePath, string tempPath, int totalChunks, int chunkSize,
+        long fileSize = -1, string? expectedHash = null)
     {
-        private const int QueuedWriteLimit = 24;
+        private const int QueuedWriteLimit = 96;
 
         public string FileName { get; } = fileName;
         public string SavePath { get; } = savePath;
@@ -12,6 +13,25 @@ namespace MultiUserEdit.Commons.Models
         public int TotalChunks { get; } = totalChunks;
         public int ChunkSize { get; } = chunkSize;
         public int ReceivedChunks { get; set; }
+        public long FileSize { get; } = fileSize;
+        public string? ExpectedHash { get; } = expectedHash;
+
+        private readonly bool[] received = new bool[Math.Max(0, totalChunks)];
+        private readonly System.Threading.Lock receivedLock = new();
+
+        public bool TryMarkReceived(int chunkIndex)
+        {
+            lock (receivedLock)
+            {
+                if (chunkIndex < 0 || chunkIndex >= received.Length || received[chunkIndex]) return false;
+
+                received[chunkIndex] = true;
+                return true;
+            }
+        }
+
+        public long ExpectedChunkLength(int chunkIndex) =>
+            chunkIndex < TotalChunks - 1 ? ChunkSize : FileSize - (long)(TotalChunks - 1) * ChunkSize;
         public Guid SenderId { get; set; }
         public DateTime StartedAt { get; } = DateTime.UtcNow;
         public DateTime LastActivityAt { get; set; } = DateTime.UtcNow;

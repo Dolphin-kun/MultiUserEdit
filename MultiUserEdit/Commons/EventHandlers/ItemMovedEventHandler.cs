@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons.Events;
+﻿using MultiUserEdit.Commons.Events;
 using MultiUserEdit.ViewModels;
 
 namespace MultiUserEdit.Commons.EventHandlers
@@ -7,6 +7,8 @@ namespace MultiUserEdit.Commons.EventHandlers
     {
         public void Handle(ItemMovedEvent editEvent, MultiUserEditViewModel viewModel)
         {
+            if (MoveOrdering.IsStale(editEvent.ExecutorId, editEvent.ItemId, editEvent.Sequence)) return;
+
             var timeline = viewModel.Scenes?.Timelines.ElementAtOrDefault(editEvent.TimelineIndex);
             if (timeline == null) return;
 

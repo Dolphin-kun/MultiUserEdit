@@ -6,6 +6,10 @@
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         ShowInTaskbar="False">
 
+    <Window.Style>
+        <Style TargetType="{x:Type Window}" BasedOn="{StaticResource {x:Type Window}}" />
+    </Window.Style>
+
     <Window.Resources>
         <Style x:Key="EqualWidthTabItemStyle" TargetType="TabItem">
             <Setter Property="MinWidth" Value="92" />

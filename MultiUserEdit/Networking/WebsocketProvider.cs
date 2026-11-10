@@ -34,6 +34,9 @@ namespace MultiUserEdit.Networking
         public event Action<string?, string?>? RoomNotFound;
         public event Action<string?>? UpdateAvailable;
         public event Action<Guid, bool>? PeerDisconnected;
+        public event Action<string?>? RoomInfoReceived;
+
+        private const long MaxIncomingMessageBytes = 64L * 1024 * 1024;
 
         private static readonly HttpMessageInvoker NoDelayInvoker = CreateNoDelayInvoker();
 
@@ -60,9 +63,13 @@ namespace MultiUserEdit.Networking
             return new HttpMessageInvoker(handler);
         }
 
-        public WebsocketProvider()
+        public WebsocketProvider() : this(Guid.NewGuid().ToString())
         {
-            userId = Guid.NewGuid().ToString();
+        }
+
+        public WebsocketProvider(string userId)
+        {
+            this.userId = userId;
         }
 
         public async Task ConnectAsync(string url, IReadOnlyDictionary<string, string> headers)
@@ -234,6 +241,7 @@ namespace MultiUserEdit.Networking
                 {
                     using var ms = new MemoryStream();
                     WebSocketReceiveResult result;
+                    var oversized = false;
 
                     do
                     {
@@ -247,12 +255,26 @@ namespace MultiUserEdit.Networking
 
                         if (result.MessageType != WebSocketMessageType.Text) continue;
 
-                        if (result.Count > 0)
-                            ms.Write(buffer, 0, result.Count);
+                        if (oversized || result.Count <= 0) continue;
+
+                        if (ms.Length + result.Count > MaxIncomingMessageBytes)
+                        {
+                            oversized = true;
+                            ms.SetLength(0);
+                            continue;
+                        }
+
+                        ms.Write(buffer, 0, result.Count);
 
                     } while (!result.EndOfMessage);
 
                     if (!IsCurrent()) return;
+
+                    if (oversized)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[WebsocketProvider] Dropped an oversized message");
+                        continue;
+                    }
 
                     var json = Encoding.UTF8.GetString(ms.ToArray());
 
@@ -343,6 +365,13 @@ namespace MultiUserEdit.Networking
                         : null);
                     return false;
                 }
+                if (senderId == "server" && typeStr == "system:room_info")
+                {
+                    RoomInfoReceived?.Invoke(dataProp.TryGetProperty("hostUserId", out var hostProp)
+                        ? hostProp.GetString()
+                        : null);
+                    return false;
+                }
                 if (senderId == "server" && typeStr == "peer_disconnected")
                 {
                     if (dataProp.TryGetProperty("userId", out var userIdProp) &&
@@ -373,6 +402,11 @@ namespace MultiUserEdit.Networking
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"[WebsocketProvider] Event Deserialize Exception: {ex.Message}");
+
+                    Commons.ErrorNotifier.NotifyOnce(
+                        "相手のプラグインを読み取れませんでした",
+                        "相手から受け取った内容を解釈できませんでした。\n"
+                        + "同じバージョンのMultiUserEditを使っているか確認してください。");
                 }
             }
 

@@ -3,7 +3,6 @@
 namespace MultiUserEdit.Commons.Events
 {
     [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-    [JsonDerivedType(typeof(SyncScenesEvent), 10)]
     [JsonDerivedType(typeof(ItemMovedEvent), 11)]
     [JsonDerivedType(typeof(ItemAddedEvent), 12)]
     [JsonDerivedType(typeof(ItemRemovedEvent), 13)]
@@ -33,6 +32,9 @@ namespace MultiUserEdit.Commons.Events
     [JsonDerivedType(typeof(RoomMigrationEvent), 37)]
     [JsonDerivedType(typeof(RoomMigrationAckEvent), 38)]
     [JsonDerivedType(typeof(FileTransferCancelEvent), 39)]
+    [JsonDerivedType(typeof(FileChunkAckEvent), 40)]
+    [JsonDerivedType(typeof(SyncScenesChunkEvent), 41)]
+    [JsonDerivedType(typeof(SyncScenesBeginEvent), 42)]
     public abstract record EditEvent
     {
         public DateTime DateTime { get; init; }

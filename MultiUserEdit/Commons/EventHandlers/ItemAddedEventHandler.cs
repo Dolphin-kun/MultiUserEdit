@@ -61,11 +61,14 @@ namespace MultiUserEdit.Commons.EventHandlers
 
                 if (requiresRealContainer && missingFiles.Count > 0)
                 {
-                    ErrorNotifier.NotifyOnce(
-                        "動画・音声ファイルを受信できませんでした",
-                        $"{viewModel.GetUserName(editEvent.ExecutorId)} が追加したアイテムのファイルが届かなかったため、アイテムを追加できませんでした。\n\n"
-                        + string.Join("\n", missingFiles.Take(5).Select(name => "・" + name))
-                        + "\n\n送信側で「データを同期する」を実行すると、もう一度送信されます。");
+                    foreach (var name in missingFiles)
+                    {
+                        ErrorNotifier.NotifyList(
+                            "動画・音声ファイルを受信できませんでした",
+                            $"{viewModel.GetUserName(editEvent.ExecutorId)} が追加したアイテムで使われている以下のファイルが届かなかったため、アイテムを追加できませんでした。",
+                            ErrorNotifier.Quote(name),
+                            "送信側で「データを同期する」を実行すると、もう一度送信されます。");
+                    }
                     return;
                 }
 
@@ -97,11 +100,11 @@ namespace MultiUserEdit.Commons.EventHandlers
             {
                 if (ItemJsonSanitizer.GetMissingPluginName(ex) is { } pluginName)
                 {
-                    ErrorNotifier.NotifyOnce(
-                        "プラグインが見つかりません",
-                        $"{viewModel.GetUserName(editEvent.ExecutorId)} が使用しているプラグインがこの環境にありません。\n\n"
-                        + $"・{pluginName}\n\n"
-                        + "このアイテムは追加できませんでした。プラグインを導入すると表示できます。");
+                    ErrorNotifier.NotifyList(
+                        ResourceAvailabilityChecker.MissingHereTitle,
+                        $"{viewModel.GetUserName(editEvent.ExecutorId)} が使用している以下のプラグインが、この環境にありません。",
+                        ErrorNotifier.Quote(pluginName),
+                        "該当するアイテムは追加できませんでした。プラグインを導入すると表示できます。");
                     return;
                 }
 

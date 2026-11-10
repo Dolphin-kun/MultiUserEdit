@@ -149,13 +149,17 @@ namespace MultiUserEdit.Commons
             catch { }
         }
 
-        public async Task SendItemMovedAsync(Guid itemId, int timelineIndex, int frame, int length, int layer)
+        private long moveSequence;
+
+        public async Task SendItemMovedAsync(Guid itemId, int timelineIndex, int frame, int length, int layer, long sequence = 0)
         {
             if (Suppressed) return;
 
+            if (sequence <= 0) sequence = Interlocked.Increment(ref moveSequence);
+
             try
             {
-                var evt = new ItemMovedEvent(itemId, timelineIndex, frame, length, layer)
+                var evt = new ItemMovedEvent(itemId, timelineIndex, frame, length, layer, sequence)
                 {
                     DateTime = DateTime.UtcNow,
                     ExecutorId = LocalUserId
@@ -182,7 +186,7 @@ namespace MultiUserEdit.Commons
                 if ((now - state.LastSent).TotalMilliseconds >= MinimumSendIntervalMilliseconds)
                 {
                     state.LastSent = now;
-                    return SendItemMovedAsync(itemId, timelineIndex, frame, length, layer);
+                    return SendItemMovedAsync(itemId, timelineIndex, frame, length, layer, Interlocked.Increment(ref moveSequence));
                 }
 
                 if (!state.FlushScheduled)
@@ -191,6 +195,7 @@ namespace MultiUserEdit.Commons
                     _ = Task.Delay(MinimumSendIntervalMilliseconds + 2).ContinueWith(_ =>
                     {
                         int f, l, ly, ti;
+                        long seq;
                         lock (state.Lock)
                         {
                             if (state.Cancelled) return;
@@ -200,8 +205,9 @@ namespace MultiUserEdit.Commons
                             f = state.Frame;
                             l = state.Length;
                             ly = state.Layer;
+                            seq = Interlocked.Increment(ref moveSequence);
                         }
-                        _ = SendItemMovedAsync(itemId, ti, f, l, ly);
+                        _ = SendItemMovedAsync(itemId, ti, f, l, ly, seq);
                     }, TaskScheduler.Default);
                 }
 

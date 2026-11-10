@@ -280,15 +280,15 @@ namespace MultiUserEdit.Commons
 
         private static void NotifyMissingCharacterFiles(string characterName, IReadOnlyList<string> missingFiles)
         {
-            const int MaxListed = 5;
-            var list = string.Join("\n", missingFiles.Take(MaxListed).Select(name => "・" + Path.GetFileName(TachieFileResolver.ToLocalSeparators(name))));
-            if (missingFiles.Count > MaxListed) list += $"\n ほか {missingFiles.Count - MaxListed} 件";
-
-            ErrorNotifier.NotifyOnce(
-                "立ち絵の素材を受け取れませんでした",
-                $"キャラクター「{characterName}」の立ち絵素材が届かないまま時間切れになりました。\n\n{list}\n\n" +
-                "キャラクターは作成しましたが、立ち絵は表示されません。\n" +
-                "通信環境を確認して、プロジェクトを開き直すと表示される場合があります。");
+            foreach (var name in missingFiles)
+            {
+                ErrorNotifier.NotifyList(
+                    "立ち絵の素材を受け取れませんでした",
+                    $"キャラクター「{characterName}」の、以下の立ち絵素材が届かないまま時間切れになりました。",
+                    ErrorNotifier.Quote(Path.GetFileName(TachieFileResolver.ToLocalSeparators(name))),
+                    "キャラクターは作成しましたが、立ち絵は表示されません。\n"
+                    + "通信環境を確認して、プロジェクトを開き直すと表示される場合があります。");
+            }
         }
 
         private void CreateCharacterCore(CharacterSharedEvent evt)

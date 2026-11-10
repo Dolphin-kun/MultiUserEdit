@@ -10,7 +10,8 @@ namespace MultiUserEdit.Commons
 
         public ClientEventDispatcher()
         {
-            Register(new SyncScenesEventHandler());
+            Register(new SyncScenesBeginEventHandler());
+            Register(new SyncScenesChunkEventHandler());
             Register(new ItemMovedEventHandler());
             Register(new ItemAddedEventHandler());
             Register(new ItemRemovedEventHandler());
@@ -24,7 +25,6 @@ namespace MultiUserEdit.Commons
             Register(new FileRequestEventHandler());
             Register(new FileTransferStartEventHandler());
             Register(new FileChunkEventHandler());
-            Register(new FileTransferCancelEventHandler());
             Register(new CharacterRequestEventHandler());
             Register(new CharacterSharedEventHandler());
             Register(new SceneAddedEventHandler());

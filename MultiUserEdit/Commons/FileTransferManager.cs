@@ -11,10 +11,15 @@ namespace MultiUserEdit.Commons
 {
     internal class FileTransferManager
     {
-        private const int ChunkSize = 1024 * 1024;
+        private const int ChunkSize = 256 * 1024;
         private static readonly TimeSpan TransferTimeout = TimeSpan.FromMinutes(3);
 
         private static readonly TimeSpan RequestWindow = TimeSpan.FromSeconds(15);
+
+        private const int AckWindow = 24;
+        private const int AckInterval = 4;
+        private static readonly TimeSpan AckPollInterval = TimeSpan.FromMilliseconds(20);
+        private static readonly TimeSpan AckStallTimeout = TimeSpan.FromSeconds(30);
 
         private static readonly TimeSpan AnnouncementLifetime = TimeSpan.FromMinutes(5);
 
@@ -75,9 +80,74 @@ namespace MultiUserEdit.Commons
 
         public Func<int>? GetPeerCount { get; set; }
 
+        public Func<IReadOnlyList<Guid>>? GetPeerIds { get; set; }
+
+        public Func<Guid, bool>? PeerHasFileChannel { get; set; }
+
+        public Action<Guid, Guid, int>? SendChunkAck { get; set; }
+
+        public Action<Guid, Guid>? DeclineTransfer { get; set; }
+
+        public Func<Guid, string, string?>? ReceiveBlockedReason { get; set; }
+
+        private const int MaxChunkSize = 8 * 1024 * 1024;
+        private const long MaxReceiveBytes = 32L * 1024 * 1024 * 1024;
+        private const long FreeSpaceMargin = 512L * 1024 * 1024;
+
+        private readonly ConcurrentDictionary<string, string> receivedHashes = new(StringComparer.OrdinalIgnoreCase);
+
+        private static bool IsPlausible(FileTransferStartEvent evt)
+        {
+            if (evt.FileSize < 0 || evt.FileSize > MaxReceiveBytes) return false;
+            if (evt.ChunkSize <= 0 || evt.ChunkSize > MaxChunkSize) return false;
+
+            var expectedChunks = evt.FileSize == 0 ? 0 : (evt.FileSize + evt.ChunkSize - 1) / evt.ChunkSize;
+            return evt.TotalChunks == expectedChunks;
+        }
+
+        private static bool HasRoomFor(long size)
+        {
+            try
+            {
+                var root = Path.GetPathRoot(GetSaveDirectory());
+                if (string.IsNullOrEmpty(root)) return true;
+
+                return new DriveInfo(root).AvailableFreeSpace >= size + FreeSpaceMargin;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        private static string? HashFile(string path)
+        {
+            try
+            {
+                using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, ChunkSize, FileOptions.SequentialScan);
+                return Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(stream));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[MultiUserEdit] Hash failed for {path}: {ex.Message}");
+                return null;
+            }
+        }
+
+        private bool HasHash(string path, string expectedHash)
+        {
+            var actual = receivedHashes.TryGetValue(path, out var known)
+                ? known
+                : ComputeHashAsync(path).GetAwaiter().GetResult();
+
+            return actual != null && string.Equals(actual, expectedHash, StringComparison.OrdinalIgnoreCase);
+        }
+
         private readonly ConcurrentDictionary<string, FileTask> activeUploads = new();
         private readonly ConcurrentDictionary<Guid, IncomingTransfer> incomingTransfers = new();
         private readonly ConcurrentDictionary<Guid, FileTask> activeDownloads = new();
+
+        private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Guid, int>> acknowledged = new();
 
         private readonly ConcurrentDictionary<Guid, Announcement> announcements = new();
         private readonly ConcurrentDictionary<string, byte> announcingPaths = new();
@@ -182,16 +252,17 @@ namespace MultiUserEdit.Commons
             if (FileSendBlockedReason?.Invoke(filePath) is { } blockedReason)
             {
                 sendDecisions[filePath] = false;
-                ErrorNotifier.NotifyOnce("素材を送信できませんでした", blockedReason);
+                ErrorNotifier.NotifyList("素材を送信できませんでした", blockedReason, ErrorNotifier.Quote(Path.GetFileName(filePath)));
                 return Task.FromResult(false);
             }
 
             if (!MultiUserEditSettings.Default.IsExtensionAllowed(filePath))
             {
                 sendDecisions[filePath] = false;
-                ErrorNotifier.NotifyOnce(
+                ErrorNotifier.NotifyList(
                     "素材を送信できませんでした",
-                    $"拡張子 [{Path.GetExtension(filePath)}] のファイルは共有設定で許可されていないため送信できません。\n" +
+                    "以下のファイルは、拡張子が共有設定で許可されていないため送信できません。",
+                    ErrorNotifier.Quote(Path.GetFileName(filePath)),
                     "設定 → ファイル → 共有可能なファイル形式 から許可してください。");
                 return Task.FromResult(false);
             }
@@ -245,12 +316,10 @@ namespace MultiUserEdit.Commons
         {
             if (fileNames.Count == 0) return false;
 
-            const int MaxListed = 10;
-            var message = fileNames.Count == 1
-                ? $"素材ファイル「{fileNames[0]}」を他メンバーに送信してもよろしいですか？"
-                : $"以下の素材ファイル {fileNames.Count} 件を他メンバーに送信してもよろしいですか？\n\n"
-                    + string.Join("\n", fileNames.Take(MaxListed).Select(name => "・" + name))
-                    + (fileNames.Count > MaxListed ? $"\n ほか {fileNames.Count - MaxListed} 件" : string.Empty);
+            const int MaxListed = 15;
+            var message = "以下のファイルを送信してもよろしいですか？\n\n"
+                + string.Join("\n", fileNames.Take(MaxListed).Select(ErrorNotifier.Quote))
+                + (fileNames.Count > MaxListed ? $"\n（ほか {fileNames.Count - MaxListed} 件）" : string.Empty);
 
             var confirmed = false;
             System.Windows.Application.Current?.Dispatcher.Invoke(() =>
@@ -430,9 +499,10 @@ namespace MultiUserEdit.Commons
 
         private static void NotifyBlocked(string fileName)
         {
-            ErrorNotifier.NotifyOnce(
+            ErrorNotifier.NotifyList(
                 "素材を受け取れませんでした",
-                $"拡張子 [{Path.GetExtension(fileName)}] のファイルは共有設定で許可されていないため受け取れません。\n" +
+                "以下のファイルは、拡張子が共有設定で許可されていないため受け取れません。",
+                ErrorNotifier.Quote(Path.GetFileName(fileName)),
                 "設定 → ファイル → 共有可能なファイル形式 から許可してください。");
         }
 
@@ -454,6 +524,40 @@ namespace MultiUserEdit.Commons
 
         private static Task SendToTargetsAsync(SessionClient sessionClient, IReadOnlyList<string>? targetIds, object data) =>
             targetIds == null ? sessionClient.SendAsync(null, data) : sessionClient.SendToManyAsync(targetIds, data);
+
+        private IReadOnlyList<Guid>? ResolveRecipients(IReadOnlyList<string>? targetIds)
+        {
+            if (targetIds == null) return GetPeerIds?.Invoke();
+
+            var resolved = new List<Guid>(targetIds.Count);
+            foreach (var id in targetIds)
+            {
+                if (Guid.TryParse(id, out var parsed) && parsed != Guid.Empty) resolved.Add(parsed);
+            }
+            return resolved;
+        }
+
+        private async Task SendBulkAsync(SessionClient sessionClient, IReadOnlyList<string>? targetIds, object data)
+        {
+            var recipients = sessionClient.HasFileChannel ? ResolveRecipients(targetIds) : null;
+            if (recipients == null || recipients.Count == 0)
+            {
+                await SendToTargetsAsync(sessionClient, targetIds, data);
+                return;
+            }
+
+            var overFileChannel = new List<string>();
+            var overControlChannel = new List<string>();
+
+            foreach (var recipient in recipients)
+            {
+                var list = PeerHasFileChannel?.Invoke(recipient) == true ? overFileChannel : overControlChannel;
+                list.Add(recipient.ToString());
+            }
+
+            if (overFileChannel.Count > 0) await sessionClient.SendFileDataToManyAsync(overFileChannel, data);
+            if (overControlChannel.Count > 0) await sessionClient.SendToManyAsync(overControlChannel, data);
+        }
 
         private Task SendChunksAsync(string filePath, string fileName, Guid transferId,
             SessionClient sessionClient, Guid executorId, IReadOnlyList<string>? targetIds) =>
@@ -482,12 +586,13 @@ namespace MultiUserEdit.Commons
                 var fileSize = fileInfo.Length;
                 var totalChunks = (int)Math.Ceiling((double)fileSize / ChunkSize);
 
-                var startEvt = new FileTransferStartEvent(transferId, fileName, fileSize, totalChunks, ChunkSize)
+                var hash = await ComputeHashAsync(filePath);
+                var startEvt = new FileTransferStartEvent(transferId, fileName, fileSize, totalChunks, ChunkSize, hash)
                 {
                     DateTime = DateTime.UtcNow,
                     ExecutorId = executorId
                 };
-                await SendToTargetsAsync(sessionClient, targetIds, startEvt);
+                await SendBulkAsync(sessionClient, targetIds, startEvt);
 
                 var buffer = new byte[ChunkSize];
                 await using var stream = OpenForSequentialReadAsync(filePath);
@@ -496,11 +601,23 @@ namespace MultiUserEdit.Commons
                     .Select(id => Guid.TryParse(id, out var parsed) ? parsed : Guid.Empty)
                     .ToArray();
 
+                var waiters = new List<Guid>(ResolveRecipients(targetIds) ?? []);
+                var hadWaiters = waiters.Count > 0;
+                acknowledged.GetOrAdd(transferId, _ => new());
+
                 for (int chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++)
                 {
                     if (IsCancelledByEveryone(transferId, targetGuids))
                     {
                         Debug.WriteLine($"[MultiUserEdit] Every receiver cancelled: {fileName}");
+                        return;
+                    }
+
+                    await WaitForAckWindowAsync(transferId, chunkIndex, waiters);
+
+                    if (hadWaiters && waiters.Count == 0)
+                    {
+                        Debug.WriteLine($"[MultiUserEdit] No receivers left, stopping: {fileName}");
                         return;
                     }
 
@@ -512,7 +629,7 @@ namespace MultiUserEdit.Commons
                         DateTime = DateTime.UtcNow,
                         ExecutorId = executorId
                     };
-                    await SendToTargetsAsync(sessionClient, targetIds, chunkEvt);
+                    await SendBulkAsync(sessionClient, targetIds, chunkEvt);
 
                     fileTask.TransferredBytes = Math.Min(fileTask.TotalBytes, fileTask.TransferredBytes + read);
                     NotifyProgress();
@@ -522,9 +639,60 @@ namespace MultiUserEdit.Commons
             }
             finally
             {
+                acknowledged.TryRemove(transferId, out _);
                 activeUploads.TryRemove(filePath, out _);
                 NotifySummary();
             }
+        }
+
+        private async Task WaitForAckWindowAsync(Guid transferId, int chunkIndex, List<Guid> waiters)
+        {
+            if (waiters.Count == 0) return;
+
+            waiters.RemoveAll(waiter => cancelledTargets.ContainsKey(CancelKey(transferId, waiter)));
+
+            if (GetPeerIds?.Invoke() is { } peers)
+                waiters.RemoveAll(waiter => !peers.Contains(waiter));
+
+            if (waiters.Count == 0 || chunkIndex < AckWindow) return;
+
+            var acked = acknowledged.GetOrAdd(transferId, _ => new());
+            var stalledSince = DateTime.UtcNow;
+            var previousSlowest = int.MinValue;
+
+            while (waiters.Count > 0)
+            {
+                waiters.RemoveAll(waiter => cancelledTargets.ContainsKey(CancelKey(transferId, waiter)));
+                if (waiters.Count == 0) return;
+
+                var slowest = int.MaxValue;
+                foreach (var waiter in waiters)
+                    slowest = Math.Min(slowest, acked.TryGetValue(waiter, out var value) ? value : -1);
+
+                if (chunkIndex - slowest < AckWindow) return;
+
+                if (slowest != previousSlowest)
+                {
+                    previousSlowest = slowest;
+                    stalledSince = DateTime.UtcNow;
+                }
+                else if (DateTime.UtcNow - stalledSince > AckStallTimeout)
+                {
+                    waiters.RemoveAll(waiter => (acked.TryGetValue(waiter, out var value) ? value : -1) <= slowest);
+                    Debug.WriteLine($"[MultiUserEdit] Dropped receivers that stopped replying: {transferId}");
+                    previousSlowest = int.MinValue;
+                    continue;
+                }
+
+                await Task.Delay(AckPollInterval);
+            }
+        }
+
+        internal void HandleChunkAck(FileChunkAckEvent evt)
+        {
+            if (!acknowledged.TryGetValue(evt.TransferId, out var acked)) return;
+
+            acked.AddOrUpdate(evt.ExecutorId, evt.ChunkIndex, (_, existing) => Math.Max(existing, evt.ChunkIndex));
         }
 
         private readonly ConcurrentDictionary<string, SentFileRecord> sentFiles = new(StringComparer.OrdinalIgnoreCase);
@@ -552,7 +720,7 @@ namespace MultiUserEdit.Commons
             SentFilesChanged?.Invoke();
         }
 
-        private bool ReuseLocalCopy(Guid transferId, string? localPath, long expectedSize)
+        private bool ReuseLocalCopy(Guid transferId, string? localPath, long expectedSize, string? expectedHash = null)
         {
             if (string.IsNullOrEmpty(localPath)) return false;
 
@@ -565,6 +733,8 @@ namespace MultiUserEdit.Commons
             {
                 return false;
             }
+
+            if (!string.IsNullOrEmpty(expectedHash) && !HasHash(localPath, expectedHash)) return false;
 
             Debug.WriteLine($"[MultiUserEdit] Reused a local file instead of receiving: {localPath}");
             TransferCompleted?.Invoke(transferId.ToString(), localPath);
@@ -582,6 +752,12 @@ namespace MultiUserEdit.Commons
                 return false;
             }
 
+            if (ReceiveBlockedReason?.Invoke(evt.ExecutorId, evt.FileName) is { } refused)
+            {
+                Debug.WriteLine($"[MultiUserEdit] Not requesting {evt.FileName}: {refused}");
+                return false;
+            }
+
             var characterPath = TachieFileResolver.ResolveLocalPath(
                 TachieFileResolver.GetBaseDirectory(evt.CharacterName), evt.FileName);
 
@@ -592,7 +768,7 @@ namespace MultiUserEdit.Commons
                 characterPath
             })
             {
-                if (ReuseLocalCopy(evt.TransferId, localPath, evt.FileSize)) return false;
+                if (ReuseLocalCopy(evt.TransferId, localPath, evt.FileSize, evt.Hash)) return false;
             }
 
             return await ConfirmReceiveAsync(evt);
@@ -688,26 +864,56 @@ namespace MultiUserEdit.Commons
             {
                 Debug.WriteLine($"[MultiUserEdit] Security Block: Rejected file transfer with disallowed extension: {evt.FileName}");
                 NotifyBlocked(evt.FileName);
+                DeclineTransfer?.Invoke(evt.ExecutorId, evt.TransferId);
+                return;
+            }
+
+            if (ReceiveBlockedReason?.Invoke(evt.ExecutorId, evt.FileName) is { } refused)
+            {
+                Debug.WriteLine($"[MultiUserEdit] Refused {evt.FileName}: {refused}");
+                DeclineTransfer?.Invoke(evt.ExecutorId, evt.TransferId);
+                return;
+            }
+
+            if (!IsPlausible(evt))
+            {
+                Debug.WriteLine($"[MultiUserEdit] Refused an implausible transfer: {evt.FileName} size={evt.FileSize} chunks={evt.TotalChunks} chunkSize={evt.ChunkSize}");
+                DeclineTransfer?.Invoke(evt.ExecutorId, evt.TransferId);
+                return;
+            }
+
+            if (!HasRoomFor(evt.FileSize))
+            {
+                ErrorNotifier.NotifyList(
+                    "空き容量が足りません",
+                    "空き容量が足りないため、以下のファイルを受信しませんでした。",
+                    ErrorNotifier.Quote(evt.FileName));
+                DeclineTransfer?.Invoke(evt.ExecutorId, evt.TransferId);
                 return;
             }
 
             if (receiveDecisions.TryGetValue(SharedFileKey(evt.FileName, evt.FileSize), out var accepted) && !accepted)
             {
                 Debug.WriteLine($"[MultiUserEdit] Declined earlier, not receiving: {evt.FileName}");
+                DeclineTransfer?.Invoke(evt.ExecutorId, evt.TransferId);
                 return;
             }
 
-            if (ReuseLocalCopy(evt.TransferId, MediaFileResolver.ResolveLocalOriginal(evt.FileName), evt.FileSize)) return;
+            if (ReuseLocalCopy(evt.TransferId, MediaFileResolver.ResolveLocalOriginal(evt.FileName), evt.FileSize, evt.Hash)
+                || ReuseLocalCopy(evt.TransferId, MediaFileResolver.ResolveLocalTempPath(evt.FileName), evt.FileSize, evt.Hash))
+            {
+                DeclineTransfer?.Invoke(evt.ExecutorId, evt.TransferId);
+                return;
+            }
 
             var finalPath = MediaFileResolver.ResolveLocalTempPath(evt.FileName);
             var tempPath = Path.Combine(GetSaveDirectory(), $"{evt.TransferId}.tmp");
 
-            var chunkSize = evt.ChunkSize > 0 ? evt.ChunkSize : ChunkSize;
-
-            incomingTransfers[evt.TransferId] = new IncomingTransfer(evt.FileName, finalPath, tempPath, evt.TotalChunks, chunkSize)
+            var transfer = new IncomingTransfer(evt.FileName, finalPath, tempPath, evt.TotalChunks, evt.ChunkSize, evt.FileSize, evt.Hash)
             {
                 SenderId = evt.ExecutorId
             };
+            incomingTransfers[evt.TransferId] = transfer;
             activeDownloads[evt.TransferId] = new FileTask
             {
                 FileName = evt.FileName,
@@ -718,11 +924,21 @@ namespace MultiUserEdit.Commons
             };
 
             NotifySummary();
+
+            if (evt.TotalChunks == 0) FinishTransfer(evt.TransferId, transfer);
         }
 
         public void HandleChunk(FileChunkEvent evt)
         {
             if (!incomingTransfers.TryGetValue(evt.TransferId, out var transfer)) return;
+
+            if (evt.ExecutorId != transfer.SenderId) return;
+
+            if (evt.ChunkIndex < 0 || evt.ChunkIndex >= transfer.TotalChunks || evt.TotalChunks != transfer.TotalChunks)
+            {
+                AbortTransfer(evt.TransferId, transfer);
+                return;
+            }
 
             if (DateTime.UtcNow - transfer.LastActivityAt > TransferTimeout)
             {
@@ -743,6 +959,15 @@ namespace MultiUserEdit.Commons
                 AbortTransfer(evt.TransferId, transfer);
                 return;
             }
+
+            if (chunkBytes.Length != transfer.ExpectedChunkLength(evt.ChunkIndex))
+            {
+                Debug.WriteLine($"[MultiUserEdit] Chunk {evt.ChunkIndex} has the wrong size: {transfer.FileName}");
+                AbortTransfer(evt.TransferId, transfer);
+                return;
+            }
+
+            if (!transfer.TryMarkReceived(evt.ChunkIndex)) return;
 
             var transferId = evt.TransferId;
             var chunkIndex = evt.ChunkIndex;
@@ -765,13 +990,17 @@ namespace MultiUserEdit.Commons
 
             transfer.ReceivedChunks++;
 
+            var isLastChunk = transfer.ReceivedChunks >= transfer.TotalChunks;
+            if (isLastChunk || chunkIndex % AckInterval == 0)
+                SendChunkAck?.Invoke(transfer.SenderId, transferId, chunkIndex);
+
             if (activeDownloads.TryGetValue(transferId, out var downTask))
             {
                 downTask.TransferredBytes = Math.Min(downTask.TotalBytes, downTask.TransferredBytes + chunkBytes.Length);
             }
             NotifyProgress();
 
-            if (transfer.ReceivedChunks < transfer.TotalChunks) return;
+            if (!isLastChunk) return;
 
             FinishTransfer(transferId, transfer);
         }
@@ -796,11 +1025,33 @@ namespace MultiUserEdit.Commons
             {
                 transfer.CloseStream();
 
+                if (!File.Exists(transfer.TempPath)) File.WriteAllBytes(transfer.TempPath, []);
+
+                var actualSize = new FileInfo(transfer.TempPath).Length;
+                var actualHash = string.IsNullOrEmpty(transfer.ExpectedHash) ? null : HashFile(transfer.TempPath);
+
+                var sizeMatches = transfer.FileSize < 0 || actualSize == transfer.FileSize;
+                var hashMatches = string.IsNullOrEmpty(transfer.ExpectedHash)
+                    || string.Equals(actualHash, transfer.ExpectedHash, StringComparison.OrdinalIgnoreCase);
+
+                if (!sizeMatches || !hashMatches)
+                {
+                    try { File.Delete(transfer.TempPath); } catch { }
+
+                    ErrorNotifier.NotifyList(
+                        "ファイルが正しく届きませんでした",
+                        "以下のファイルは、中身が送り主のものと一致しなかったため破棄しました。",
+                        ErrorNotifier.Quote(transfer.FileName),
+                        "「データを同期する」を実行すると、もう一度受信できます。");
+                    return;
+                }
+
                 var saveDirectory = Path.GetDirectoryName(transfer.SavePath);
                 if (!string.IsNullOrEmpty(saveDirectory)) Directory.CreateDirectory(saveDirectory);
 
                 File.Move(transfer.TempPath, transfer.SavePath, overwrite: true);
                 receivedFiles[transfer.SavePath] = 0;
+                if (actualHash != null) receivedHashes[transfer.SavePath] = actualHash;
                 NoteSharedFile(Path.GetFileName(transfer.SavePath), new FileInfo(transfer.SavePath).Length);
                 RememberOwner(transfer.SavePath, ownerName);
 
@@ -818,6 +1069,7 @@ namespace MultiUserEdit.Commons
             activeDownloads.TryRemove(transferId, out _);
 
             transfer.Abort();
+            DeclineTransfer?.Invoke(transfer.SenderId, transferId);
 
             NotifySummary();
         }
@@ -937,6 +1189,7 @@ namespace MultiUserEdit.Commons
             announcements.Clear();
             announcingPaths.Clear();
             cancelledTargets.Clear();
+            acknowledged.Clear();
             NotifySummary();
 
             CleanUpIncompleteTransfers();

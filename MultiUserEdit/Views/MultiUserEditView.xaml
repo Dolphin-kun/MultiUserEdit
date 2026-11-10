@@ -20,14 +20,20 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type controls:SidebarButton}">
                         <Border x:Name="border" Background="Transparent" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
-                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Background="Transparent">
-                                <Path Data="{TemplateBinding IconData}" Fill="{TemplateBinding Foreground}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,8,0" />
-                                <TextBlock Text="{TemplateBinding Label}" Foreground="{TemplateBinding Foreground}" FontSize="12" VerticalAlignment="Center" />
+                            <StackPanel x:Name="content" Orientation="Horizontal" VerticalAlignment="Center" Background="Transparent">
+                                <Path x:Name="icon" Data="{TemplateBinding IconData}" Fill="{TemplateBinding Foreground}" Width="14" Height="14" Stretch="Uniform" Margin="0,0,8,0" />
+                                <TextBlock x:Name="label" Text="{TemplateBinding Label}" Foreground="{TemplateBinding Foreground}" FontSize="12" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                             </StackPanel>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter Property="FontWeight" Value="Bold" />
+                            </Trigger>
+                            <Trigger Property="controls:SidebarButton.IsCompact" Value="True">
+                                <Setter TargetName="label" Property="Visibility" Value="Collapsed" />
+                                <Setter TargetName="icon" Property="Margin" Value="0" />
+                                <Setter TargetName="content" Property="HorizontalAlignment" Value="Center" />
+                                <Setter Property="ToolTip" Value="{Binding Label, RelativeSource={RelativeSource Self}}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -38,14 +44,25 @@
 
     <Grid x:Name="RootGrid">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="124" />
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition x:Name="SidebarColumn" Width="124" MinWidth="44" MaxWidth="280" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" MinWidth="160" />
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="0,0,1,0">
+        <Border x:Name="SidebarBorder" Grid.Column="0" SizeChanged="OnSidebarSizeChanged">
             <DockPanel Margin="0,6">
                 <StackPanel DockPanel.Dock="Top" Margin="8,6,8,12">
-                    <TextBlock Text="MUE" FontWeight="Bold" FontSize="12" />
+                    <TextBlock Text="MUE" FontWeight="Bold" FontSize="12" TextTrimming="CharacterEllipsis">
+                        <TextBlock.Style>
+                            <Style TargetType="{x:Type TextBlock}">
+                                <Style.Triggers>
+                                    <Trigger Property="controls:SidebarButton.IsCompact" Value="True">
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
 
                 <StackPanel x:Name="SettingsNavFooter" DockPanel.Dock="Bottom" Margin="0,0,0,6" Visibility="Collapsed">
@@ -103,6 +120,12 @@
                                             IconData="{DynamicResource {x:Static icons:GeometryKeys.Folder}}"
                                             Click="OnNavFileSettingsClick" />
 
+                    <controls:SidebarButton x:Name="DisplaySettingsNavButton"
+                                            GroupName="SettingsNavGroup"
+                                            Label="表示"
+                                            IconData="{DynamicResource {x:Static icons:GeometryKeys.EyeOutline}}"
+                                            Click="OnNavDisplaySettingsClick" />
+
                     <controls:SidebarButton x:Name="LinkSettingsNavButton"
                                             GroupName="SettingsNavGroup"
                                             Label="連携"
@@ -121,7 +144,20 @@
             </DockPanel>
         </Border>
 
-        <Grid Grid.Column="1">
+        <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                      ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" Focusable="False"
+                      Cursor="SizeWE" DragCompleted="OnSidebarSplitterDragCompleted">
+            <GridSplitter.Template>
+                <ControlTemplate TargetType="{x:Type GridSplitter}">
+                    <Border Background="Transparent">
+                        <Rectangle Width="1" HorizontalAlignment="Center"
+                                   Fill="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+                    </Border>
+                </ControlTemplate>
+            </GridSplitter.Template>
+        </GridSplitter>
+
+        <Grid Grid.Column="2">
             <ContentControl x:Name="MainContentControl" />
 
             <controls:FileTransferBanner VerticalAlignment="Top" HorizontalAlignment="Stretch" Margin="0,4,0,0" Panel.ZIndex="99" />
