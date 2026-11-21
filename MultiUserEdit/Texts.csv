@@ -1,0 +1,755 @@
+﻿Key,Parameter,ja-jp,en-us,zh-cn,zh-tw,ko-kr,es-es,ar-sa,id-id,
+PluginName,,共同編集,Collaborative Editing,协同编辑,協同編輯,공동 편집,Edición colaborativa,التحرير التعاوني,Pengeditan Bersama,
+Host,,ホスト,Host,房主,房主,호스트,Anfitrión,المضيف,Host,
+Guest,,ゲスト,Guest,访客,訪客,게스트,Invitado,ضيف,Tamu,
+Unknown,,不明,Unknown,未知,未知,알 수 없음,Desconocido,غير معروف,Tidak diketahui,
+DefaultUserName,,ユーザー,User,用户,使用者,사용자,Usuario,مستخدم,Pengguna,
+Collaborator,,共同編集相手,Collaborator,协作者,協作者,공동 편집자,Colaborador,المتعاون,Kolaborator,
+OtherParticipant,,ほかの参加者,Another participant,其他参与者,其他參與者,다른 참가자,Otro participante,مشارك آخر,Peserta lain,
+ThisUser,,指定ユーザー,This user,该用户,該使用者,해당 사용자,Este usuario,هذا المستخدم,Pengguna ini,
+Me,,自分,Me,我,我,나,Yo,أنا,Saya,
+Honorific,0: user name,{0} さん,{0},{0},{0},{0} 님,{0},{0},{0},
+ListSeparator,,、,", ",、,、,", ",", ","، ",", ",
+Send,,送信,Send,发送,傳送,송신,Envío,إرسال,Kirim,
+Receive,,受信,Receive,接收,接收,수신,Recepción,استقبال,Terima,
+Allowed,,許可,Allowed,允许,允許,허용,Permitido,مسموح,Diizinkan,
+Restricted,,制限中,Restricted,受限,受限,제한됨,Restringido,مقيّد,Dibatasi,
+On,,オン,On,开,開,켜짐,Activado,تشغيل,Aktif,
+Off,,オフ,Off,关,關,꺼짐,Desactivado,إيقاف,Nonaktif,
+OK,,決定,OK,确定,確定,확인,Aceptar,موافق,OK,
+Apply,,適用,Apply,应用,套用,적용,Aplicar,تطبيق,Terapkan,
+Cancel,,キャンセル,Cancel,取消,取消,취소,Cancelar,إلغاء,Batal,
+Close,,閉じる,Close,关闭,關閉,닫기,Cerrar,إغلاق,Tutup,
+Add,,追加,Add,添加,新增,추가,Añadir,إضافة,Tambah,
+Delete,,削除,Delete,删除,刪除,삭제,Eliminar,حذف,Hapus,
+Edit,,編集,Edit,编辑,編輯,편집,Editar,تحرير,Edit,
+Refresh,,更新,Refresh,刷新,重新整理,새로 고침,Actualizar,تحديث,Muat ulang,
+StatusOnline,,オンライン,Online,在线,線上,온라인,En línea,متصل,Daring,
+StatusAway,,離席中,Away,离开,離開,자리 비움,Ausente,بعيد,Sedang pergi,
+StatusDisconnected,,接続切れ,Disconnected,已断开,已中斷,연결 끊김,Desconectado,منقطع,Terputus,
+StatusOffline,,オフライン,Offline,离线,離線,오프라인,Sin conexión,غير متصل,Luring,
+UserAway,0: user name,{0} (離席中),{0} (Away),{0}（离开）,{0}（離開）,{0} (자리 비움),{0} (Ausente),{0} (بعيد),{0} (Sedang pergi),
+UserOperating,0: user name,{0} が操作中,{0} is editing,{0} 正在操作,{0} 正在操作,{0} 님이 조작 중,{0} está editando,{0} يحرّر,{0} sedang mengedit,
+Back,,戻る,Back,返回,返回,뒤로,Atrás,رجوع,Kembali,
+Settings,,設定,Settings,设置,設定,설정,Ajustes,الإعدادات,Pengaturan,
+Home,,ホーム,Home,主页,首頁,홈,Inicio,الرئيسية,Beranda,
+Rules,,ルール,Rules,规则,規則,규칙,Reglas,القواعد,Aturan,
+Files,,ファイル,Files,文件,檔案,파일,Archivos,الملفات,File,
+Profile,,プロフィール,Profile,个人资料,個人資料,프로필,Perfil,الملف الشخصي,Profil,
+Display,,表示,Display,显示,顯示,표시,Visualización,العرض,Tampilan,
+Integration,,連携,Integration,联动,連動,연동,Integración,التكامل,Integrasi,
+About,,情報,About,关于,關於,정보,Acerca de,حول,Tentang,
+Connected,,接続中,Connected,已连接,已連線,연결됨,Conectado,متصل,Terhubung,
+NotConnected,,未接続,Not connected,未连接,未連線,연결 안 됨,Sin conectar,غير متصل,Tidak terhubung,
+DivergenceHint,,気になる場合は同期してください。同期すると、届いていない自分の変更は失われます。,"If this concerns you, sync now. Any of your changes that have not reached the others will be lost.",如有疑虑，请进行同步。同步后，尚未送达的你的更改将会丢失。,如有疑慮，請進行同步。同步後，尚未送達的你的變更將會遺失。,신경 쓰인다면 동기화하세요. 동기화하면 아직 전달되지 않은 내 변경 사항은 사라집니다.,"Si te preocupa, sincroniza. Al sincronizar se perderán los cambios tuyos que aún no hayan llegado.",إذا كان الأمر يقلقك فقم بالمزامنة. عند المزامنة ستُفقد تغييراتك التي لم تصل بعد.,"Jika ragu, lakukan sinkronisasi. Perubahan Anda yang belum terkirim akan hilang.",
+SyncData,,データの同期,Sync data,同步数据,同步資料,데이터 동기화,Sincronizar datos,مزامنة البيانات,Sinkronkan data,
+SyncDataAction,,データを同期する,Sync data,同步数据,同步資料,데이터 동기화,Sincronizar datos,مزامنة البيانات,Sinkronkan data,
+NewVersionPublishedFormat,0: version,新しいバージョン {0} が公開されています,Version {0} is available,新版本 {0} 已发布,新版本 {0} 已發布,새 버전 {0}이(가) 공개되었습니다,La versión {0} está disponible,الإصدار {0} متاح,Versi {0} sudah tersedia,
+LatestOnlyPleaseUpdate,,共同編集は最新のプラグイン同士でのみ利用できます。更新してください。,Collaborative editing works only between the latest plugin versions. Please update.,协同编辑只能在最新版本的插件之间使用。请更新。,協同編輯只能在最新版本的外掛之間使用。請更新。,공동 편집은 최신 플러그인끼리만 사용할 수 있습니다. 업데이트해 주세요.,La edición colaborativa solo funciona entre las versiones más recientes del complemento. Actualízalo.,يعمل التحرير التعاوني فقط بين أحدث إصدارات الإضافة. يُرجى التحديث.,Pengeditan bersama hanya dapat digunakan antar plugin versi terbaru. Silakan perbarui.,
+OpenUpdatePage,,更新ページを開く,Open update page,打开更新页面,開啟更新頁面,업데이트 페이지 열기,Abrir página de actualización,فتح صفحة التحديث,Buka halaman pembaruan,
+Room,,部屋,Room,房间,房間,방,Sala,الغرفة,Ruang,
+SmallRoomLabel,0: max people,小さい部屋（最大{0}人）,Small room (up to {0}),小房间（最多 {0} 人）,小房間（最多 {0} 人）,작은 방(최대 {0}명),Sala pequeña (hasta {0}),غرفة صغيرة (حتى {0}),Ruang kecil (maks. {0}),
+LargeRoomLabel,0: max people,大きい部屋（最大{0}人）,Large room (up to {0}),大房间（最多 {0} 人）,大房間（最多 {0} 人）,큰 방(최대 {0}명),Sala grande (hasta {0}),غرفة كبيرة (حتى {0}),Ruang besar (maks. {0}),
+SmallRoomTip,,少人数向け。すぐに繋がります。,For a few people. Connects right away.,适合少数人。可立即连接。,適合少數人。可立即連線。,소수 인원용. 바로 연결됩니다.,Para pocas personas. Se conecta al instante.,لعدد قليل من الأشخاص. يتصل فورًا.,Untuk sedikit orang. Langsung terhubung.,
+LargeRoomTip,,多人数向け。専用の中継サーバーを使います。人数が少ない状態が続くと自動で小さい部屋へ移ります。,"For many people. Uses a dedicated relay server. If only a few people stay for a while, the room moves to a small room automatically.",适合多人。使用专用中继服务器。人数持续较少时会自动转移到小房间。,適合多人。使用專用中繼伺服器。人數持續較少時會自動轉移到小房間。,다수 인원용. 전용 중계 서버를 사용합니다. 인원이 적은 상태가 계속되면 자동으로 작은 방으로 이동합니다.,"Para muchas personas. Usa un servidor de retransmisión dedicado. Si hay pocas personas durante un tiempo, pasa automáticamente a una sala pequeña.",لعدد كبير من الأشخاص. يستخدم خادم ترحيل مخصصًا. إذا استمر عدد قليل من الأشخاص لفترة، تنتقل تلقائيًا إلى غرفة صغيرة.,"Untuk banyak orang. Menggunakan server relai khusus. Jika jumlah orang tetap sedikit untuk beberapa waktu, otomatis pindah ke ruang kecil.",
+CreateRoom,,部屋を作成,Create room,创建房间,建立房間,방 만들기,Crear sala,إنشاء غرفة,Buat ruang,
+JoinExistingRoom,,既存の部屋に参加,Join an existing room,加入现有房间,加入現有房間,기존 방에 참가,Unirse a una sala existente,الانضمام إلى غرفة موجودة,Gabung ke ruang yang ada,
+JoinFromClipboard,,クリップボードのリンクから参加,Join from the link in the clipboard,通过剪贴板中的链接加入,透過剪貼簿中的連結加入,클립보드의 링크로 참가,Unirse con el enlace del portapapeles,الانضمام عبر الرابط في الحافظة,Gabung dari tautan di papan klip,
+Join,,参加,Join,加入,加入,참가,Unirse,انضمام,Gabung,
+SyncDataTip,,タイムラインの内容をホストの状態に揃え直します,Makes your timeline match the host's again,将时间轴内容重新与房主保持一致,將時間軸內容重新與房主保持一致,타임라인 내용을 호스트 상태에 다시 맞춥니다,Vuelve a igualar tu línea de tiempo con la del anfitrión,يعيد مطابقة مخططك الزمني مع المضيف,Menyamakan kembali isi timeline dengan milik host,
+Disconnect,,切断する,Disconnect,断开连接,中斷連線,연결 끊기,Desconectar,قطع الاتصال,Putuskan,
+CopyId,,IDをコピー,Copy ID,复制 ID,複製 ID,ID 복사,Copiar ID,نسخ المعرّف,Salin ID,
+CopyInviteLink,,招待リンクコピー,Copy invite link,复制邀请链接,複製邀請連結,초대 링크 복사,Copiar enlace de invitación,نسخ رابط الدعوة,Salin tautan undangan,
+ParticipantList,,参加者一覧,Participants,参与者列表,參與者列表,참가자 목록,Participantes,المشاركون,Daftar peserta,
+ParticipantCount,0: count,({0}名),({0}),（{0} 人）,（{0} 人）,({0}명),({0}),({0}),({0} orang),
+UserColor,,ユーザーカラー,User color,用户颜色,使用者顏色,사용자 색상,Color del usuario,لون المستخدم,Warna pengguna,
+OpenUserInfo,,ユーザー情報を開く,Open user info,打开用户信息,開啟使用者資訊,사용자 정보 열기,Abrir información del usuario,فتح معلومات المستخدم,Buka info pengguna,
+CharacterImport,,キャラクターの読み込み,Import character,导入角色,匯入角色,캐릭터 불러오기,Importar personaje,استيراد الشخصية,Impor karakter,
+NewCharacterAdded,,新しいキャラクターが追加されました,A new character was added,已添加新角色,已新增新角色,새 캐릭터가 추가되었습니다,Se añadió un personaje nuevo,تمت إضافة شخصية جديدة,Karakter baru telah ditambahkan,
+LinkToExisting,,既存のキャラクターに紐づける,Link to an existing character,关联到现有角色,連結到現有角色,기존 캐릭터에 연결,Vincular a un personaje existente,ربطها بشخصية موجودة,Tautkan ke karakter yang ada,
+ImportAsNew,,新しいキャラクターとして読み込む,Import as a new character,作为新角色导入,作為新角色匯入,새 캐릭터로 불러오기,Importar como personaje nuevo,استيرادها كشخصية جديدة,Impor sebagai karakter baru,
+ImportAsNewHint,,相手の設定をそのまま複製して追加します。素材は共有されたものが使われます。,Adds an exact copy of the sender's settings. The shared assets are used.,按原样复制对方的设置并添加。素材使用共享的文件。,照原樣複製對方的設定並新增。素材使用共享的檔案。,상대의 설정을 그대로 복제해 추가합니다. 소재는 공유된 것을 사용합니다.,Añade una copia exacta de los ajustes del remitente. Se usan los recursos compartidos.,يضيف نسخة مطابقة من إعدادات المُرسِل. تُستخدم المواد المشتركة.,Menambahkan salinan persis pengaturan pengirim. Materi yang dibagikan akan digunakan.,
+FromOwner,0: user name,（{0} から）,(from {0}),（来自 {0}）,（來自 {0}）,({0} 님으로부터),(de {0}),(من {0}),(dari {0}),
+CannotCreateCharacter,,相手からキャラクターの設定を取得できなかったため、新規作成はできません。,"The character settings could not be obtained from the sender, so a new character cannot be created.",未能从对方获取角色设置，因此无法新建。,未能從對方取得角色設定，因此無法新建。,상대로부터 캐릭터 설정을 가져오지 못해 새로 만들 수 없습니다.,"No se pudieron obtener los ajustes del personaje del remitente, así que no se puede crear uno nuevo.",تعذّر الحصول على إعدادات الشخصية من المُرسِل، لذا لا يمكن إنشاء شخصية جديدة.,"Pengaturan karakter tidak dapat diperoleh dari pengirim, jadi karakter baru tidak dapat dibuat.",
+CharacterName,,キャラクター名,Character name,角色名,角色名稱,캐릭터 이름,Nombre del personaje,اسم الشخصية,Nama karakter,
+SameNameExists,,同じ名前のキャラクターが既にあります。,A character with the same name already exists.,已存在同名角色。,已存在同名角色。,같은 이름의 캐릭터가 이미 있습니다.,Ya existe un personaje con el mismo nombre.,توجد شخصية بالاسم نفسه بالفعل.,Karakter dengan nama yang sama sudah ada.,
+FileTransfers,,送信・受信ファイル管理,Sent and received files,收发文件管理,收發檔案管理,송수신 파일 관리,Archivos enviados y recibidos,إدارة الملفات المرسلة والمستلمة,Kelola file terkirim dan diterima,
+ToggleTransferList,,送受信中のファイルの一覧を開く／閉じる,Show or hide files being transferred,展开/收起正在收发的文件列表,展開/收合正在收發的檔案列表,송수신 중인 파일 목록 열기/닫기,Mostrar u ocultar los archivos en transferencia,إظهار أو إخفاء الملفات قيد النقل,Buka/tutup daftar file yang sedang ditransfer,
+CancelReceive,,受け取りを中止,Stop receiving,停止接收,停止接收,수신 중지,Detener la recepción,إيقاف الاستلام,Hentikan penerimaan,
+OpenSaveFolder,,保存先を開く,Open save folder,打开保存位置,開啟儲存位置,저장 위치 열기,Abrir carpeta de destino,فتح مجلد الحفظ,Buka folder penyimpanan,
+ClearAll,,全消去,Clear all,全部清除,全部清除,모두 지우기,Borrar todo,مسح الكل,Hapus semua,
+ColumnType,,種別,Type,类型,類型,종류,Tipo,النوع,Jenis,
+ColumnSender,,送信者,Sender,发送者,傳送者,보낸 사람,Remitente,المُرسِل,Pengirim,
+ColumnFileName,,ファイル名,File name,文件名,檔案名稱,파일 이름,Nombre de archivo,اسم الملف,Nama file,
+ColumnSize,,サイズ,Size,大小,大小,크기,Tamaño,الحجم,Ukuran,
+ColumnAction,,操作,Action,操作,操作,작업,Acción,إجراء,Aksi,
+DeleteFile,,ファイルを削除,Delete file,删除文件,刪除檔案,파일 삭제,Eliminar archivo,حذف الملف,Hapus file,
+OperationRules,,操作ルール,Editing rules,操作规则,操作規則,조작 규칙,Reglas de edición,قواعد التحرير,Aturan pengeditan,
+OperationRulesDescription,,参加者に許可する操作を決めます。個別に変えたい相手は、ホーム画面の参加者一覧から設定してください。,"Choose what participants are allowed to do. To change it for one person, use the participant list on the Home page.",设置允许参与者进行的操作。如需单独更改某人，请在主页的参与者列表中设置。,設定允許參與者進行的操作。如需個別變更某人，請在首頁的參與者列表中設定。,참가자에게 허용할 조작을 정합니다. 특정 상대만 바꾸려면 홈 화면의 참가자 목록에서 설정하세요.,"Elige qué pueden hacer los participantes. Para cambiarlo a una sola persona, usa la lista de participantes de Inicio.",حدّد ما يُسمح للمشاركين بفعله. لتغييره لشخص واحد، استخدم قائمة المشاركين في الصفحة الرئيسية.,"Tentukan tindakan yang diizinkan bagi peserta. Untuk mengubahnya per orang, atur dari daftar peserta di Beranda.",
+Preset,,プリセット,Preset,预设,預設,프리셋,Preajuste,إعداد مسبق,Preset,
+FullEdit,,フル編集,Full editing,完全编辑,完整編輯,전체 편집,Edición completa,تحرير كامل,Edit penuh,
+StandardEdit,,標準編集,Standard editing,标准编辑,標準編輯,표준 편집,Edición estándar,تحرير قياسي,Edit standar,
+ReadOnly,,閲覧のみ,View only,仅查看,僅檢視,보기 전용,Solo lectura,عرض فقط,Hanya lihat,
+LiveMirror,,ライブミラーリング,Live mirroring,实时镜像,即時鏡像,라이브 미러링,Duplicado en vivo,النسخ المباشر,Pencerminan langsung,
+StandardEditLimitScenes,,標準編集（シーンの操作を制限）,Standard editing (scene operations restricted),标准编辑（限制场景操作）,標準編輯（限制場景操作）,표준 편집(장면 조작 제한),Edición estándar (operaciones de escenas restringidas),تحرير قياسي (عمليات المشاهد مقيّدة),Edit standar (operasi adegan dibatasi),
+LiveMirrorFollowHost,,ライブミラーリング（閲覧のみ＋ホストに追従）,"Live mirroring (view only, follows the host)",实时镜像（仅查看＋跟随房主）,即時鏡像（僅檢視＋跟隨房主）,라이브 미러링(보기 전용 + 호스트 따라가기),Duplicado en vivo (solo lectura y sigue al anfitrión),النسخ المباشر (عرض فقط مع متابعة المضيف),Pencerminan langsung (hanya lihat + mengikuti host),
+Item,,アイテム,Items,项目,項目,아이템,Elementos,العناصر,Item,
+DeleteOthersItems,,他の人が追加したアイテムも削除できる,Can also delete items added by others,也可删除他人添加的项目,也可刪除他人新增的項目,다른 사람이 추가한 아이템도 삭제 가능,También puede eliminar elementos añadidos por otros,يمكنه أيضًا حذف العناصر التي أضافها الآخرون,Juga dapat menghapus item yang ditambahkan orang lain,
+MoveAndResize,,移動・長さの変更,Move and change length,移动・更改长度,移動・變更長度,이동・길이 변경,Mover y cambiar la duración,النقل وتغيير المدة,Pindah dan ubah durasi,
+SceneTimeline,,シーン（タイムライン）,Scenes (timelines),场景（时间轴）,場景（時間軸）,장면(타임라인),Escenas (líneas de tiempo),المشاهد (المخططات الزمنية),Adegan (timeline),
+Other,,その他,Other,其他,其他,기타,Otros,أخرى,Lainnya,
+SendMaterialFiles,,素材ファイルの送信,Sending asset files,发送素材文件,傳送素材檔案,소재 파일 송신,Envío de archivos de recursos,إرسال ملفات المواد,Kirim file materi,
+FollowHostPlayback,,ホストの再生位置に追従する,Follow the host's playback position,跟随房主的播放位置,跟隨房主的播放位置,호스트의 재생 위치 따라가기,Seguir la posición de reproducción del anfitrión,متابعة موضع التشغيل لدى المضيف,Ikuti posisi pemutaran host,
+FollowHostPlaybackShort,,ホストの再生位置に追従,Follow host's playback,跟随房主播放位置,跟隨房主播放位置,호스트 재생 위치 따라가기,Seguir la reproducción del anfitrión,متابعة تشغيل المضيف,Ikuti pemutaran host,
+ApplyToAll,,全参加者に適用,Apply to all participants,应用到所有参与者,套用到所有參與者,모든 참가자에게 적용,Aplicar a todos los participantes,تطبيق على جميع المشاركين,Terapkan ke semua peserta,
+YourRules,,あなたの操作ルール,Your editing rules,你的操作规则,你的操作規則,나의 조작 규칙,Tus reglas de edición,قواعد التحرير الخاصة بك,Aturan pengeditan Anda,
+YourRulesDescription,,ホストが設定した、あなたに許可されている操作です。,What the host allows you to do.,房主设置的、允许你进行的操作。,房主設定的、允許你進行的操作。,"호스트가 설정한, 나에게 허용된 조작입니다.",Lo que el anfitrión te permite hacer.,ما يسمح لك المضيف بفعله.,Tindakan yang diizinkan host untuk Anda.,
+PermissionLevel,,権限レベル,Permission level,权限级别,權限等級,권한 수준,Nivel de permiso,مستوى الصلاحية,Tingkat izin,
+OthersAddedItems,,他の人が追加したアイテム,Items added by others,他人添加的项目,他人新增的項目,다른 사람이 추가한 아이템,Elementos añadidos por otros,العناصر التي أضافها الآخرون,Item yang ditambahkan orang lain,
+RulesAppliedMessage,,全参加者にルールを適用しました。,The rules were applied to all participants.,已将规则应用到所有参与者。,已將規則套用到所有參與者。,모든 참가자에게 규칙을 적용했습니다.,Se aplicaron las reglas a todos los participantes.,تم تطبيق القواعد على جميع المشاركين.,Aturan telah diterapkan ke semua peserta.,
+RulesAppliedTitle,,ルールを適用しました,Rules applied,规则已应用,規則已套用,규칙 적용됨,Reglas aplicadas,تم تطبيق القواعد,Aturan diterapkan,
+UserInfo,,ユーザー情報,User info,用户信息,使用者資訊,사용자 정보,Información del usuario,معلومات المستخدم,Info pengguna,
+UserInfoTitle,0: user name,{0} の情報,About {0},{0} 的信息,{0} 的資訊,{0} 님의 정보,Información de {0},معلومات {0},Info {0},
+EditTime,,編集時間:,Editing time:,编辑时间：,編輯時間：,편집 시간:,Tiempo de edición:,وقت التحرير:,Waktu edit:,
+TotalTime,,合計参加時間:,Total time joined:,总参与时间：,總參與時間：,총 참가 시간:,Tiempo total de participación:,إجمالي وقت المشاركة:,Total waktu bergabung:,
+DisplayName,,表示名,Display name,显示名称,顯示名稱,표시 이름,Nombre visible,الاسم المعروض,Nama tampilan,
+SelfIntroduction,,自己紹介,About me,自我介绍,自我介紹,자기소개,Sobre mí,نبذة عني,Tentang saya,
+CannotEditOthersProfile,,他の参加者のプロフィールは編集できません。,You cannot edit other participants' profiles.,无法编辑其他参与者的个人资料。,無法編輯其他參與者的個人資料。,다른 참가자의 프로필은 편집할 수 없습니다.,No puedes editar el perfil de otros participantes.,لا يمكنك تعديل الملفات الشخصية للمشاركين الآخرين.,Anda tidak dapat mengedit profil peserta lain.,
+Permission,,権限,Permissions,权限,權限,권한,Permisos,الصلاحيات,Izin,
+PermissionPreset,,権限プリセット,Permission preset,权限预设,權限預設,권한 프리셋,Preajuste de permisos,إعداد الصلاحيات المسبق,Preset izin,
+FullEditDetail,,フル編集 (全操作を許可),Full editing (everything allowed),完全编辑（允许所有操作）,完整編輯（允許所有操作）,전체 편집(모든 조작 허용),Edición completa (todo permitido),تحرير كامل (كل العمليات مسموحة),Edit penuh (semua diizinkan),
+StandardEditDetail,,標準編集 (シーン削除等の操作制限),Standard editing (scene deletion and similar restricted),标准编辑（限制删除场景等操作）,標準編輯（限制刪除場景等操作）,표준 편집(장면 삭제 등 조작 제한),Edición estándar (eliminar escenas y similares restringido),تحرير قياسي (حذف المشاهد وما شابه مقيّد),Edit standar (hapus adegan dan sejenisnya dibatasi),
+ReadOnlyDetail,,閲覧専用 (編集不可・閲覧のみ),View only (no editing),仅查看（不可编辑）,僅檢視（不可編輯）,보기 전용(편집 불가),Solo lectura (sin edición),عرض فقط (بدون تحرير),Hanya lihat (tidak bisa mengedit),
+LiveMirrorDetail,,ライブミラーリング (ホスト画面・再生完全同期),Live mirroring (fully synced with the host's view and playback),实时镜像（与房主画面和播放完全同步）,即時鏡像（與房主畫面和播放完全同步）,라이브 미러링(호스트 화면・재생 완전 동기화),Duplicado en vivo (sincronizado con la vista y reproducción del anfitrión),النسخ المباشر (مزامنة كاملة مع عرض المضيف وتشغيله),Pencerminan langsung (sinkron penuh dengan layar dan pemutaran host),
+CustomizeRules,,詳細ルールのカスタマイズ,Customize rules,自定义详细规则,自訂詳細規則,세부 규칙 사용자 지정,Personalizar reglas,تخصيص القواعد,Sesuaikan aturan,
+AllowAddItems,,アイテムの追加を許可,Allow adding items,允许添加项目,允許新增項目,아이템 추가 허용,Permitir añadir elementos,السماح بإضافة العناصر,Izinkan menambah item,
+AllowDeleteItems,,アイテムの削除を許可,Allow deleting items,允许删除项目,允許刪除項目,아이템 삭제 허용,Permitir eliminar elementos,السماح بحذف العناصر,Izinkan menghapus item,
+AllowDeleteOthersItems,,他の人が追加したアイテムも削除を許可,Also allow deleting items added by others,也允许删除他人添加的项目,也允許刪除他人新增的項目,다른 사람이 추가한 아이템 삭제도 허용,Permitir también eliminar elementos añadidos por otros,السماح أيضًا بحذف العناصر التي أضافها الآخرون,Izinkan juga menghapus item yang ditambahkan orang lain,
+AllowMoveItems,,アイテムの移動・長さの変更を許可,Allow moving items and changing their length,允许移动项目・更改长度,允許移動項目・變更長度,아이템 이동・길이 변경 허용,Permitir mover elementos y cambiar su duración,السماح بنقل العناصر وتغيير مدتها,Izinkan memindah item dan mengubah durasinya,
+AllowEditItems,,アイテムの編集を許可,Allow editing items,允许编辑项目,允許編輯項目,아이템 편집 허용,Permitir editar elementos,السماح بتحرير العناصر,Izinkan mengedit item,
+AllowAddScenes,,シーン（タイムライン）の追加を許可,Allow adding scenes (timelines),允许添加场景（时间轴）,允許新增場景（時間軸）,장면(타임라인) 추가 허용,Permitir añadir escenas (líneas de tiempo),السماح بإضافة المشاهد (المخططات الزمنية),Izinkan menambah adegan (timeline),
+AllowDeleteScenes,,シーン（タイムライン）の削除を許可,Allow deleting scenes (timelines),允许删除场景（时间轴）,允許刪除場景（時間軸）,장면(타임라인) 삭제 허용,Permitir eliminar escenas (líneas de tiempo),السماح بحذف المشاهد (المخططات الزمنية),Izinkan menghapus adegan (timeline),
+AllowSendFiles,,素材ファイルの送信を許可,Allow sending asset files,允许发送素材文件,允許傳送素材檔案,소재 파일 송신 허용,Permitir enviar archivos de recursos,السماح بإرسال ملفات المواد,Izinkan mengirim file materi,
+AutoFollowHost,,ホストのシーク位置・画面に自動追従する,Automatically follow the host's seek position and view,自动跟随房主的定位位置和画面,自動跟隨房主的定位位置和畫面,호스트의 탐색 위치・화면을 자동으로 따라가기,Seguir automáticamente la posición y vista del anfitrión,متابعة موضع المضيف وعرضه تلقائيًا,Otomatis mengikuti posisi dan tampilan host,
+Kick,,キック,Kick,踢出,踢出,강퇴,Expulsar,طرد,Keluarkan,
+SyncFromThisUser,,この人の状態で同期,Sync to this person's state,同步为此人的状态,同步為此人的狀態,이 사람의 상태로 동기화,Sincronizar con el estado de esta persona,المزامنة مع حالة هذا الشخص,Sinkronkan ke kondisi orang ini,
+KickConfirmProfile,0: user name,「{0}」を部屋から退出させますか？,"Remove ""{0}"" from the room?",要将“{0}”移出房间吗？,要將「{0}」移出房間嗎？,'{0}' 님을 방에서 내보내시겠습니까?,¿Sacar a «{0}» de la sala?,هل تريد إخراج «{0}» من الغرفة؟,"Keluarkan ""{0}"" dari ruang?",
+KickUserTitle,,ユーザーのキック,Kick user,踢出用户,踢出使用者,사용자 강퇴,Expulsar usuario,طرد المستخدم,Keluarkan pengguna,
+Version,,バージョン,Version,版本,版本,버전,Versión,الإصدار,Versi,
+CurrentVersion,,現在のバージョン:,Current version:,当前版本：,目前版本：,현재 버전:,Versión actual:,الإصدار الحالي:,Versi saat ini:,
+LatestVersion,,最新のバージョン:,Latest version:,最新版本：,最新版本：,최신 버전:,Última versión:,أحدث إصدار:,Versi terbaru:,
+NewVersionAvailable,,新しいバージョンが公開されています。,A new version is available.,新版本已发布。,新版本已發布。,새 버전이 공개되었습니다.,Hay una versión nueva disponible.,يتوفر إصدار جديد.,Versi baru sudah tersedia.,
+OpenDownloadPage,,ダウンロードページを開く,Open download page,打开下载页面,開啟下載頁面,다운로드 페이지 열기,Abrir página de descarga,فتح صفحة التنزيل,Buka halaman unduhan,
+CopyrightTitle,,著作権および利用規約について,Copyright and terms of use,关于著作权及使用条款,關於著作權及使用條款,저작권 및 이용 약관,Derechos de autor y condiciones de uso,حقوق النشر وشروط الاستخدام,Hak cipta dan ketentuan penggunaan,
+CopyrightNotice,,転送・共有される素材（画像・動画・音声等）の著作権および利用規約は送信者の責任となります。二次配布が禁止されている有料素材などの送信には十分ご注意ください。,"The sender is responsible for the copyright and terms of use of assets (images, videos, audio, etc.) that are transferred or shared. Take care when sending paid assets or others whose redistribution is prohibited.",传送・共享的素材（图片・视频・音频等）的著作权及使用条款由发送者负责。发送禁止二次分发的付费素材等时请务必注意。,傳送・共享的素材（圖片・影片・音訊等）的著作權及使用條款由傳送者負責。傳送禁止二次散布的付費素材等時請務必注意。,전송・공유되는 소재(이미지・동영상・음성 등)의 저작권 및 이용 약관은 보낸 사람의 책임입니다. 재배포가 금지된 유료 소재 등을 보낼 때는 충분히 주의하세요.,"El remitente es responsable de los derechos de autor y las condiciones de uso de los recursos (imágenes, vídeos, audio, etc.) que se transfieren o comparten. Ten cuidado al enviar recursos de pago u otros cuya redistribución esté prohibida.",يتحمّل المُرسِل مسؤولية حقوق النشر وشروط استخدام المواد (الصور والفيديو والصوت وغيرها) التي تُنقل أو تُشارك. احرص عند إرسال المواد المدفوعة أو غيرها مما يُمنع إعادة توزيعه.,"Hak cipta dan ketentuan penggunaan materi (gambar, video, audio, dll.) yang ditransfer atau dibagikan menjadi tanggung jawab pengirim. Berhati-hatilah saat mengirim materi berbayar atau materi lain yang dilarang didistribusikan ulang.",
+Timeline,,タイムライン,Timeline,时间轴,時間軸,타임라인,Línea de tiempo,المخطط الزمني,Timeline,
+ShowOperatorName,,操作中のアイテムに名前を表示する,Show names on items being edited,在正在操作的项目上显示名称,在正在操作的項目上顯示名稱,조작 중인 아이템에 이름 표시,Mostrar nombres en los elementos que se están editando,إظهار الأسماء على العناصر قيد التحرير,Tampilkan nama pada item yang sedang diedit,
+ShowOperatorNameHint,,オフにすると、ほかの参加者が操作中のアイテムは枠の色だけで示されます。,"When off, items other participants are editing are shown only by the color of their frame.",关闭后，其他参与者正在操作的项目仅以边框颜色表示。,關閉後，其他參與者正在操作的項目僅以外框顏色表示。,끄면 다른 참가자가 조작 중인 아이템은 테두리 색으로만 표시됩니다.,"Si se desactiva, los elementos que editan otros participantes solo se indican con el color del marco.",عند الإيقاف، تُعرض العناصر التي يحررها مشاركون آخرون بلون الإطار فقط.,"Jika dinonaktifkan, item yang sedang diedit peserta lain hanya ditandai dengan warna bingkai.",
+FileSharingCache,,ファイル共有・キャッシュ,File sharing and cache,文件共享・缓存,檔案共享・快取,파일 공유・캐시,Uso compartido de archivos y caché,مشاركة الملفات وذاكرة التخزين المؤقت,Berbagi file dan cache,
+ReceivedFileStorage,,受信ファイルの保存形式,How received files are kept,接收文件的保存方式,接收檔案的保存方式,수신 파일 저장 방식,Cómo se guardan los archivos recibidos,طريقة حفظ الملفات المستلمة,Cara menyimpan file yang diterima,
+TemporaryStorage,,セッション中一時保存 (終了時に自動消去),Keep only during the session (deleted on exit),会话期间临时保存（退出时自动清除）,工作階段期間暫存（結束時自動清除）,세션 중 임시 저장(종료 시 자동 삭제),Guardar solo durante la sesión (se borra al salir),حفظ مؤقت أثناء الجلسة (يُحذف عند الخروج),Simpan sementara selama sesi (dihapus saat keluar),
+TemporaryStorageTip,,YMM4終了時にキャッシュ素材を自動で全削除します,Deletes all cached assets when YMM4 exits,YMM4 退出时自动删除所有缓存素材,YMM4 結束時自動刪除所有快取素材,YMM4 종료 시 캐시 소재를 모두 자동 삭제합니다,Borra todos los recursos en caché al cerrar YMM4,يحذف جميع المواد المخزنة مؤقتًا عند إغلاق YMM4,Menghapus semua materi cache saat YMM4 ditutup,
+KeepStorage,,ストレージに保持 (次回以降もキャッシュ利用),Keep on disk (reuse the cache next time),保留在存储中（以后继续使用缓存）,保留在儲存空間中（之後繼續使用快取）,저장소에 보관(다음에도 캐시 사용),Conservar en disco (reutilizar la caché la próxima vez),الاحتفاظ على القرص (إعادة استخدام ذاكرة التخزين المؤقت لاحقًا),Simpan di penyimpanan (pakai cache lagi lain kali),
+KeepStorageTip,,一時フォルダに保存して、次回以降もそこから読み込みます,Saves to a temporary folder and loads from there next time,保存到临时文件夹，以后也从那里读取,儲存到暫存資料夾，之後也從那裡讀取,임시 폴더에 저장하고 다음에도 거기서 불러옵니다,Guarda en una carpeta temporal y carga desde allí la próxima vez,يحفظ في مجلد مؤقت ويحمّل منه في المرات القادمة,Menyimpan ke folder sementara dan memuat dari sana lain kali,
+ConfirmLargeReceive,,サイズの大きい素材ファイルを受け取る前に確認する,Ask before receiving large asset files,接收大型素材文件前确认,接收大型素材檔案前確認,큰 소재 파일을 받기 전에 확인,Preguntar antes de recibir archivos de recursos grandes,السؤال قبل استلام ملفات المواد الكبيرة,Tanyakan sebelum menerima file materi besar,
+ConfirmLargeReceiveTip,,大きいファイルが送られてきたとき、受け取るかどうかを先に確認します,"When a large file is sent to you, asks first whether to receive it",收到大文件时，先确认是否接收,收到大型檔案時，先確認是否接收,큰 파일이 전송되면 받을지 먼저 확인합니다,"Cuando te envían un archivo grande, pregunta primero si quieres recibirlo",عند إرسال ملف كبير إليك، يسأل أولًا عما إذا كنت تريد استلامه,"Saat file besar dikirim, tanyakan dulu apakah akan diterima",
+ConfirmSize,,確認するサイズ,Ask from,确认的大小,確認的大小,확인할 크기,Preguntar a partir de,السؤال ابتداءً من,Tanyakan mulai,
+MBOrMore,,MB 以上,MB or more,MB 以上,MB 以上,MB 이상,MB o más,ميغابايت أو أكثر,MB atau lebih,
+SendLimits,,送信の制限,Sending,发送限制,傳送限制,송신 제한,Envío,الإرسال,Pengiriman,
+ConfirmBeforeSend,,素材ファイルを送信する前に確認メッセージを表示する,Ask before sending asset files,发送素材文件前显示确认消息,傳送素材檔案前顯示確認訊息,소재 파일을 보내기 전에 확인 메시지 표시,Preguntar antes de enviar archivos de recursos,السؤال قبل إرسال ملفات المواد,Tanyakan sebelum mengirim file materi,
+ConfirmBeforeSendTip,,他のユーザーに動画・画像・音声等のファイルが自動送信される前に確認ダイアログを表示します,"Shows a confirmation before videos, images, audio and other files are sent to other users automatically",在视频・图片・音频等文件自动发送给其他用户前显示确认对话框,在影片・圖片・音訊等檔案自動傳送給其他使用者前顯示確認對話方塊,동영상・이미지・음성 등의 파일이 다른 사용자에게 자동 송신되기 전에 확인 대화 상자를 표시합니다,"Muestra una confirmación antes de que se envíen automáticamente vídeos, imágenes, audio y otros archivos a otros usuarios",يعرض تأكيدًا قبل إرسال ملفات الفيديو والصور والصوت وغيرها تلقائيًا إلى المستخدمين الآخرين,"Menampilkan konfirmasi sebelum video, gambar, audio, dan file lain dikirim otomatis ke pengguna lain",
+ShareableExtensions,,共有可能な拡張子,Shareable extensions,可共享的扩展名,可共享的副檔名,공유 가능한 확장자,Extensiones compartibles,الامتدادات القابلة للمشاركة,Ekstensi yang dapat dibagikan,
+SelectAll,,すべて選択,Select all,全选,全選,모두 선택,Seleccionar todo,تحديد الكل,Pilih semua,
+DeselectAll,,すべて解除,Deselect all,全部取消,全部取消,모두 해제,Deseleccionar todo,إلغاء تحديد الكل,Batalkan semua,
+ResetToDefault,,既定に戻す,Reset to default,恢复默认,還原為預設,기본값으로 되돌리기,Restablecer valores predeterminados,إعادة التعيين إلى الافتراضي,Kembalikan ke default,
+RemoveFormat,,この形式を一覧から削除,Remove this format from the list,从列表中删除此格式,從列表中刪除此格式,이 형식을 목록에서 삭제,Quitar este formato de la lista,إزالة هذه الصيغة من القائمة,Hapus format ini dari daftar,
+AddFormatHint,,"※一覧に無い形式（例: .m2v）はここから追加できます。未許可の拡張子 (.exe, .bat など) は転送されず自動ブロックされます。",* Formats not in the list (e.g. .m2v) can be added here. Extensions that are not allowed (such as .exe and .bat) are blocked automatically and never transferred.,※列表中没有的格式（例如 .m2v）可在此添加。未允许的扩展名（如 .exe、.bat）不会被传送，将自动拦截。,※列表中沒有的格式（例如 .m2v）可在此新增。未允許的副檔名（如 .exe、.bat）不會被傳送，將自動封鎖。,"※ 목록에 없는 형식(예: .m2v)은 여기서 추가할 수 있습니다. 허용되지 않은 확장자(.exe, .bat 등)는 전송되지 않고 자동으로 차단됩니다.","* Aquí puedes añadir formatos que no están en la lista (p. ej., .m2v). Las extensiones no permitidas (como .exe o .bat) se bloquean automáticamente y nunca se transfieren.",* يمكن إضافة الصيغ غير الموجودة في القائمة (مثل .m2v) من هنا. تُحظر الامتدادات غير المسموح بها (مثل .exe و.bat) تلقائيًا ولا تُنقل.,* Format yang tidak ada di daftar (mis. .m2v) dapat ditambahkan di sini. Ekstensi yang tidak diizinkan (seperti .exe dan .bat) diblokir otomatis dan tidak ditransfer.,
+WebDeepLink,,Webディープリンク,Web deep link,Web 深度链接,Web 深層連結,웹 딥 링크,Enlace profundo web,رابط الويب العميق,Tautan dalam web,
+WebDeepLinkDescription,,ブラウザからワンクリックでYMM4を開いて自動参加するためのプロトコル設定です。（起動時に自動登録されます）,Protocol setting that lets one click in the browser open YMM4 and join automatically. (Registered automatically at startup),用于在浏览器中一键打开 YMM4 并自动加入的协议设置。（启动时自动注册）,用於在瀏覽器中一鍵開啟 YMM4 並自動加入的通訊協定設定。（啟動時自動註冊）,브라우저에서 한 번의 클릭으로 YMM4를 열고 자동 참가하기 위한 프로토콜 설정입니다. (시작 시 자동 등록됩니다),Ajuste de protocolo que permite abrir YMM4 con un clic desde el navegador y unirse automáticamente. (Se registra automáticamente al iniciar),إعداد بروتوكول يتيح فتح YMM4 بنقرة واحدة من المتصفح والانضمام تلقائيًا. (يُسجَّل تلقائيًا عند بدء التشغيل),Pengaturan protokol untuk membuka YMM4 dan bergabung otomatis dengan sekali klik dari browser. (Didaftarkan otomatis saat mulai),
+CurrentStatus,,現在のステータス:,Current status:,当前状态：,目前狀態：,현재 상태:,Estado actual:,الحالة الحالية:,Status saat ini:,
+Registered,,登録済み (有効),Registered (enabled),已注册（有效）,已註冊（有效）,등록됨(활성),Registrado (activo),مسجّل (مفعّل),Terdaftar (aktif),
+NotRegistered,,未登録,Not registered,未注册,未註冊,등록 안 됨,Sin registrar,غير مسجّل,Belum terdaftar,
+Reregister,,再登録する,Register again,重新注册,重新註冊,다시 등록,Volver a registrar,إعادة التسجيل,Daftarkan ulang,
+Unregister,,解除,Unregister,解除,解除,해제,Anular registro,إلغاء التسجيل,Batalkan pendaftaran,
+DescriptionHint,,140文字・3行まで（超えた分は自動でまとめられます）,Up to 140 characters and 3 lines (extra lines are merged automatically),最多 140 个字符、3 行（超出部分会自动合并）,最多 140 個字元、3 行（超出部分會自動合併）,140자・3줄까지(초과분은 자동으로 합쳐집니다),Hasta 140 caracteres y 3 líneas (lo que sobre se une automáticamente),حتى 140 حرفًا و3 أسطر (تُدمج الأسطر الزائدة تلقائيًا),Maks. 140 karakter dan 3 baris (kelebihannya digabung otomatis),
+Image,,画像,Images,图片,圖片,이미지,Imágenes,الصور,Gambar,
+Video,,動画,Videos,视频,影片,동영상,Vídeos,الفيديو,Video,
+Audio,,音声,Audio,音频,音訊,음성,Audio,الصوت,Audio,
+Ymm4AndOther,,YMM4・その他,YMM4 and other,YMM4・其他,YMM4・其他,YMM4・기타,YMM4 y otros,YMM4 وغيرها,YMM4 dan lainnya,
+AddedFormats,,追加した形式,Added formats,已添加的格式,已新增的格式,추가한 형식,Formatos añadidos,الصيغ المضافة,Format tambahan,
+ReceivedDone,,受信済み,Received,已接收,已接收,수신 완료,Recibido,تم الاستلام,Diterima,
+SentDone,,送信済み,Sent,已发送,已傳送,송신 완료,Enviado,تم الإرسال,Terkirim,
+SendSkipped,,相手が保有済みのため送信を省略,Not sent because the recipient already has it,对方已拥有，因此省略发送,對方已擁有，因此省略傳送,상대가 이미 가지고 있어 송신 생략,No se envió porque el destinatario ya lo tiene,لم يُرسل لأن المستلم يملكه بالفعل,Tidak dikirim karena penerima sudah memilikinya,
+PerSecond,0: size,{0}/秒,{0}/s,{0}/秒,{0}/秒,{0}/초,{0}/s,{0}/ث,{0}/dtk,
+RemainingSeconds,0: seconds,残り {0:F0} 秒,{0:F0} s left,剩余 {0:F0} 秒,剩餘 {0:F0} 秒,{0:F0}초 남음,Quedan {0:F0} s,متبقٍ {0:F0} ث,Sisa {0:F0} dtk,
+RemainingMinutes,0: minutes,残り {0:F0} 分,{0:F0} min left,剩余 {0:F0} 分钟,剩餘 {0:F0} 分鐘,{0:F0}분 남음,Quedan {0:F0} min,متبقٍ {0:F0} د,Sisa {0:F0} mnt,
+RemainingHours,0: hours,残り {0:F1} 時間,{0:F1} h left,剩余 {0:F1} 小时,剩餘 {0:F1} 小時,{0:F1}시간 남음,Quedan {0:F1} h,متبقٍ {0:F1} س,Sisa {0:F1} jam,
+FromUser,0: user name,{0} さんから,from {0},来自 {0},來自 {0},{0} 님으로부터,de {0},من {0},dari {0},
+TransferBoth,"0: upload count, 1: download count, 2: file name",送信 {0}件 / 受信 {1}件: {2},Sending {0} / Receiving {1}: {2},发送 {0} 个 / 接收 {1} 个：{2},傳送 {0} 個 / 接收 {1} 個：{2},송신 {0}건 / 수신 {1}건: {2},Enviando {0} / Recibiendo {1}: {2},إرسال {0} / استقبال {1}: {2},Mengirim {0} / Menerima {1}: {2},
+SendingOne,0: file name,{0} を送信中,Sending {0},正在发送 {0},正在傳送 {0},{0} 송신 중,Enviando {0},جارٍ إرسال {0},Mengirim {0},
+SendingMany,"0: file name, 1: other count",{0} ほか{1}件を送信中,Sending {0} and {1} more,正在发送 {0} 等 {1} 个文件,正在傳送 {0} 等 {1} 個檔案,{0} 외 {1}건 송신 중,Enviando {0} y {1} más,جارٍ إرسال {0} و{1} أخرى,Mengirim {0} dan {1} lainnya,
+DownloadingOne,0: file name,{0} をダウンロード中,Downloading {0},正在下载 {0},正在下載 {0},{0} 다운로드 중,Descargando {0},جارٍ تنزيل {0},Mengunduh {0},
+DownloadingMany,"0: file name, 1: other count",{0} ほか{1}件をダウンロード中,Downloading {0} and {1} more,正在下载 {0} 等 {1} 个文件,正在下載 {0} 等 {1} 個檔案,{0} 외 {1}건 다운로드 중,Descargando {0} y {1} más,جارٍ تنزيل {0} و{1} أخرى,Mengunduh {0} dan {1} lainnya,
+FilesBoth,"0: upload count, 1: download count",送受信中 (送信 {0}件 / 受信 {1}件),Transferring (sending {0} / receiving {1}),收发中（发送 {0} 个 / 接收 {1} 个）,收發中（傳送 {0} 個 / 接收 {1} 個）,송수신 중(송신 {0}건 / 수신 {1}건),Transfiriendo (enviando {0} / recibiendo {1}),جارٍ النقل (إرسال {0} / استقبال {1}),Mentransfer (mengirim {0} / menerima {1}),
+FilesSending,0: count,送信中 ({0}件),Sending ({0}),发送中（{0} 个）,傳送中（{0} 個）,송신 중({0}건),Enviando ({0}),جارٍ الإرسال ({0}),Mengirim ({0}),
+FilesReceiving,0: count,受信中 ({0}件),Receiving ({0}),接收中（{0} 个）,接收中（{0} 個）,수신 중({0}건),Recibiendo ({0}),جارٍ الاستقبال ({0}),Menerima ({0}),
+FilesIdle,,送受信はありません,Nothing is being transferred,没有正在收发的文件,沒有正在收發的檔案,송수신 중인 파일이 없습니다,No hay transferencias,لا توجد عمليات نقل,Tidak ada transfer,
+MoreItems,0: count,（ほか {0} 件）,(and {0} more),（另有 {0} 个）,（另有 {0} 個）,(외 {0}건),(y {0} más),(و{0} أخرى),(dan {0} lainnya),
+CancelReceiveConfirm,0: file name,"「{0}」の受け取りを中止します。
+よろしいですか？","Stop receiving ""{0}"".
+Are you sure?","将停止接收“{0}”。
+确定吗？","將停止接收「{0}」。
+確定嗎？","'{0}' 수신을 중지합니다.
+계속하시겠습니까?","Se detendrá la recepción de «{0}».
+¿Continuar?","سيتم إيقاف استلام «{0}».
+هل أنت متأكد؟","Penerimaan ""{0}"" akan dihentikan.
+Lanjutkan?",
+CancelReceiveTitle,,受け取りの中止,Stop receiving,停止接收,停止接收,수신 중지,Detener la recepción,إيقاف الاستلام,Hentikan penerimaan,
+ClearAllConfirm,,"受信した素材ファイルをすべて削除します。
+よろしいですか？","All received asset files will be deleted.
+Are you sure?","将删除所有已接收的素材文件。
+确定吗？","將刪除所有已接收的素材檔案。
+確定嗎？","수신한 소재 파일을 모두 삭제합니다.
+계속하시겠습니까?","Se eliminarán todos los archivos de recursos recibidos.
+¿Continuar?","سيتم حذف جميع ملفات المواد المستلمة.
+هل أنت متأكد؟","Semua file materi yang diterima akan dihapus.
+Lanjutkan?",
+ClearAllTitle,,全消去の確認,Clear all,确认全部清除,確認全部清除,모두 지우기 확인,Borrar todo,تأكيد مسح الكل,Konfirmasi hapus semua,
+CannotChangeItemTitle,,アイテムを変更できません,Cannot change the item,无法更改项目,無法變更項目,아이템을 변경할 수 없습니다,No se puede cambiar el elemento,لا يمكن تغيير العنصر,Item tidak dapat diubah,
+CannotChangeItemMessage,,"ホストの設定により、この部屋ではアイテムの移動や編集ができません。
+変更はホストの状態に戻されます。","The host's settings do not allow moving or editing items in this room.
+Your change will be reverted to the host's state.","根据房主的设置，此房间内不能移动或编辑项目。
+更改将恢复为房主的状态。","依房主的設定，此房間內不能移動或編輯項目。
+變更將還原為房主的狀態。","호스트 설정에 따라 이 방에서는 아이템을 이동하거나 편집할 수 없습니다.
+변경 사항은 호스트 상태로 되돌려집니다.","La configuración del anfitrión no permite mover ni editar elementos en esta sala.
+El cambio se revertirá al estado del anfitrión.","لا تسمح إعدادات المضيف بنقل العناصر أو تحريرها في هذه الغرفة.
+سيُعاد التغيير إلى حالة المضيف.","Pengaturan host tidak mengizinkan memindah atau mengedit item di ruang ini.
+Perubahan akan dikembalikan ke kondisi host.",
+SyncAllConfirm,,"参加者全員のタイムラインを、自分のタイムラインの状態で上書きします。
+実行してもよろしいですか？","Every participant's timeline will be overwritten with yours.
+Continue?","将用你的时间轴覆盖所有参与者的时间轴。
+确定要执行吗？","將用你的時間軸覆寫所有參與者的時間軸。
+確定要執行嗎？","모든 참가자의 타임라인을 내 타임라인 상태로 덮어씁니다.
+실행하시겠습니까?","La línea de tiempo de todos los participantes se sobrescribirá con la tuya.
+¿Continuar?","سيتم استبدال المخطط الزمني لجميع المشاركين بمخططك.
+هل تريد المتابعة؟","Timeline semua peserta akan ditimpa dengan milik Anda.
+Lanjutkan?",
+DeepLinkRegistered,,Webディープリンク (ymm4-multi-user-edit://) をWindowsに登録しました。,The web deep link (ymm4-multi-user-edit://) was registered with Windows.,已将 Web 深度链接（ymm4-multi-user-edit://）注册到 Windows。,已將 Web 深層連結（ymm4-multi-user-edit://）註冊到 Windows。,웹 딥 링크(ymm4-multi-user-edit://)를 Windows에 등록했습니다.,Se registró el enlace profundo web (ymm4-multi-user-edit://) en Windows.,تم تسجيل رابط الويب العميق (ymm4-multi-user-edit://) في Windows.,Tautan dalam web (ymm4-multi-user-edit://) telah didaftarkan ke Windows.,
+RegisterDone,,登録完了,Registered,注册完成,註冊完成,등록 완료,Registro completado,اكتمل التسجيل,Pendaftaran selesai,
+DeepLinkUnregistered,,Webディープリンク (ymm4-multi-user-edit://) の登録を解除しました。,The web deep link (ymm4-multi-user-edit://) was unregistered.,已解除 Web 深度链接（ymm4-multi-user-edit://）的注册。,已解除 Web 深層連結（ymm4-multi-user-edit://）的註冊。,웹 딥 링크(ymm4-multi-user-edit://) 등록을 해제했습니다.,Se anuló el registro del enlace profundo web (ymm4-multi-user-edit://).,تم إلغاء تسجيل رابط الويب العميق (ymm4-multi-user-edit://).,Pendaftaran tautan dalam web (ymm4-multi-user-edit://) telah dibatalkan.,
+UnregisterDone,,解除完了,Unregistered,解除完成,解除完成,해제 완료,Registro anulado,تم إلغاء التسجيل,Pembatalan selesai,
+KickConfirm,0: user name,{0} を部屋からキックしてもよろしいですか？,Kick {0} from the room?,确定要将 {0} 踢出房间吗？,確定要將 {0} 踢出房間嗎？,{0} 님을 방에서 강퇴하시겠습니까?,¿Expulsar a {0} de la sala?,هل تريد طرد {0} من الغرفة؟,Keluarkan {0} dari ruang?,
+KickConfirmTitle,,キックの確認,Kick,确认踢出,確認踢出,강퇴 확인,Expulsar,تأكيد الطرد,Konfirmasi keluarkan,
+SceneUnavailableTitle,,シーンを用意できませんでした,Could not prepare a scene,无法准备场景,無法準備場景,장면을 준비하지 못했습니다,No se pudo preparar una escena,تعذّر تجهيز مشهد,Adegan tidak dapat disiapkan,
+SceneUnavailableLead,,以下のシーンを、この環境に用意できませんでした。,The following scene could not be prepared on this PC.,无法在此环境中准备以下场景。,無法在此環境中準備以下場景。,다음 장면을 이 환경에서 준비하지 못했습니다.,No se pudo preparar la siguiente escena en este equipo.,تعذّر تجهيز المشهد التالي على هذا الجهاز.,Adegan berikut tidak dapat disiapkan di PC ini.,
+SceneUnavailableNote,,そのシーンの内容は表示されません。,Its contents will not be shown.,该场景的内容将不会显示。,該場景的內容將不會顯示。,해당 장면의 내용은 표시되지 않습니다.,Su contenido no se mostrará.,لن يُعرض محتواه.,Isinya tidak akan ditampilkan.,
+SyncFromConfirm,0: user name,"現在のタイムライン上のアイテムをすべて削除して、{0} の状態と同期します。
+よろしいですか？","All items on your current timeline will be deleted and synced to {0}'s state.
+Continue?","将删除当前时间轴上的所有项目，并与 {0} 的状态同步。
+确定吗？","將刪除目前時間軸上的所有項目，並與 {0} 的狀態同步。
+確定嗎？","현재 타임라인의 아이템을 모두 삭제하고 {0} 님의 상태와 동기화합니다.
+계속하시겠습니까?","Se eliminarán todos los elementos de tu línea de tiempo actual y se sincronizará con el estado de {0}.
+¿Continuar?","سيتم حذف جميع العناصر في مخططك الزمني الحالي ومزامنته مع حالة {0}.
+هل تريد المتابعة؟","Semua item di timeline saat ini akan dihapus dan disinkronkan ke kondisi {0}.
+Lanjutkan?",
+PeerSyncedData,0: user name,{0} がデータの同期を実行しました。,{0} synced the data.,{0} 执行了数据同步。,{0} 執行了資料同步。,{0} 님이 데이터 동기화를 실행했습니다.,{0} sincronizó los datos.,قام {0} بمزامنة البيانات.,{0} menjalankan sinkronisasi data.,
+InitialSyncConfirm,,"部屋に参加するため、現在のタイムライン上のアイテムをすべて削除してホストの状態と同期します。
+削除して同期を開始してもよろしいですか？","To join the room, all items on your current timeline will be deleted and synced to the host's state.
+Delete them and start syncing?","为加入房间，将删除当前时间轴上的所有项目并与房主的状态同步。
+确定删除并开始同步吗？","為加入房間，將刪除目前時間軸上的所有項目並與房主的狀態同步。
+確定刪除並開始同步嗎？","방에 참가하기 위해 현재 타임라인의 아이템을 모두 삭제하고 호스트 상태와 동기화합니다.
+삭제하고 동기화를 시작하시겠습니까?","Para unirte a la sala, se eliminarán todos los elementos de tu línea de tiempo actual y se sincronizará con el anfitrión.
+¿Eliminarlos y empezar a sincronizar?","للانضمام إلى الغرفة، سيتم حذف جميع العناصر في مخططك الزمني الحالي ومزامنته مع حالة المضيف.
+هل تريد الحذف وبدء المزامنة؟","Untuk bergabung ke ruang, semua item di timeline saat ini akan dihapus dan disinkronkan ke kondisi host.
+Hapus dan mulai sinkronisasi?",
+InitialSyncTitle,,初期同期の確認,Initial sync,确认初始同步,確認初始同步,초기 동기화 확인,Sincronización inicial,تأكيد المزامنة الأولية,Konfirmasi sinkronisasi awal,
+SceneDefaultName,0: number,シーン{0},Scene {0},场景{0},場景{0},장면{0},Escena {0},المشهد {0},Adegan {0},
+MediaNotReceivedTitle,,動画・音声ファイルを受信できませんでした,Could not receive video or audio files,未能接收视频・音频文件,未能接收影片・音訊檔案,동영상・음성 파일을 수신하지 못했습니다,No se pudieron recibir archivos de vídeo o audio,تعذّر استلام ملفات الفيديو أو الصوت,File video/audio tidak dapat diterima,
+MediaNotReceivedLead,0: user name,{0} のアイテムで使われている以下のファイルが届かなかったため、アイテムを追加できませんでした。,"The following file used by {0}'s item did not arrive, so the item could not be added.",{0} 的项目所使用的以下文件未送达，因此无法添加该项目。,{0} 的項目所使用的以下檔案未送達，因此無法新增該項目。,{0} 님의 아이템에 사용된 다음 파일이 도착하지 않아 아이템을 추가하지 못했습니다.,"No llegó el siguiente archivo usado por un elemento de {0}, así que no se pudo añadir el elemento.",لم يصل الملف التالي الذي يستخدمه عنصر {0}، لذا تعذّرت إضافة العنصر.,"File berikut yang digunakan item milik {0} tidak sampai, jadi item tidak dapat ditambahkan.",
+ResyncToReceiveNote,,「データを同期する」を実行すると、もう一度受信できます。,"Run ""Sync data"" to receive it again.",执行“同步数据”即可再次接收。,執行「同步資料」即可再次接收。,'데이터 동기화'를 실행하면 다시 수신할 수 있습니다.,Ejecuta «Sincronizar datos» para recibirlo de nuevo.,شغّل «مزامنة البيانات» لاستلامه مرة أخرى.,"Jalankan ""Sinkronkan data"" untuk menerimanya lagi.",
+NewVersionLatestOnly,0: version,"新しいバージョン ({0}) が公開されています。
+共同編集は最新のプラグイン同士でのみ利用できます。","A new version ({0}) is available.
+Collaborative editing works only between the latest plugin versions.","新版本（{0}）已发布。
+协同编辑只能在最新版本的插件之间使用。","新版本（{0}）已發布。
+協同編輯只能在最新版本的外掛之間使用。","새 버전({0})이 공개되었습니다.
+공동 편집은 최신 플러그인끼리만 사용할 수 있습니다.","Hay una versión nueva ({0}).
+La edición colaborativa solo funciona entre las versiones más recientes del complemento.","يتوفر إصدار جديد ({0}).
+يعمل التحرير التعاوني فقط بين أحدث إصدارات الإضافة.","Versi baru ({0}) sudah tersedia.
+Pengeditan bersama hanya dapat digunakan antar plugin versi terbaru.",
+NewVersionNextTime,0: version,"新しいバージョン ({0}) が公開されています。
+共同編集は最新のプラグイン同士でのみ利用できるため、更新するまで次回から接続できません。","A new version ({0}) is available.
+Collaborative editing works only between the latest plugin versions, so you will not be able to connect next time until you update.","新版本（{0}）已发布。
+协同编辑只能在最新版本的插件之间使用，更新前下次将无法连接。","新版本（{0}）已發布。
+協同編輯只能在最新版本的外掛之間使用，更新前下次將無法連線。","새 버전({0})이 공개되었습니다.
+공동 편집은 최신 플러그인끼리만 사용할 수 있으므로, 업데이트하기 전까지 다음부터 연결할 수 없습니다.","Hay una versión nueva ({0}).
+La edición colaborativa solo funciona entre las versiones más recientes, así que no podrás conectarte la próxima vez hasta que actualices.","يتوفر إصدار جديد ({0}).
+يعمل التحرير التعاوني فقط بين أحدث الإصدارات، لذا لن تتمكن من الاتصال في المرة القادمة حتى تقوم بالتحديث.","Versi baru ({0}) sudah tersedia.
+Pengeditan bersama hanya dapat digunakan antar plugin versi terbaru, jadi Anda tidak dapat terhubung lain kali sebelum memperbarui.",
+OpenUpdatePageQuestion,0: reason,"{0}
+
+更新ページを開きますか？","{0}
+
+Open the update page?","{0}
+
+要打开更新页面吗？","{0}
+
+要開啟更新頁面嗎？","{0}
+
+업데이트 페이지를 여시겠습니까?","{0}
+
+¿Abrir la página de actualización?","{0}
+
+هل تريد فتح صفحة التحديث؟","{0}
+
+Buka halaman pembaruan?",
+UpdateRequiredTitle,,プラグインの更新が必要です,Plugin update required,需要更新插件,需要更新外掛,플러그인 업데이트가 필요합니다,Hay que actualizar el complemento,يلزم تحديث الإضافة,Plugin perlu diperbarui,
+RelayConnectFailed,0: cause,"大きい部屋用の中継サーバーに接続できませんでした。
+
+原因: {0}
+
+小さい部屋は別のサーバーを使うため、こちらだけつながらない場合はお使いの回線やセキュリティソフトが原因のことが多いです。
+この画面をホストに伝えてください。","Could not connect to the relay server for large rooms.
+
+Cause: {0}
+
+Small rooms use a different server, so if only this one fails, your network or security software is usually the cause.
+Please tell the host what this window says.","无法连接到大房间用的中继服务器。
+
+原因：{0}
+
+小房间使用其他服务器，如果只有这里无法连接，通常是你的网络或安全软件导致的。
+请将此画面告知房主。","無法連線到大房間用的中繼伺服器。
+
+原因：{0}
+
+小房間使用其他伺服器，如果只有這裡無法連線，通常是你的網路或安全軟體導致的。
+請將此畫面告知房主。","큰 방용 중계 서버에 연결하지 못했습니다.
+
+원인: {0}
+
+작은 방은 다른 서버를 사용하므로, 이쪽만 연결되지 않는다면 사용 중인 회선이나 보안 소프트웨어가 원인인 경우가 많습니다.
+이 화면을 호스트에게 알려 주세요.","No se pudo conectar al servidor de retransmisión de salas grandes.
+
+Causa: {0}
+
+Las salas pequeñas usan otro servidor, así que si solo falla este, la causa suele ser tu red o tu software de seguridad.
+Comunica al anfitrión lo que dice esta ventana.","تعذّر الاتصال بخادم الترحيل الخاص بالغرف الكبيرة.
+
+السبب: {0}
+
+تستخدم الغرف الصغيرة خادمًا مختلفًا، لذا إذا فشل هذا وحده فالسبب غالبًا شبكتك أو برنامج الحماية.
+يُرجى إبلاغ المضيف بما تعرضه هذه النافذة.","Tidak dapat terhubung ke server relai untuk ruang besar.
+
+Penyebab: {0}
+
+Ruang kecil memakai server lain, jadi jika hanya yang ini gagal, biasanya penyebabnya jaringan atau perangkat lunak keamanan Anda.
+Sampaikan isi jendela ini kepada host.",
+RelayConnectFailedCreate,0: cause,"大きい部屋用の中継サーバーに接続できませんでした。
+
+原因: {0}
+
+このまま作成しますか？（参加者も接続できない可能性があります）","Could not connect to the relay server for large rooms.
+
+Cause: {0}
+
+Create the room anyway? (Participants may not be able to connect either)","无法连接到大房间用的中继服务器。
+
+原因：{0}
+
+仍要创建吗？（参与者可能也无法连接）","無法連線到大房間用的中繼伺服器。
+
+原因：{0}
+
+仍要建立嗎？（參與者可能也無法連線）","큰 방용 중계 서버에 연결하지 못했습니다.
+
+원인: {0}
+
+그래도 만드시겠습니까? (참가자도 연결하지 못할 수 있습니다)","No se pudo conectar al servidor de retransmisión de salas grandes.
+
+Causa: {0}
+
+¿Crear la sala de todos modos? (Puede que los participantes tampoco puedan conectarse)","تعذّر الاتصال بخادم الترحيل الخاص بالغرف الكبيرة.
+
+السبب: {0}
+
+هل تريد إنشاء الغرفة على أي حال؟ (قد لا يتمكن المشاركون من الاتصال أيضًا)","Tidak dapat terhubung ke server relai untuk ruang besar.
+
+Penyebab: {0}
+
+Tetap buat ruang? (Peserta mungkin juga tidak dapat terhubung)",
+RelayUnavailableTitle,,中継サーバーに接続できません,Cannot reach the relay server,无法连接到中继服务器,無法連線到中繼伺服器,중계 서버에 연결할 수 없습니다,No se puede acceder al servidor de retransmisión,يتعذّر الوصول إلى خادم الترحيل,Server relai tidak dapat dijangkau,
+ConnectionError,,接続エラー,Connection error,连接错误,連線錯誤,연결 오류,Error de conexión,خطأ في الاتصال,Kesalahan koneksi,
+HostIsNewer,"0: host version, 1: your version",ホストのプラグイン ({0}) より古いバージョン ({1}) のため、接続を切断しました。,Disconnected because your version ({1}) is older than the host's plugin ({0}).,你的版本（{1}）比房主的插件（{0}）旧，因此已断开连接。,你的版本（{1}）比房主的外掛（{0}）舊，因此已中斷連線。,호스트의 플러그인({0})보다 오래된 버전({1})이라 연결을 끊었습니다.,Se desconectó porque tu versión ({1}) es anterior al complemento del anfitrión ({0}).,تم قطع الاتصال لأن إصدارك ({1}) أقدم من إضافة المضيف ({0}).,Koneksi diputus karena versi Anda ({1}) lebih lama dari plugin host ({0}).,
+HostIsOlder,0: host version,"ホストのプラグイン ({0}) が古いため、接続を切断しました。
+ホストにプラグインの更新を依頼してください。","Disconnected because the host's plugin ({0}) is out of date.
+Ask the host to update the plugin.","房主的插件（{0}）版本较旧，因此已断开连接。
+请让房主更新插件。","房主的外掛（{0}）版本較舊，因此已中斷連線。
+請房主更新外掛。","호스트의 플러그인({0})이 오래되어 연결을 끊었습니다.
+호스트에게 플러그인 업데이트를 요청하세요.","Se desconectó porque el complemento del anfitrión ({0}) está desactualizado.
+Pide al anfitrión que lo actualice.","تم قطع الاتصال لأن إضافة المضيف ({0}) قديمة.
+اطلب من المضيف تحديث الإضافة.","Koneksi diputus karena plugin host ({0}) sudah usang.
+Minta host untuk memperbarui plugin.",
+ConnectionLostTitle,,接続が切断されました,Disconnected,连接已断开,連線已中斷,연결이 끊어졌습니다,Desconectado,انقطع الاتصال,Koneksi terputus,
+ConnectionLostMessage,,"共同編集サーバーとの接続が切れ、繋ぎ直せませんでした。
+通信環境を確認して、もう一度部屋に参加してください。","The connection to the collaboration server was lost and could not be restored.
+Check your network and join the room again.","与协同编辑服务器的连接已断开，且无法重新连接。
+请检查网络环境后再次加入房间。","與協同編輯伺服器的連線已中斷，且無法重新連線。
+請檢查網路環境後再次加入房間。","공동 편집 서버와의 연결이 끊겨 다시 연결하지 못했습니다.
+통신 환경을 확인하고 다시 방에 참가하세요.","Se perdió la conexión con el servidor de colaboración y no se pudo restablecer.
+Revisa tu red y vuelve a unirte a la sala.","انقطع الاتصال بخادم التعاون وتعذّرت استعادته.
+تحقق من شبكتك وانضم إلى الغرفة مرة أخرى.","Koneksi ke server kolaborasi terputus dan tidak dapat dipulihkan.
+Periksa jaringan Anda lalu gabung ke ruang lagi.",
+DivergenceWarning,0: host name,通信が途切れていた間に、{0} さん (ホスト) の内容とずれた可能性があります。,Your contents may have drifted from {0}'s (host) while the connection was interrupted.,通信中断期间，你的内容可能与 {0}（房主）的内容不一致。,通訊中斷期間，你的內容可能與 {0}（房主）的內容不一致。,통신이 끊긴 동안 {0} 님(호스트)의 내용과 어긋났을 수 있습니다.,Puede que tu contenido se haya desincronizado del de {0} (anfitrión) mientras se cortó la conexión.,ربما اختلف محتواك عن محتوى {0} (المضيف) أثناء انقطاع الاتصال.,Isi Anda mungkin tidak sama lagi dengan milik {0} (host) selama koneksi terputus.,
+OutdatedPlugin,"0: your version, 1: latest version","お使いのプラグイン ({0}) は古いため、共同編集サーバーに接続できません。
+公開中の最新バージョンは {1} です。","Your plugin ({0}) is out of date and cannot connect to the collaboration server.
+The latest version is {1}.","你的插件（{0}）版本较旧，无法连接到协同编辑服务器。
+当前最新版本为 {1}。","你的外掛（{0}）版本較舊，無法連線到協同編輯伺服器。
+目前最新版本為 {1}。","사용 중인 플러그인({0})이 오래되어 공동 편집 서버에 연결할 수 없습니다.
+공개된 최신 버전은 {1}입니다.","Tu complemento ({0}) está desactualizado y no puede conectarse al servidor de colaboración.
+La versión más reciente es {1}.","إضافتك ({0}) قديمة ولا يمكنها الاتصال بخادم التعاون.
+أحدث إصدار هو {1}.","Plugin Anda ({0}) sudah usang dan tidak dapat terhubung ke server kolaborasi.
+Versi terbaru adalah {1}.",
+RoomFull,,この部屋は参加できる人数の上限に達しました。,This room has reached its participant limit.,此房间已达到可加入人数的上限。,此房間已達到可加入人數的上限。,이 방은 참가 가능 인원의 상한에 도달했습니다.,Esta sala alcanzó el límite de participantes.,وصلت هذه الغرفة إلى الحد الأقصى للمشاركين.,Ruang ini sudah mencapai batas peserta.,
+RoomFullAskLarge,,"この部屋は参加できる人数の上限に達しました。
+ホストに大きい部屋を作ってもらってください。","This room has reached its participant limit.
+Ask the host to create a large room.","此房间已达到可加入人数的上限。
+请让房主创建大房间。","此房間已達到可加入人數的上限。
+請房主建立大房間。","이 방은 참가 가능 인원의 상한에 도달했습니다.
+호스트에게 큰 방을 만들어 달라고 요청하세요.","Esta sala alcanzó el límite de participantes.
+Pide al anfitrión que cree una sala grande.","وصلت هذه الغرفة إلى الحد الأقصى للمشاركين.
+اطلب من المضيف إنشاء غرفة كبيرة.","Ruang ini sudah mencapai batas peserta.
+Minta host untuk membuat ruang besar.",
+RoomFullTitle,,満員です,Room is full,房间已满,房間已滿,인원 초과,Sala llena,الغرفة ممتلئة,Ruang penuh,
+RoomExpired,,"この部屋は一定時間やり取りが無かったため、自動的に閉じられました。
+ホストに新しい部屋を作り直してもらってください。","This room was closed automatically because there was no activity for a while.
+Ask the host to create a new room.","此房间因一段时间没有通信而被自动关闭。
+请让房主重新创建房间。","此房間因一段時間沒有通訊而被自動關閉。
+請房主重新建立房間。","이 방은 일정 시간 동안 활동이 없어 자동으로 닫혔습니다.
+호스트에게 새 방을 다시 만들어 달라고 요청하세요.","Esta sala se cerró automáticamente por falta de actividad.
+Pide al anfitrión que cree una sala nueva.","أُغلقت هذه الغرفة تلقائيًا لعدم وجود نشاط لفترة.
+اطلب من المضيف إنشاء غرفة جديدة.","Ruang ini ditutup otomatis karena tidak ada aktivitas selama beberapa waktu.
+Minta host untuk membuat ruang baru.",
+RoomHostKeyRejected,,"この部屋にはホストとして接続できません。
+新しい部屋を作成してください。","You cannot connect to this room as the host.
+Please create a new room.","无法以房主身份连接到此房间。
+请创建新房间。","無法以房主身分連線到此房間。
+請建立新房間。","이 방에는 호스트로 연결할 수 없습니다.
+새 방을 만들어 주세요.","No puedes conectarte a esta sala como anfitrión.
+Crea una sala nueva.","لا يمكنك الاتصال بهذه الغرفة بصفتك المضيف.
+يُرجى إنشاء غرفة جديدة.","Anda tidak dapat terhubung ke ruang ini sebagai host.
+Silakan buat ruang baru.",
+RoomNotFound,,部屋が存在しません。部屋IDを確認してください。,The room does not exist. Check the room ID.,房间不存在。请检查房间 ID。,房間不存在。請檢查房間 ID。,방이 존재하지 않습니다. 방 ID를 확인하세요.,La sala no existe. Comprueba el ID de la sala.,الغرفة غير موجودة. تحقق من معرّف الغرفة.,Ruang tidak ada. Periksa ID ruang.,
+KickedMessage,,ホストによって部屋からキックされたため、接続が切断されました。,You were kicked from the room by the host and have been disconnected.,你已被房主踢出房间，连接已断开。,你已被房主踢出房間，連線已中斷。,호스트에 의해 방에서 강퇴되어 연결이 끊어졌습니다.,El anfitrión te expulsó de la sala y se cortó la conexión.,طردك المضيف من الغرفة وتم قطع الاتصال.,Anda dikeluarkan dari ruang oleh host dan koneksi diputus.,
+KickedTitle,,キック通知,Kicked,踢出通知,踢出通知,강퇴 알림,Expulsado,إشعار الطرد,Dikeluarkan,
+HostNoResponse,"0: host name, 1: minutes","{0} との接続が切れたまま約{1:0}分が経過し、応答がありません。
+YMM4が落ちたか、通信が途切れている可能性があります。
+
+部屋自体はまだ開いているため、復帰を待つこともできます。
+待機を続けますか？（いいえ を選ぶと切断します）","About {1:0} minutes have passed since the connection to {0} was lost, and there is no response.
+YMM4 may have crashed, or the connection may be down.
+
+The room itself is still open, so you can wait for them to come back.
+Keep waiting? (Choose No to disconnect)","与 {0} 的连接中断已约 {1:0} 分钟，仍无响应。
+YMM4 可能已崩溃，或通信已中断。
+
+房间本身仍然开着，你也可以等待其恢复。
+要继续等待吗？（选择“否”将断开连接）","與 {0} 的連線中斷已約 {1:0} 分鐘，仍無回應。
+YMM4 可能已當機，或通訊已中斷。
+
+房間本身仍然開著，你也可以等待其恢復。
+要繼續等待嗎？（選擇「否」將中斷連線）","{0} 님과의 연결이 끊긴 채 약 {1:0}분이 지났으며 응답이 없습니다.
+YMM4가 종료되었거나 통신이 끊겼을 수 있습니다.
+
+방 자체는 아직 열려 있으므로 복귀를 기다릴 수도 있습니다.
+계속 기다리시겠습니까? ('아니요'를 선택하면 연결을 끊습니다)","Han pasado unos {1:0} minutos desde que se perdió la conexión con {0} y no hay respuesta.
+Puede que YMM4 se haya cerrado o que la conexión esté caída.
+
+La sala sigue abierta, así que puedes esperar a que vuelva.
+¿Seguir esperando? (Elige No para desconectarte)","مرّت نحو {1:0} دقيقة منذ انقطاع الاتصال بـ {0} ولا توجد استجابة.
+ربما توقف YMM4 عن العمل أو انقطع الاتصال.
+
+لا تزال الغرفة مفتوحة، لذا يمكنك انتظار عودته.
+هل تريد مواصلة الانتظار؟ (اختر لا لقطع الاتصال)","Sudah sekitar {1:0} menit sejak koneksi ke {0} terputus dan tidak ada respons.
+YMM4 mungkin tertutup paksa, atau koneksi sedang terputus.
+
+Ruang masih terbuka, jadi Anda dapat menunggu ia kembali.
+Tetap menunggu? (Pilih Tidak untuk memutus koneksi)",
+HostNoResponseTitle,,ホストの応答がありません,No response from the host,房主无响应,房主無回應,호스트의 응답이 없습니다,El anfitrión no responde,لا توجد استجابة من المضيف,Host tidak merespons,
+HostDidNotReturn,,ホストとの接続が復帰しなかったため、切断します。,"The connection to the host did not come back, so you will be disconnected.",与房主的连接未能恢复，将断开连接。,與房主的連線未能恢復，將中斷連線。,호스트와의 연결이 복구되지 않아 연결을 끊습니다.,"La conexión con el anfitrión no se recuperó, así que se cortará la conexión.",لم يعد الاتصال بالمضيف، لذا سيتم قطع الاتصال.,"Koneksi ke host tidak pulih, jadi koneksi akan diputus.",
+HostClosedRoom,,ホストが部屋を終了したため、接続が切断されました。,"The host closed the room, so you have been disconnected.",房主已关闭房间，连接已断开。,房主已關閉房間，連線已中斷。,호스트가 방을 종료하여 연결이 끊어졌습니다.,El anfitrión cerró la sala y se cortó la conexión.,أغلق المضيف الغرفة وتم قطع الاتصال.,"Host menutup ruang, jadi koneksi diputus.",
+KeepTimelineQuestion,0: reason,"{0}
+
+共同編集で作ったタイムラインを、このプロジェクトに残しますか？
+「はい」　： そのまま残して編集を続けます。
+「いいえ」： 共同編集で追加されたアイテムをすべて削除します。","{0}
+
+Keep the timeline you made together in this project?
+Yes: keep it and continue editing.
+No: delete every item added during collaborative editing.","{0}
+
+要将协同编辑制作的时间轴保留在此项目中吗？
+“是”：保留并继续编辑。
+“否”：删除协同编辑中添加的所有项目。","{0}
+
+要將協同編輯製作的時間軸保留在此專案中嗎？
+「是」：保留並繼續編輯。
+「否」：刪除協同編輯中新增的所有項目。","{0}
+
+공동 편집으로 만든 타임라인을 이 프로젝트에 남기시겠습니까?
+'예': 그대로 남기고 편집을 계속합니다.
+'아니요': 공동 편집으로 추가된 아이템을 모두 삭제합니다.","{0}
+
+¿Conservar en este proyecto la línea de tiempo creada en colaboración?
+Sí: conservarla y seguir editando.
+No: eliminar todos los elementos añadidos durante la edición colaborativa.","{0}
+
+هل تريد الاحتفاظ بالمخطط الزمني الذي أنشأتموه معًا في هذا المشروع؟
+نعم: الاحتفاظ به ومواصلة التحرير.
+لا: حذف كل العناصر التي أُضيفت أثناء التحرير التعاوني.","{0}
+
+Simpan timeline yang dibuat bersama di proyek ini?
+Ya: simpan dan lanjutkan mengedit.
+Tidak: hapus semua item yang ditambahkan selama pengeditan bersama.",
+RoomEndedTitle,,部屋を終了しました,The room has ended,房间已结束,房間已結束,방이 종료되었습니다,La sala terminó,انتهت الغرفة,Ruang telah berakhir,
+SendBlockedAll,,ホストの設定により、この部屋では素材ファイルを送信できません。,The host's settings do not allow sending asset files in this room.,根据房主的设置，此房间内不能发送素材文件。,依房主的設定，此房間內不能傳送素材檔案。,호스트 설정에 따라 이 방에서는 소재 파일을 보낼 수 없습니다.,La configuración del anfitrión no permite enviar archivos de recursos en esta sala.,لا تسمح إعدادات المضيف بإرسال ملفات المواد في هذه الغرفة.,Pengaturan host tidak mengizinkan pengiriman file materi di ruang ini.,
+SendBlockedVideo,,ホストの設定により、この部屋では動画ファイルを送信できません。,The host's settings do not allow sending video files in this room.,根据房主的设置，此房间内不能发送视频文件。,依房主的設定，此房間內不能傳送影片檔案。,호스트 설정에 따라 이 방에서는 동영상 파일을 보낼 수 없습니다.,La configuración del anfitrión no permite enviar archivos de vídeo en esta sala.,لا تسمح إعدادات المضيف بإرسال ملفات الفيديو في هذه الغرفة.,Pengaturan host tidak mengizinkan pengiriman file video di ruang ini.,
+SendBlockedImage,,ホストの設定により、この部屋では画像ファイルを送信できません。,The host's settings do not allow sending image files in this room.,根据房主的设置，此房间内不能发送图片文件。,依房主的設定，此房間內不能傳送圖片檔案。,호스트 설정에 따라 이 방에서는 이미지 파일을 보낼 수 없습니다.,La configuración del anfitrión no permite enviar archivos de imagen en esta sala.,لا تسمح إعدادات المضيف بإرسال ملفات الصور في هذه الغرفة.,Pengaturan host tidak mengizinkan pengiriman file gambar di ruang ini.,
+SendBlockedAudio,,ホストの設定により、この部屋では音声ファイルを送信できません。,The host's settings do not allow sending audio files in this room.,根据房主的设置，此房间内不能发送音频文件。,依房主的設定，此房間內不能傳送音訊檔案。,호스트 설정에 따라 이 방에서는 음성 파일을 보낼 수 없습니다.,La configuración del anfitrión no permite enviar archivos de audio en esta sala.,لا تسمح إعدادات المضيف بإرسال ملفات الصوت في هذه الغرفة.,Pengaturan host tidak mengizinkan pengiriman file audio di ruang ini.,
+CannotDeleteItemTitle,,アイテムを削除できません,Cannot delete the item,无法删除项目,無法刪除項目,아이템을 삭제할 수 없습니다,No se puede eliminar el elemento,لا يمكن حذف العنصر,Item tidak dapat dihapus,
+DeleteOwnOnly,,"ホストの設定により、自分が追加したアイテムだけを削除できます。
+削除したアイテムは元に戻されました。","The host's settings only let you delete items you added.
+The deleted items were restored.","根据房主的设置，只能删除自己添加的项目。
+已删除的项目已恢复。","依房主的設定，只能刪除自己新增的項目。
+已刪除的項目已還原。","호스트 설정에 따라 내가 추가한 아이템만 삭제할 수 있습니다.
+삭제한 아이템은 원래대로 되돌렸습니다.","La configuración del anfitrión solo te permite eliminar los elementos que añadiste tú.
+Se restauraron los elementos eliminados.","لا تسمح لك إعدادات المضيف إلا بحذف العناصر التي أضفتها.
+تمت استعادة العناصر المحذوفة.","Pengaturan host hanya mengizinkan Anda menghapus item yang Anda tambahkan.
+Item yang dihapus telah dikembalikan.",
+DeleteNotAllowed,,"ホストの設定により、この部屋ではアイテムを削除できません。
+削除したアイテムは元に戻されました。","The host's settings do not allow deleting items in this room.
+The deleted items were restored.","根据房主的设置，此房间内不能删除项目。
+已删除的项目已恢复。","依房主的設定，此房間內不能刪除項目。
+已刪除的項目已還原。","호스트 설정에 따라 이 방에서는 아이템을 삭제할 수 없습니다.
+삭제한 아이템은 원래대로 되돌렸습니다.","La configuración del anfitrión no permite eliminar elementos en esta sala.
+Se restauraron los elementos eliminados.","لا تسمح إعدادات المضيف بحذف العناصر في هذه الغرفة.
+تمت استعادة العناصر المحذوفة.","Pengaturan host tidak mengizinkan penghapusan item di ruang ini.
+Item yang dihapus telah dikembalikan.",
+CannotAddItemTitle,,アイテムを追加できません,Cannot add the item,无法添加项目,無法新增項目,아이템을 추가할 수 없습니다,No se puede añadir el elemento,لا يمكن إضافة العنصر,Item tidak dapat ditambahkan,
+AddNotAllowed,,"ホストの設定により、この部屋ではアイテムを追加できません。
+追加したアイテムは取り消されました。","The host's settings do not allow adding items in this room.
+The added items were removed.","根据房主的设置，此房间内不能添加项目。
+已添加的项目已撤销。","依房主的設定，此房間內不能新增項目。
+已新增的項目已復原。","호스트 설정에 따라 이 방에서는 아이템을 추가할 수 없습니다.
+추가한 아이템은 취소되었습니다.","La configuración del anfitrión no permite añadir elementos en esta sala.
+Se quitaron los elementos añadidos.","لا تسمح إعدادات المضيف بإضافة العناصر في هذه الغرفة.
+تمت إزالة العناصر المضافة.","Pengaturan host tidak mengizinkan penambahan item di ruang ini.
+Item yang ditambahkan telah dibatalkan.",
+CustomVoiceAsk,0: character name,"キャラクター「{0}」はカスタムボイスを使用しています。
+音声ファイルは共有されないため、お使いの環境にある音声フォルダを指定してください。
+
+一度指定すると、次からは自動で設定されます。
+今すぐ指定しますか？（あとから YMM4 のキャラクター設定でも変更できます）","The character ""{0}"" uses a custom voice.
+Voice files are not shared, so choose the voice folder on your PC.
+
+Once you choose it, it will be set automatically from then on.
+Choose it now? (You can also change it later in YMM4's character settings)","角色“{0}”使用了自定义语音。
+语音文件不会共享，请指定你电脑上的语音文件夹。
+
+指定一次后，以后会自动设置。
+现在就指定吗？（之后也可在 YMM4 的角色设置中更改）","角色「{0}」使用了自訂語音。
+語音檔案不會共享，請指定你電腦上的語音資料夾。
+
+指定一次後，之後會自動設定。
+現在就指定嗎？（之後也可在 YMM4 的角色設定中變更）","캐릭터 '{0}'은(는) 커스텀 보이스를 사용합니다.
+음성 파일은 공유되지 않으므로 사용 중인 환경의 음성 폴더를 지정해 주세요.
+
+한 번 지정하면 다음부터는 자동으로 설정됩니다.
+지금 지정하시겠습니까? (나중에 YMM4의 캐릭터 설정에서도 변경할 수 있습니다)","El personaje «{0}» usa una voz personalizada.
+Los archivos de voz no se comparten, así que elige la carpeta de voz de tu equipo.
+
+Una vez elegida, se configurará automáticamente a partir de entonces.
+¿Elegirla ahora? (También puedes cambiarla después en los ajustes de personajes de YMM4)","تستخدم الشخصية «{0}» صوتًا مخصصًا.
+لا تتم مشاركة ملفات الصوت، لذا اختر مجلد الصوت الموجود على جهازك.
+
+بعد اختياره مرة واحدة سيُضبط تلقائيًا في المرات القادمة.
+هل تريد اختياره الآن؟ (يمكنك أيضًا تغييره لاحقًا من إعدادات الشخصيات في YMM4)","Karakter ""{0}"" menggunakan suara kustom.
+File suara tidak dibagikan, jadi pilih folder suara di PC Anda.
+
+Setelah dipilih sekali, selanjutnya akan diatur otomatis.
+Pilih sekarang? (Anda juga dapat mengubahnya nanti di pengaturan karakter YMM4)",
+CustomVoiceTitle,,カスタムボイスのフォルダ,Custom voice folder,自定义语音文件夹,自訂語音資料夾,커스텀 보이스 폴더,Carpeta de voz personalizada,مجلد الصوت المخصص,Folder suara kustom,
+SelectVoiceFolder,0: character name,「{0}」の音声フォルダを選択,"Choose the voice folder for ""{0}""",选择“{0}”的语音文件夹,選擇「{0}」的語音資料夾,'{0}'의 음성 폴더 선택,Elige la carpeta de voz de «{0}»,اختر مجلد الصوت لـ «{0}»,"Pilih folder suara untuk ""{0}""",
+TachieNotReceivedTitle,,立ち絵の素材を受け取れませんでした,Could not receive character image assets,未能接收立绘素材,未能接收立繪素材,스탠딩 일러스트 소재를 받지 못했습니다,No se pudieron recibir los recursos de imagen del personaje,تعذّر استلام مواد صورة الشخصية,Materi gambar karakter tidak dapat diterima,
+TachieNotReceivedLead,0: character name,キャラクター「{0}」の、以下の立ち絵素材が届かないまま時間切れになりました。,"The following image asset for the character ""{0}"" did not arrive in time.",角色“{0}”的以下立绘素材未送达，已超时。,角色「{0}」的以下立繪素材未送達，已逾時。,캐릭터 '{0}'의 다음 스탠딩 일러스트 소재가 도착하지 않은 채 시간이 초과되었습니다.,El siguiente recurso de imagen del personaje «{0}» no llegó a tiempo.,لم تصل مادة الصورة التالية للشخصية «{0}» في الوقت المحدد.,"Materi gambar berikut untuk karakter ""{0}"" tidak sampai tepat waktu.",
+TachieNotReceivedNote,,"キャラクターは作成しましたが、立ち絵は表示されません。
+通信環境を確認して、プロジェクトを開き直すと表示される場合があります。","The character was created, but its image will not be shown.
+Check your network; reopening the project may show it.","角色已创建，但立绘不会显示。
+检查网络环境后重新打开项目，可能会显示。","角色已建立，但立繪不會顯示。
+檢查網路環境後重新開啟專案，可能會顯示。","캐릭터는 만들었지만 스탠딩 일러스트는 표시되지 않습니다.
+통신 환경을 확인하고 프로젝트를 다시 열면 표시될 수 있습니다.","Se creó el personaje, pero su imagen no se mostrará.
+Revisa tu red; puede que aparezca al volver a abrir el proyecto.","تم إنشاء الشخصية، لكن صورتها لن تُعرض.
+تحقق من شبكتك؛ قد تظهر عند إعادة فتح المشروع.","Karakter sudah dibuat, tetapi gambarnya tidak akan ditampilkan.
+Periksa jaringan Anda; membuka ulang proyek mungkin akan menampilkannya.",
+CharacterSettingsUnreadable,,キャラクターの設定を読み取れませんでした。,Could not read the character settings.,无法读取角色设置。,無法讀取角色設定。,캐릭터 설정을 읽지 못했습니다.,No se pudieron leer los ajustes del personaje.,تعذّرت قراءة إعدادات الشخصية.,Pengaturan karakter tidak dapat dibaca.,
+CharacterListUnavailable,0: reason,YMM4のキャラクター一覧を取得できませんでした。({0}),Could not get YMM4's character list. ({0}),无法获取 YMM4 的角色列表。（{0}）,無法取得 YMM4 的角色列表。（{0}）,YMM4의 캐릭터 목록을 가져오지 못했습니다. ({0}),No se pudo obtener la lista de personajes de YMM4. ({0}),تعذّر الحصول على قائمة شخصيات YMM4. ({0}),Daftar karakter YMM4 tidak dapat diambil. ({0}),
+CharacterAddFailed,"0: character name, 1: reason","キャラクター「{0}」を追加できませんでした。
+{1}
+
+同名のキャラクターがある場合はそちらに紐づけて続行します。","Could not add the character ""{0}"".
+{1}
+
+If a character with the same name exists, it will be linked to that one instead.","无法添加角色“{0}”。
+{1}
+
+如有同名角色，将关联到该角色并继续。","無法新增角色「{0}」。
+{1}
+
+如有同名角色，將連結到該角色並繼續。","캐릭터 '{0}'을(를) 추가하지 못했습니다.
+{1}
+
+같은 이름의 캐릭터가 있으면 그 캐릭터에 연결하여 계속합니다.","No se pudo añadir el personaje «{0}».
+{1}
+
+Si existe un personaje con el mismo nombre, se vinculará a ese.","تعذّرت إضافة الشخصية «{0}».
+{1}
+
+إذا وُجدت شخصية بالاسم نفسه فسيتم ربطها بها والمتابعة.","Karakter ""{0}"" tidak dapat ditambahkan.
+{1}
+
+Jika ada karakter dengan nama yang sama, akan ditautkan ke karakter itu.",
+CharacterListUnreadable,,キャラクター一覧を読み取れませんでした。,Could not read the character list.,无法读取角色列表。,無法讀取角色列表。,캐릭터 목록을 읽지 못했습니다.,No se pudo leer la lista de personajes.,تعذّرت قراءة قائمة الشخصيات.,Daftar karakter tidak dapat dibaca.,
+CharacterSettingsTypeMissing,,CharacterSettings 型が見つかりません。,The CharacterSettings type was not found.,未找到 CharacterSettings 类型。,找不到 CharacterSettings 型別。,CharacterSettings 형식을 찾을 수 없습니다.,No se encontró el tipo CharacterSettings.,لم يُعثر على النوع CharacterSettings.,Tipe CharacterSettings tidak ditemukan.,
+CharacterSettingsInstanceMissing,,CharacterSettings のインスタンスを取得できません。,Could not get the CharacterSettings instance.,无法获取 CharacterSettings 实例。,無法取得 CharacterSettings 執行個體。,CharacterSettings 인스턴스를 가져올 수 없습니다.,No se pudo obtener la instancia de CharacterSettings.,تعذّر الحصول على مثيل CharacterSettings.,Instans CharacterSettings tidak dapat diambil.,
+CharacterSettingsListMissing,,CharacterSettings.Characters が見つかりません。,CharacterSettings.Characters was not found.,未找到 CharacterSettings.Characters。,找不到 CharacterSettings.Characters。,CharacterSettings.Characters를 찾을 수 없습니다.,No se encontró CharacterSettings.Characters.,لم يُعثر على CharacterSettings.Characters.,CharacterSettings.Characters tidak ditemukan.,
+MediaNotReceivedAddedLead,0: user name,{0} が追加したアイテムで使われている以下のファイルが届かなかったため、アイテムを追加できませんでした。,"The following file used by an item {0} added did not arrive, so the item could not be added.",{0} 添加的项目所使用的以下文件未送达，因此无法添加该项目。,{0} 新增的項目所使用的以下檔案未送達，因此無法新增該項目。,{0} 님이 추가한 아이템에 사용된 다음 파일이 도착하지 않아 아이템을 추가하지 못했습니다.,"No llegó el siguiente archivo usado por un elemento que añadió {0}, así que no se pudo añadir el elemento.",لم يصل الملف التالي الذي يستخدمه عنصر أضافه {0}، لذا تعذّرت إضافة العنصر.,"File berikut yang digunakan item yang ditambahkan {0} tidak sampai, jadi item tidak dapat ditambahkan.",
+ResendFromSenderNote,,送信側で「データを同期する」を実行すると、もう一度送信されます。,"It will be sent again when the sender runs ""Sync data"".",发送方执行“同步数据”后会再次发送。,傳送方執行「同步資料」後會再次傳送。,보낸 쪽에서 '데이터 동기화'를 실행하면 다시 송신됩니다.,Se volverá a enviar cuando el remitente ejecute «Sincronizar datos».,سيُرسل مرة أخرى عندما يشغّل المُرسِل «مزامنة البيانات».,"File akan dikirim lagi saat pengirim menjalankan ""Sinkronkan data"".",
+ItemNeedsPluginNote,,該当するアイテムは追加できませんでした。プラグインを導入すると表示できます。,The item could not be added. Install the plugin to show it.,无法添加相应的项目。安装插件后即可显示。,無法新增相應的項目。安裝外掛後即可顯示。,해당 아이템을 추가하지 못했습니다. 플러그인을 설치하면 표시할 수 있습니다.,No se pudo añadir el elemento. Instala el complemento para mostrarlo.,تعذّرت إضافة العنصر. ثبّت الإضافة لعرضه.,Item tidak dapat ditambahkan. Pasang plugin untuk menampilkannya.,
+ItemAddFailedTitle,,アイテムを追加できませんでした,Could not add the item,未能添加项目,未能新增項目,아이템을 추가하지 못했습니다,No se pudo añadir el elemento,تعذّرت إضافة العنصر,Item gagal ditambahkan,
+ItemAddFailedDetail,"0: item type, 1: error","種類: {0}
+{1}","Type: {0}
+{1}","类型：{0}
+{1}","類型：{0}
+{1}","종류: {0}
+{1}","Tipo: {0}
+{1}","النوع: {0}
+{1}","Jenis: {0}
+{1}",
+NoRoomOnLayer,0: layer number,レイヤー {0} 付近に空きが無いため、共同編集相手が追加したアイテムを配置できませんでした。,"There is no free space around layer {0}, so an item a collaborator added could not be placed.",图层 {0} 附近没有空位，因此无法放置协作者添加的项目。,圖層 {0} 附近沒有空位，因此無法放置協作者新增的項目。,레이어 {0} 근처에 빈 공간이 없어 공동 편집자가 추가한 아이템을 배치하지 못했습니다.,"No hay espacio libre cerca de la capa {0}, así que no se pudo colocar un elemento añadido por un colaborador.",لا توجد مساحة فارغة قرب الطبقة {0}، لذا تعذّر وضع عنصر أضافه متعاون.,"Tidak ada ruang kosong di sekitar layer {0}, jadi item yang ditambahkan kolaborator tidak dapat ditempatkan.",
+SendFailedTitle,,素材を送信できませんでした,Could not send an asset,未能发送素材,未能傳送素材,소재를 보내지 못했습니다,No se pudo enviar un recurso,تعذّر إرسال مادة,Materi tidak dapat dikirim,
+SendExtensionBlocked,,以下のファイルは、拡張子が共有設定で許可されていないため送信できません。,The following file cannot be sent because its extension is not allowed in the sharing settings.,以下文件的扩展名未在共享设置中允许，因此无法发送。,以下檔案的副檔名未在共享設定中允許，因此無法傳送。,다음 파일은 확장자가 공유 설정에서 허용되지 않아 보낼 수 없습니다.,El siguiente archivo no se puede enviar porque su extensión no está permitida en los ajustes de uso compartido.,لا يمكن إرسال الملف التالي لأن امتداده غير مسموح به في إعدادات المشاركة.,File berikut tidak dapat dikirim karena ekstensinya tidak diizinkan di pengaturan berbagi.,
+AllowInSettingsNote,,設定 → ファイル → 共有可能な拡張子 から許可してください。,Allow it in Settings → Files → Shareable extensions.,请在 设置 → 文件 → 可共享的扩展名 中允许。,請在 設定 → 檔案 → 可共享的副檔名 中允許。,설정 → 파일 → 공유 가능한 확장자에서 허용해 주세요.,Permítelo en Ajustes → Archivos → Extensiones compartibles.,اسمح به من الإعدادات ← الملفات ← الامتدادات القابلة للمشاركة.,Izinkan di Pengaturan → File → Ekstensi yang dapat dibagikan.,
+SendConfirm,,以下のファイルを送信してもよろしいですか？,Send the following files?,确定要发送以下文件吗？,確定要傳送以下檔案嗎？,다음 파일을 보내시겠습니까?,¿Enviar los siguientes archivos?,هل تريد إرسال الملفات التالية؟,Kirim file berikut?,
+SendConfirmTitle,,ファイル送信の確認,Send files,确认发送文件,確認傳送檔案,파일 송신 확인,Enviar archivos,تأكيد إرسال الملفات,Konfirmasi kirim file,
+ReceiveFailedTitle,,素材を受け取れませんでした,Could not receive an asset,未能接收素材,未能接收素材,소재를 받지 못했습니다,No se pudo recibir un recurso,تعذّر استلام مادة,Materi tidak dapat diterima,
+ReceiveExtensionBlocked,,以下のファイルは、拡張子が共有設定で許可されていないため受け取れません。,The following file cannot be received because its extension is not allowed in the sharing settings.,以下文件的扩展名未在共享设置中允许，因此无法接收。,以下檔案的副檔名未在共享設定中允許，因此無法接收。,다음 파일은 확장자가 공유 설정에서 허용되지 않아 받을 수 없습니다.,El siguiente archivo no se puede recibir porque su extensión no está permitida en los ajustes de uso compartido.,لا يمكن استلام الملف التالي لأن امتداده غير مسموح به في إعدادات المشاركة.,File berikut tidak dapat diterima karena ekstensinya tidak diizinkan di pengaturan berbagi.,
+LargeFileIncoming,"0: sender, 1: file name, 2: size","{0} から、サイズの大きい素材ファイルが届こうとしています。
+
+ファイル名: {1}
+サイズ: {2}
+
+受け取りますか？
+「いいえ」を選ぶと、このファイルは受信しません。","{0} is sending you a large asset file.
+
+File name: {1}
+Size: {2}
+
+Receive it?
+If you choose No, this file will not be received.","{0} 正在向你发送大型素材文件。
+
+文件名：{1}
+大小：{2}
+
+要接收吗？
+选择“否”则不接收此文件。","{0} 正在向你傳送大型素材檔案。
+
+檔案名稱：{1}
+大小：{2}
+
+要接收嗎？
+選擇「否」則不接收此檔案。","{0}에게서 큰 소재 파일이 도착하려고 합니다.
+
+파일 이름: {1}
+크기: {2}
+
+받으시겠습니까?
+'아니요'를 선택하면 이 파일은 수신하지 않습니다.","{0} te está enviando un archivo de recursos grande.
+
+Nombre de archivo: {1}
+Tamaño: {2}
+
+¿Recibirlo?
+Si eliges No, este archivo no se recibirá.","يرسل إليك {0} ملف مواد كبيرًا.
+
+اسم الملف: {1}
+الحجم: {2}
+
+هل تريد استلامه؟
+إذا اخترت لا فلن يُستلم هذا الملف.","{0} sedang mengirim file materi berukuran besar.
+
+Nama file: {1}
+Ukuran: {2}
+
+Terima file ini?
+Jika memilih Tidak, file ini tidak akan diterima.",
+LargeFileTitle,,大きい素材ファイルの受け取り,Receive a large asset file,接收大型素材文件,接收大型素材檔案,큰 소재 파일 받기,Recibir un archivo de recursos grande,استلام ملف مواد كبير,Terima file materi besar,
+DiskFullTitle,,空き容量が足りません,Not enough free space,可用空间不足,可用空間不足,여유 공간이 부족합니다,No hay suficiente espacio libre,لا توجد مساحة فارغة كافية,Ruang kosong tidak cukup,
+DiskFullLead,,空き容量が足りないため、以下のファイルを受信しませんでした。,The following file was not received because there is not enough free space.,可用空间不足，因此未接收以下文件。,可用空間不足，因此未接收以下檔案。,여유 공간이 부족하여 다음 파일을 수신하지 않았습니다.,No se recibió el siguiente archivo porque no hay suficiente espacio libre.,لم يُستلم الملف التالي لعدم وجود مساحة فارغة كافية.,File berikut tidak diterima karena ruang kosong tidak cukup.,
+CorruptedTitle,,ファイルが正しく届きませんでした,A file did not arrive correctly,文件未能正确送达,檔案未能正確送達,파일이 올바르게 도착하지 않았습니다,Un archivo no llegó correctamente,لم يصل ملف بشكل صحيح,File tidak sampai dengan benar,
+CorruptedLead,,以下のファイルは、中身が送り主のものと一致しなかったため破棄しました。,The following file was discarded because its contents did not match the sender's.,以下文件的内容与发送者的不一致，因此已丢弃。,以下檔案的內容與傳送者的不一致，因此已捨棄。,다음 파일은 내용이 보낸 사람의 것과 일치하지 않아 폐기했습니다.,Se descartó el siguiente archivo porque su contenido no coincidía con el del remitente.,تم تجاهل الملف التالي لأن محتواه لم يطابق ما لدى المُرسِل.,File berikut dibuang karena isinya tidak sama dengan milik pengirim.,
+NetHttpStatus,0: status code,サーバーが HTTP {0} を返しました。,The server returned HTTP {0}.,服务器返回了 HTTP {0}。,伺服器傳回了 HTTP {0}。,서버가 HTTP {0}을(를) 반환했습니다.,El servidor devolvió HTTP {0}.,أعاد الخادم HTTP {0}.,Server mengembalikan HTTP {0}.,
+NetTls,,暗号化通信の確認に失敗しました。セキュリティソフトの通信検査やプロキシが原因の可能性があります。,Could not verify the encrypted connection. Traffic inspection by security software or a proxy may be the cause.,加密通信验证失败。可能是安全软件的通信检查或代理导致的。,加密通訊驗證失敗。可能是安全軟體的通訊檢查或 Proxy 導致的。,암호화 통신 확인에 실패했습니다. 보안 소프트웨어의 통신 검사나 프록시가 원인일 수 있습니다.,No se pudo verificar la conexión cifrada. Puede deberse a la inspección del tráfico de un software de seguridad o a un proxy.,تعذّر التحقق من الاتصال المشفّر. قد يكون السبب فحص حركة المرور من برنامج الحماية أو وكيل.,Koneksi terenkripsi tidak dapat diverifikasi. Penyebabnya mungkin pemeriksaan lalu lintas oleh perangkat lunak keamanan atau proxy.,
+NetWebSocket,0: error code,接続を確立できませんでした（{0}）。,Could not establish the connection ({0}).,无法建立连接（{0}）。,無法建立連線（{0}）。,연결을 설정하지 못했습니다({0}).,No se pudo establecer la conexión ({0}).,تعذّر إنشاء الاتصال ({0}).,Koneksi tidak dapat dibuat ({0}).,
+NetTimeout,,サーバーの応答がありませんでした（タイムアウト）。,The server did not respond (timeout).,服务器没有响应（超时）。,伺服器沒有回應（逾時）。,서버의 응답이 없었습니다(시간 초과).,El servidor no respondió (tiempo de espera agotado).,لم يستجب الخادم (انتهت المهلة).,Server tidak merespons (waktu habis).,
+NetDns,,サーバー名を解決できませんでした（DNS）。別の DNS（例: 1.1.1.1）に変えると直ることがあります。,Could not resolve the server name (DNS). Switching to another DNS (e.g. 1.1.1.1) may fix it.,无法解析服务器名称（DNS）。更换为其他 DNS（例如 1.1.1.1）可能会解决。,無法解析伺服器名稱（DNS）。更換為其他 DNS（例如 1.1.1.1）可能會解決。,서버 이름을 확인하지 못했습니다(DNS). 다른 DNS(예: 1.1.1.1)로 바꾸면 해결될 수 있습니다.,"No se pudo resolver el nombre del servidor (DNS). Cambiar a otro DNS (p. ej., 1.1.1.1) puede solucionarlo.",تعذّر تحليل اسم الخادم (DNS). قد يحل التغيير إلى DNS آخر (مثل 1.1.1.1) المشكلة.,Nama server tidak dapat diselesaikan (DNS). Mengganti ke DNS lain (mis. 1.1.1.1) mungkin dapat memperbaikinya.,
+NetNoResponse,,サーバーに接続できませんでした（応答なし）。セキュリティソフトやルーターが 443 番の通信を止めている可能性があります。,Could not connect to the server (no response). Security software or a router may be blocking port 443.,无法连接到服务器（无响应）。安全软件或路由器可能阻止了 443 端口的通信。,無法連線到伺服器（無回應）。安全軟體或路由器可能封鎖了 443 連接埠的通訊。,서버에 연결하지 못했습니다(응답 없음). 보안 소프트웨어나 라우터가 443번 포트 통신을 막고 있을 수 있습니다.,No se pudo conectar al servidor (sin respuesta). Puede que un software de seguridad o el router estén bloqueando el puerto 443.,تعذّر الاتصال بالخادم (لا استجابة). قد يكون برنامج الحماية أو الموجّه يحظر المنفذ 443.,Tidak dapat terhubung ke server (tidak ada respons). Perangkat lunak keamanan atau router mungkin memblokir port 443.,
+NetRefused,,サーバーに接続を拒否されました。,The server refused the connection.,服务器拒绝了连接。,伺服器拒絕了連線。,서버가 연결을 거부했습니다.,El servidor rechazó la conexión.,رفض الخادم الاتصال.,Server menolak koneksi.,
+NetUnreachable,,サーバーまでの経路がありません。IPv4 で接続できない回線の可能性があります。,There is no route to the server. Your connection may not support IPv4.,没有到达服务器的路由。你的网络可能无法使用 IPv4 连接。,沒有到達伺服器的路由。你的網路可能無法使用 IPv4 連線。,서버까지의 경로가 없습니다. IPv4로 연결할 수 없는 회선일 수 있습니다.,No hay ruta hasta el servidor. Puede que tu conexión no admita IPv4.,لا يوجد مسار إلى الخادم. ربما لا يدعم اتصالك IPv4.,Tidak ada rute ke server. Koneksi Anda mungkin tidak mendukung IPv4.,
+NetBlocked,,通信がブロックされました。セキュリティソフトの設定を確認してください。,The connection was blocked. Check your security software settings.,通信被拦截。请检查安全软件的设置。,通訊被封鎖。請檢查安全軟體的設定。,통신이 차단되었습니다. 보안 소프트웨어 설정을 확인하세요.,Se bloqueó la conexión. Revisa la configuración de tu software de seguridad.,تم حظر الاتصال. تحقق من إعدادات برنامج الحماية.,Koneksi diblokir. Periksa pengaturan perangkat lunak keamanan Anda.,
+NetFailed,0: error,通信に失敗しました（{0}）。,Communication failed ({0}).,通信失败（{0}）。,通訊失敗（{0}）。,통신에 실패했습니다({0}).,Falló la comunicación ({0}).,فشل الاتصال ({0}).,Komunikasi gagal ({0}).,
+MissingHereTitle,,プラグイン・フォントが見つかりません,Missing plugins or fonts,找不到插件・字体,找不到外掛・字型,플러그인・글꼴을 찾을 수 없습니다,Faltan complementos o fuentes,إضافات أو خطوط مفقودة,Plugin atau font tidak ditemukan,
+MissingThereTitle,,相手の環境にないものがあります,Something is missing on the other side,对方环境中缺少某些内容,對方環境中缺少某些內容,상대 환경에 없는 것이 있습니다,Al otro participante le falta algo,يوجد ما ينقص لدى الطرف الآخر,Ada yang tidak tersedia di pihak lain,
+PeerPluginMissingLead,0: user name,{0} が使用している以下のプラグインが、この環境にありません。,The following plugin used by {0} is not installed on this PC.,{0} 使用的以下插件在此环境中不存在。,{0} 使用的以下外掛在此環境中不存在。,{0} 님이 사용하는 다음 플러그인이 이 환경에 없습니다.,El siguiente complemento que usa {0} no está instalado en este equipo.,الإضافة التالية التي يستخدمها {0} غير مثبّتة على هذا الجهاز.,Plugin berikut yang digunakan {0} tidak terpasang di PC ini.,
+PluginMissingNote,,該当するアイテムや効果は、この環境では表示されません。,Items and effects that use it will not be shown on this PC.,相应的项目和效果在此环境中不会显示。,相應的項目和效果在此環境中不會顯示。,해당 아이템이나 효과는 이 환경에서 표시되지 않습니다.,Los elementos y efectos que lo usan no se mostrarán en este equipo.,لن تُعرض العناصر والتأثيرات التي تستخدمها على هذا الجهاز.,Item dan efek yang memakainya tidak akan ditampilkan di PC ini.,
+PeerFontMissingLead,0: user name,{0} が使用している以下のフォントが、この環境にありません。,The following font used by {0} is not installed on this PC.,{0} 使用的以下字体在此环境中不存在。,{0} 使用的以下字型在此環境中不存在。,{0} 님이 사용하는 다음 글꼴이 이 환경에 없습니다.,La siguiente fuente que usa {0} no está instalada en este equipo.,الخط التالي الذي يستخدمه {0} غير مثبّت على هذا الجهاز.,Font berikut yang digunakan {0} tidak terpasang di PC ini.,
+FontMissingNote,,代わりのフォントで表示されるため、見た目が異なります。,"A substitute font is used, so it will look different.",将使用替代字体显示，因此外观会有所不同。,將使用替代字型顯示，因此外觀會有所不同。,대체 글꼴로 표시되므로 모양이 다릅니다.,"Se usa una fuente sustituta, así que se verá diferente.",يُستخدم خط بديل، لذا سيبدو مختلفًا.,"Font pengganti digunakan, jadi tampilannya akan berbeda.",
+PeerScreenNote,,その参加者の画面では、表示が異なるか、アイテムが表示されていません。,"On that participant's screen, it looks different or the item is not shown.",在该参与者的画面上，显示会有所不同或项目未显示。,在該參與者的畫面上，顯示會有所不同或項目未顯示。,그 참가자의 화면에서는 표시가 다르거나 아이템이 표시되지 않습니다.,En la pantalla de ese participante se ve diferente o el elemento no aparece.,على شاشة ذلك المشارك يبدو مختلفًا أو لا يظهر العنصر.,"Di layar peserta tersebut, tampilannya berbeda atau item tidak ditampilkan.",
+MyPluginMissingLead,,あなたが使用している以下のプラグインが、相手の環境にありません。,The following plugin you use is not installed on the other participant's PC.,你使用的以下插件在对方的环境中不存在。,你使用的以下外掛在對方的環境中不存在。,내가 사용하는 다음 플러그인이 상대 환경에 없습니다.,El siguiente complemento que usas no está instalado en el equipo del otro participante.,الإضافة التالية التي تستخدمها غير مثبّتة على جهاز المشارك الآخر.,Plugin berikut yang Anda gunakan tidak terpasang di PC peserta lain.,
+MyFontMissingLead,,あなたが使用している以下のフォントが、相手の環境にありません。,The following font you use is not installed on the other participant's PC.,你使用的以下字体在对方的环境中不存在。,你使用的以下字型在對方的環境中不存在。,내가 사용하는 다음 글꼴이 상대 환경에 없습니다.,La siguiente fuente que usas no está instalada en el equipo del otro participante.,الخط التالي الذي تستخدمه غير مثبّت على جهاز المشارك الآخر.,Font berikut yang Anda gunakan tidak terpasang di PC peserta lain.,
+OwnersFew,0: user names,（{0} さん）," ({0})",（{0}）,（{0}）," ({0} 님)"," ({0})"," ({0})"," ({0})",
+OwnersMany,"0: user name, 1: other count",（{0} さん ほか {1} 人）," ({0} and {1} more)",（{0} 等 {1} 人）,（{0} 等 {1} 人）," ({0} 님 외 {1}명)"," ({0} y {1} más)"," ({0} و{1} آخرون)"," ({0} dan {1} lainnya)",
+MigratedMessage,,"人数が少ない状態が続いたため、小さい部屋へ移動しました。
+ルームIDが変わっているので、新しく招待する場合は招待リンクを取り直してください。","Only a few people stayed for a while, so the room moved to a small room.
+The room ID has changed, so get a new invite link before inviting anyone else.","由于人数持续较少，已转移到小房间。
+房间 ID 已更改，如需邀请新成员，请重新获取邀请链接。","由於人數持續較少，已轉移到小房間。
+房間 ID 已變更，如需邀請新成員，請重新取得邀請連結。","인원이 적은 상태가 계속되어 작은 방으로 이동했습니다.
+방 ID가 바뀌었으므로 새로 초대하려면 초대 링크를 다시 받아 주세요.","Hubo pocas personas durante un tiempo, así que la sala pasó a una sala pequeña.
+El ID de la sala cambió; obtén un enlace de invitación nuevo antes de invitar a alguien más.","استمر وجود عدد قليل من الأشخاص لفترة، لذا انتقلت الغرفة إلى غرفة صغيرة.
+تغيّر معرّف الغرفة، لذا احصل على رابط دعوة جديد قبل دعوة أي شخص آخر.","Jumlah orang tetap sedikit untuk beberapa waktu, jadi ruang dipindah ke ruang kecil.
+ID ruang telah berubah, jadi ambil tautan undangan baru sebelum mengundang orang lain.",
+MigratedTitle,,部屋を移動しました,Moved to another room,已转移房间,已轉移房間,방을 이동했습니다,Se cambió de sala,تم نقل الغرفة,Ruang dipindahkan,
+ProjectTooLargeTitle,,プロジェクトが大きすぎます,The project is too large,项目过大,專案過大,프로젝트가 너무 큽니다,El proyecto es demasiado grande,المشروع كبير جدًا,Proyek terlalu besar,
+ProjectTooLargeMessage,,相手のプロジェクトが大きすぎたため、同期を中止しました。,Syncing was stopped because the other participant's project is too large.,对方的项目过大，已中止同步。,對方的專案過大，已中止同步。,상대의 프로젝트가 너무 커서 동기화를 중지했습니다.,Se detuvo la sincronización porque el proyecto del otro participante es demasiado grande.,تم إيقاف المزامنة لأن مشروع المشارك الآخر كبير جدًا.,Sinkronisasi dihentikan karena proyek peserta lain terlalu besar.,
+Checking,,確認中...,Checking...,正在检查...,正在檢查...,확인 중...,Comprobando...,جارٍ التحقق...,Memeriksa...,
+NotPublished,,未公開,Not released,未发布,未發布,미공개,Sin publicar,غير منشور,Belum dirilis,
+FetchFailed,,取得できませんでした,Could not get it,无法获取,無法取得,가져오지 못했습니다,No se pudo obtener,تعذّر الحصول عليه,Tidak dapat diambil,
+VoiceFailedTitle,,音声を作れませんでした,Could not create a voice,未能生成语音,未能產生語音,음성을 만들지 못했습니다,No se pudo crear una voz,تعذّر إنشاء صوت,Suara tidak dapat dibuat,
+VoiceCharacterMissingLead,,以下のキャラクターがこの環境にないため、音声を作れませんでした。,The voice could not be created because the following character does not exist on this PC.,此环境中没有以下角色，因此未能生成语音。,此環境中沒有以下角色，因此未能產生語音。,다음 캐릭터가 이 환경에 없어 음성을 만들지 못했습니다.,No se pudo crear la voz porque el siguiente personaje no existe en este equipo.,تعذّر إنشاء الصوت لأن الشخصية التالية غير موجودة على هذا الجهاز.,Suara tidak dapat dibuat karena karakter berikut tidak ada di PC ini.,
+VoiceCharacterMissingNote,,同じ名前のキャラクターを用意するか、共有されたキャラクターを受け取ってください。,"Prepare a character with the same name, or accept the shared character.",请准备同名角色，或接收共享的角色。,請準備同名角色，或接收共享的角色。,같은 이름의 캐릭터를 준비하거나 공유된 캐릭터를 받아 주세요.,Prepara un personaje con el mismo nombre o acepta el personaje compartido.,جهّز شخصية بالاسم نفسه أو اقبل الشخصية المشتركة.,"Siapkan karakter dengan nama yang sama, atau terima karakter yang dibagikan.",
+VoiceNotSetLead,,以下のキャラクターに声が設定されていないため、音声を作れませんでした。,The voice could not be created because the following character has no voice set.,以下角色未设置声音，因此未能生成语音。,以下角色未設定聲音，因此未能產生語音。,다음 캐릭터에 목소리가 설정되어 있지 않아 음성을 만들지 못했습니다.,No se pudo crear la voz porque el siguiente personaje no tiene voz asignada.,تعذّر إنشاء الصوت لأن الشخصية التالية ليس لها صوت محدد.,Suara tidak dapat dibuat karena karakter berikut belum diatur suaranya.,
+VoiceNotSetNote,,キャラクター設定で声を選んでください。,Choose a voice in the character settings.,请在角色设置中选择声音。,請在角色設定中選擇聲音。,캐릭터 설정에서 목소리를 선택하세요.,Elige una voz en los ajustes del personaje.,اختر صوتًا من إعدادات الشخصية.,Pilih suara di pengaturan karakter.,
+VoiceEngineMismatchLead,,以下のキャラクターは、声の種類（音声エンジン）が送り主と違うため、音声を作れませんでした。,The voice could not be created because the following character uses a different kind of voice (voice engine) from the sender's.,以下角色的声音类型（语音引擎）与发送者不同，因此未能生成语音。,以下角色的聲音類型（語音引擎）與傳送者不同，因此未能產生語音。,다음 캐릭터는 목소리 종류(음성 엔진)가 보낸 사람과 달라 음성을 만들지 못했습니다.,No se pudo crear la voz porque el siguiente personaje usa un tipo de voz (motor de voz) distinto al del remitente.,تعذّر إنشاء الصوت لأن الشخصية التالية تستخدم نوع صوت (محرك صوت) مختلفًا عن المُرسِل.,Suara tidak dapat dibuat karena karakter berikut memakai jenis suara (mesin suara) yang berbeda dari pengirim.,
+VoiceEngineMismatchNote,,送り主と同じ音声エンジンを、キャラクターの声に設定してください。,Set the character's voice to the same voice engine as the sender's.,请将角色的声音设置为与发送者相同的语音引擎。,請將角色的聲音設定為與傳送者相同的語音引擎。,보낸 사람과 같은 음성 엔진을 캐릭터의 목소리로 설정하세요.,Asigna al personaje el mismo motor de voz que usa el remitente.,اضبط صوت الشخصية على محرك الصوت نفسه الذي يستخدمه المُرسِل.,Atur suara karakter ke mesin suara yang sama dengan pengirim.,
+VoiceEngineErrorLead,,以下のキャラクターの音声を、この環境の音声エンジンで作れませんでした。,The voice engine on this PC could not create the voice for the following character.,此环境的语音引擎未能生成以下角色的语音。,此環境的語音引擎未能產生以下角色的語音。,이 환경의 음성 엔진으로 다음 캐릭터의 음성을 만들지 못했습니다.,El motor de voz de este equipo no pudo crear la voz del siguiente personaje.,تعذّر على محرك الصوت في هذا الجهاز إنشاء صوت الشخصية التالية.,Mesin suara di PC ini tidak dapat membuat suara untuk karakter berikut.,
+VoiceEngineErrorNote,,音声エンジンが起動しているか、利用規約に同意しているかを確認してください。,Check that the voice engine is running and that you have agreed to its terms of use.,请确认语音引擎是否已启动，以及是否已同意使用条款。,請確認語音引擎是否已啟動，以及是否已同意使用條款。,"음성 엔진이 실행 중인지, 이용 약관에 동의했는지 확인하세요.",Comprueba que el motor de voz esté en ejecución y que hayas aceptado sus condiciones de uso.,تأكد من أن محرك الصوت قيد التشغيل وأنك وافقت على شروط استخدامه.,Pastikan mesin suara sedang berjalan dan Anda telah menyetujui ketentuan penggunaannya.,
+VoiceEngineSlowLead,,以下のキャラクターの音声エンジンから応答がないため、ほかの音声を先に作ります。,"The voice engine for the following character is not responding, so other voices will be created first.",以下角色的语音引擎无响应，将先生成其他语音。,以下角色的語音引擎無回應，將先產生其他語音。,다음 캐릭터의 음성 엔진이 응답하지 않아 다른 음성을 먼저 만듭니다.,"El motor de voz del siguiente personaje no responde, así que se crearán primero otras voces.",محرك الصوت للشخصية التالية لا يستجيب، لذا ستُنشأ أصوات أخرى أولًا.,"Mesin suara untuk karakter berikut tidak merespons, jadi suara lain akan dibuat lebih dulu.",
+VoiceEngineSlowNote,,音声エンジンが起動しているか、確認画面が開いたままになっていないかを確認してください。,Check that the voice engine is running and that no confirmation window is left open.,请确认语音引擎是否已启动，以及是否有确认窗口仍处于打开状态。,請確認語音引擎是否已啟動，以及是否有確認視窗仍處於開啟狀態。,"음성 엔진이 실행 중인지, 확인 화면이 열린 채로 있지 않은지 확인하세요.",Comprueba que el motor de voz esté en ejecución y que no haya ninguna ventana de confirmación abierta.,تأكد من أن محرك الصوت قيد التشغيل وأنه لا توجد نافذة تأكيد مفتوحة.,Pastikan mesin suara sedang berjalan dan tidak ada jendela konfirmasi yang masih terbuka.,
+PeerDataUnreadableTitle,,相手のプラグインを読み取れませんでした,Could not read the other participant's data,无法读取对方插件的数据,無法讀取對方外掛的資料,상대 플러그인을 읽지 못했습니다,No se pudieron leer los datos del otro participante,تعذّرت قراءة بيانات المشارك الآخر,Data peserta lain tidak dapat dibaca,
+PeerDataUnreadableMessage,,"相手から受け取った内容を解釈できませんでした。
+同じバージョンのMultiUserEditを使っているか確認してください。","Could not interpret what was received from the other participant.
+Check that you are both using the same version of MultiUserEdit.","无法解析从对方收到的内容。
+请确认是否使用相同版本的 MultiUserEdit。","無法解析從對方收到的內容。
+請確認是否使用相同版本的 MultiUserEdit。","상대에게서 받은 내용을 해석하지 못했습니다.
+같은 버전의 MultiUserEdit를 사용하고 있는지 확인하세요.","No se pudo interpretar lo recibido del otro participante.
+Comprueba que ambos usáis la misma versión de MultiUserEdit.","تعذّر تفسير ما تم استلامه من المشارك الآخر.
+تأكد من أنكما تستخدمان الإصدار نفسه من MultiUserEdit.","Isi yang diterima dari peserta lain tidak dapat dipahami.
+Pastikan Anda berdua memakai versi MultiUserEdit yang sama.",

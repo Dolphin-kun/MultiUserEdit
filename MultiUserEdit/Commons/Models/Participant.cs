@@ -24,7 +24,9 @@ namespace MultiUserEdit.Commons.Models
         public bool HasFileChannel { get => hasFileChannel; set => Set(ref hasFileChannel, value); }
 
         private UserRole role;
-        public UserRole Role { get => role; set => Set(ref role, value); }
+        public UserRole Role { get => role; set => Set(ref role, value, nameof(Role), nameof(RoleText)); }
+
+        public string RoleText => Role == UserRole.Host ? Texts.Host : Texts.Guest;
 
         private DateTime lastActivity;
         public DateTime LastActivity { get => lastActivity; set => Set(ref lastActivity, value); }
@@ -46,10 +48,10 @@ namespace MultiUserEdit.Commons.Models
 
         public string StatusText => Status switch
         {
-            UserStatus.Active => "オンライン",
-            UserStatus.Away => "離席中",
-            UserStatus.Disconnected => "接続切れ",
-            _ => "オフライン"
+            UserStatus.Active => Texts.StatusOnline,
+            UserStatus.Away => Texts.StatusAway,
+            UserStatus.Disconnected => Texts.StatusDisconnected,
+            _ => Texts.StatusOffline
         };
 
         private int currentFrame;

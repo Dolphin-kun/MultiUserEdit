@@ -19,7 +19,7 @@ namespace MultiUserEdit.Settings
             set => Set(ref storageMode, value);
         }
 
-        private string userName = "ユーザー";
+        private string userName = Texts.DefaultUserName;
         public string UserName
         {
             get => userName;
@@ -114,7 +114,7 @@ namespace MultiUserEdit.Settings
         public override void Initialize()
         {
             if (string.IsNullOrEmpty(UserName))
-                UserName = "ユーザー";
+                UserName = Texts.DefaultUserName;
 
             if (!Guid.TryParse(ProfileId, out _))
                 ProfileId = Guid.NewGuid().ToString();

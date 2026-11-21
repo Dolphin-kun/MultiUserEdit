@@ -22,7 +22,7 @@ namespace MultiUserEdit.Commons
         public string CurrentVersion { get; } =
             Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
 
-        private string latestVersion = "確認中...";
+        private string latestVersion = Texts.Checking;
         public string LatestVersion
         {
             get => latestVersion;
@@ -130,7 +130,7 @@ namespace MultiUserEdit.Commons
         {
             if (string.IsNullOrEmpty(PostId))
             {
-                LatestVersion = "未公開";
+                LatestVersion = Texts.NotPublished;
                 return;
             }
 
@@ -143,7 +143,7 @@ namespace MultiUserEdit.Commons
                 var response = await httpClient.SendAsync(request);
                 if (!response.IsSuccessStatusCode)
                 {
-                    LatestVersion = "取得できませんでした";
+                    LatestVersion = Texts.FetchFailed;
                     return;
                 }
 
@@ -153,12 +153,12 @@ namespace MultiUserEdit.Commons
                 if (!root.TryGetProperty("success", out var success) || !success.GetBoolean() ||
                     !root.TryGetProperty("version", out var versionElement))
                 {
-                    LatestVersion = "取得できませんでした";
+                    LatestVersion = Texts.FetchFailed;
                     return;
                 }
 
-                var latest = versionElement.GetString();
-                LatestVersion = string.IsNullOrWhiteSpace(latest) ? "不明" : latest;
+                var latest = versionElement.GetString()?.Trim().TrimStart('v', 'V');
+                LatestVersion = string.IsNullOrWhiteSpace(latest) ? Texts.Unknown : latest;
 
                 if (root.TryGetProperty("downloadURL", out var urlElement))
                     downloadUrl = urlElement.GetString() ?? string.Empty;
@@ -167,7 +167,7 @@ namespace MultiUserEdit.Commons
             }
             catch
             {
-                LatestVersion = "取得できませんでした";
+                LatestVersion = Texts.FetchFailed;
             }
         }
     }

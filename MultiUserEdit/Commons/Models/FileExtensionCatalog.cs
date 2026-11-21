@@ -1,15 +1,24 @@
 ﻿namespace MultiUserEdit.Commons.Models
 {
+    internal enum FileGroupKind
+    {
+        Image,
+        Video,
+        Audio,
+        Other,
+        Custom,
+    }
+
     internal static class FileExtensionCatalog
     {
-        public record Group(string Name, IReadOnlyList<string> Extensions);
+        public record Group(FileGroupKind Kind, IReadOnlyList<string> Extensions);
 
         public static readonly IReadOnlyList<Group> Groups =
         [
-            new("画像", [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tif", ".tiff", ".ico", ".dds", ".heic", ".psd", ".svg"]),
-            new("動画", [".mp4", ".m4v", ".mov", ".avi", ".wmv", ".mkv", ".webm", ".flv", ".ts", ".mts", ".m2ts", ".mpg", ".mpeg", ".ogv", ".asf"]),
-            new("音声", [".mp3", ".wav", ".aac", ".m4a", ".flac", ".ogg", ".opus", ".wma", ".aiff", ".mid", ".midi"]),
-            new("YMM4・その他", [".ymmp", ".ymmt", ".lab", ".txt", ".csv", ".tsv", ".srt", ".sub", ".sbv"]),
+            new(FileGroupKind.Image, [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tif", ".tiff", ".ico", ".dds", ".heic", ".psd", ".svg"]),
+            new(FileGroupKind.Video, [".mp4", ".m4v", ".mov", ".avi", ".wmv", ".mkv", ".webm", ".flv", ".ts", ".mts", ".m2ts", ".mpg", ".mpeg", ".ogv", ".asf"]),
+            new(FileGroupKind.Audio, [".mp3", ".wav", ".aac", ".m4a", ".flac", ".ogg", ".opus", ".wma", ".aiff", ".mid", ".midi"]),
+            new(FileGroupKind.Other, [".ymmp", ".ymmt", ".lab", ".txt", ".csv", ".tsv", ".srt", ".sub", ".sbv"]),
         ];
 
         public static IEnumerable<string> AllExtensions =>
@@ -17,25 +26,26 @@
 
         public static IReadOnlyList<string> DefaultEnabled =>
         [
-            .. Groups.Where(group => group.Name != "YMM4・その他").SelectMany(group => group.Extensions),
+            .. Groups.Where(group => group.Kind != FileGroupKind.Other).SelectMany(group => group.Extensions),
             ".ymmp", ".ymmt", ".lab",
         ];
 
         public static string DefaultCsv => string.Join(", ", DefaultEnabled);
 
-        public const string CustomGroupName = "追加した形式";
+        public static string NameOf(FileGroupKind kind) => kind switch
+        {
+            FileGroupKind.Image => Texts.Image,
+            FileGroupKind.Video => Texts.Video,
+            FileGroupKind.Audio => Texts.Audio,
+            FileGroupKind.Other => Texts.Ymm4AndOther,
+            _ => Texts.AddedFormats,
+        };
 
-        public const string VideoGroupName = "動画";
+        public static FileGroupKind GetKindForFile(string filePath) =>
+            GetKind(Normalize(System.IO.Path.GetExtension(filePath)) ?? string.Empty);
 
-        public const string ImageGroupName = "画像";
-
-        public const string AudioGroupName = "音声";
-
-        public static string GetGroupNameForFile(string filePath) =>
-            GetGroupName(Normalize(System.IO.Path.GetExtension(filePath)) ?? string.Empty);
-
-        public static string GetGroupName(string extension) =>
-            Groups.FirstOrDefault(group => group.Extensions.Contains(extension))?.Name ?? CustomGroupName;
+        public static FileGroupKind GetKind(string extension) =>
+            Groups.FirstOrDefault(group => group.Extensions.Contains(extension))?.Kind ?? FileGroupKind.Custom;
 
         public static string? Normalize(string? extension)
         {

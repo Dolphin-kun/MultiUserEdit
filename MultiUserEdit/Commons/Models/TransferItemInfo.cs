@@ -16,7 +16,7 @@ namespace MultiUserEdit.Commons.Models
 
         public string DisplayName => Path.GetFileName(Name.Replace('/', Path.DirectorySeparatorChar));
 
-        public string DirectionText => IsUpload ? "送信" : "受信";
+        public string DirectionText => IsUpload ? Texts.Send : Texts.Receive;
 
         public bool CanCancel => !IsUpload && TransferId != Guid.Empty;
 
@@ -28,7 +28,7 @@ namespace MultiUserEdit.Commons.Models
 
         public string SizeText => $"{FormatBytes(TransferredBytes)} / {FormatBytes(TotalBytes)}";
 
-        public string SpeedText => BytesPerSecond <= 0 ? string.Empty : $"{FormatBytes((long)BytesPerSecond)}/秒";
+        public string SpeedText => BytesPerSecond <= 0 ? string.Empty : string.Format(Texts.PerSecond, FormatBytes((long)BytesPerSecond));
 
         public string RemainingText
         {
@@ -37,14 +37,14 @@ namespace MultiUserEdit.Commons.Models
                 if (BytesPerSecond <= 0 || TotalBytes <= TransferredBytes) return string.Empty;
 
                 var seconds = (TotalBytes - TransferredBytes) / BytesPerSecond;
-                if (seconds < 60) return $"残り {seconds:F0} 秒";
-                if (seconds < 3600) return $"残り {seconds / 60:F0} 分";
-                return $"残り {seconds / 3600:F1} 時間";
+                if (seconds < 60) return string.Format(Texts.RemainingSeconds, seconds);
+                if (seconds < 3600) return string.Format(Texts.RemainingMinutes, seconds / 60);
+                return string.Format(Texts.RemainingHours, seconds / 3600);
             }
         }
 
         public string DetailText =>
-            string.Join("  ", new[] { OwnerName.Length > 0 ? (IsUpload ? string.Empty : $"{OwnerName} さんから") : string.Empty, SpeedText, RemainingText }
+            string.Join("  ", new[] { OwnerName.Length > 0 ? (IsUpload ? string.Empty : string.Format(Texts.FromUser, OwnerName)) : string.Empty, SpeedText, RemainingText }
                 .Where(text => !string.IsNullOrEmpty(text)));
 
         private static string FormatBytes(long bytes)

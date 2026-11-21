@@ -61,14 +61,7 @@ namespace MultiUserEdit.Views
 
         private void OnSidebarSplitterDragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
         {
-            var width = SidebarColumn.ActualWidth;
-            if (width < CompactSidebarThreshold)
-            {
-                width = SidebarColumn.MinWidth;
-                SidebarColumn.Width = new GridLength(width);
-            }
-
-            Settings.MultiUserEditSettings.Default.SidebarWidth = width;
+            Settings.MultiUserEditSettings.Default.SidebarWidth = SidebarColumn.ActualWidth;
         }
 
         private void MultiUserEditView_Loaded(object sender, RoutedEventArgs e)

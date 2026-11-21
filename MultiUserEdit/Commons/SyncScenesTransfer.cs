@@ -1,4 +1,4 @@
-using MultiUserEdit.Commons.Events;
+﻿using MultiUserEdit.Commons.Events;
 using MultiUserEdit.Commons.Models;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -137,8 +137,8 @@ namespace MultiUserEdit.Commons
                 {
                     pending.TryRemove(evt.SyncId, out _);
                     ErrorNotifier.NotifyOnce(
-                        "プロジェクトが大きすぎます",
-                        "相手のプロジェクトが大きすぎたため、同期を中止しました。");
+                        Texts.ProjectTooLargeTitle,
+                        Texts.ProjectTooLargeMessage);
                     return null;
                 }
 

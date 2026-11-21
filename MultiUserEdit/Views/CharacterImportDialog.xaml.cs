@@ -13,7 +13,7 @@ namespace MultiUserEdit.Views
             InitializeComponent();
 
             CharacterNameText.Text = $"「{characterName}」";
-            OwnerText.Text = string.IsNullOrEmpty(ownerName) ? string.Empty : $"（{ownerName} から）";
+            OwnerText.Text = string.IsNullOrEmpty(ownerName) ? string.Empty : string.Format(Texts.FromOwner, ownerName);
 
             var view = new CollectionViewSource { Source = characters };
             view.GroupDescriptions.Add(new PropertyGroupDescription(nameof(Character.GroupName)));
@@ -25,7 +25,7 @@ namespace MultiUserEdit.Views
             if (!canCreate)
             {
                 CreateRadio.IsEnabled = false;
-                CreateHint.Text = "相手からキャラクターの設定を取得できなかったため、新規作成はできません。";
+                CreateHint.Text = Texts.CannotCreateCharacter;
             }
             else if (characters.Count == 0)
             {

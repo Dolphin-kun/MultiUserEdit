@@ -1,8 +1,9 @@
 ﻿<Window x:Class="MultiUserEdit.Views.UserProfileDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:MultiUserEdit"
         xmlns:icons="clr-namespace:YukkuriMovieMaker.Resources.Icons;assembly=YukkuriMovieMaker.Plugin"
-        Title="ユーザー情報" Height="440" Width="380"
+        Title="{x:Static loc:Texts.UserInfo}" Height="440" Width="380"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
         ShowInTaskbar="False">
 
@@ -11,7 +12,7 @@
     </Window.Style>
 
     <Window.Resources>
-        <Style x:Key="EqualWidthTabItemStyle" TargetType="TabItem">
+        <Style x:Key="EqualWidthTabItemStyle" TargetType="TabItem" BasedOn="{StaticResource {x:Type TabItem}}">
             <Setter Property="MinWidth" Value="92" />
             <Setter Property="Padding" Value="10,4" />
             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -48,11 +49,11 @@
                     <TextBlock x:Name="StatusLabel" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="編集時間: " FontSize="12" Opacity="0.75" />
+                    <TextBlock Text="{x:Static loc:Texts.EditTime}" Margin="0,0,4,0" FontSize="12" Opacity="0.75" />
                     <TextBlock x:Name="EditDurationText" FontSize="12" FontWeight="SemiBold" />
                 </StackPanel>
                 <StackPanel x:Name="TotalDurationPanel" Orientation="Horizontal" Margin="0,3,0,0">
-                    <TextBlock Text="合計参加時間: " FontSize="12" Opacity="0.75" />
+                    <TextBlock Text="{x:Static loc:Texts.TotalTime}" Margin="0,0,4,0" FontSize="12" Opacity="0.75" />
                     <TextBlock x:Name="TotalDurationText" FontSize="12" FontWeight="SemiBold" />
                 </StackPanel>
             </StackPanel>
@@ -62,49 +63,49 @@
 
         <Grid Grid.Row="2" Margin="0">
             <TabControl x:Name="Tabs" BorderThickness="1">
-                <TabItem x:Name="ProfileTab" Header="プロフィール" Style="{StaticResource EqualWidthTabItemStyle}"
+                <TabItem x:Name="ProfileTab" Header="{x:Static loc:Texts.Profile}" Style="{StaticResource EqualWidthTabItemStyle}"
                          HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
                     <StackPanel Margin="10,8,10,8">
-                        <TextBlock Text="表示名" FontSize="11" Opacity="0.75" Margin="0,0,0,3" />
+                        <TextBlock Text="{x:Static loc:Texts.DisplayName}" FontSize="11" Opacity="0.75" Margin="0,0,0,3" />
                         <TextBox x:Name="UserNameBox" Height="26" Padding="6,3" VerticalContentAlignment="Center" MaxLength="32" />
 
-                        <TextBlock Text="自己紹介" FontSize="11" Opacity="0.75" Margin="0,10,0,3" />
+                        <TextBlock Text="{x:Static loc:Texts.SelfIntroduction}" FontSize="11" Opacity="0.75" Margin="0,10,0,3" />
                         <TextBox x:Name="DescriptionBox" Height="72" Padding="6,4" TextWrapping="Wrap"
                                  AcceptsReturn="True" VerticalScrollBarVisibility="Auto" />
                         <TextBlock x:Name="DescriptionHint" FontSize="10" Opacity="0.6" Margin="0,3,0,0" TextWrapping="Wrap" />
 
-                        <TextBlock x:Name="ReadOnlyNote" Text="他の参加者のプロフィールは編集できません。"
+                        <TextBlock x:Name="ReadOnlyNote" Text="{x:Static loc:Texts.CannotEditOthersProfile}"
                                    FontSize="10" Opacity="0.65" Margin="0,8,0,0" TextWrapping="Wrap" />
                     </StackPanel>
                 </TabItem>
 
-                <TabItem x:Name="PermissionTab" Header="権限" Style="{StaticResource EqualWidthTabItemStyle}"
+                <TabItem x:Name="PermissionTab" Header="{x:Static loc:Texts.Permission}" Style="{StaticResource EqualWidthTabItemStyle}"
                          HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel x:Name="PermissionPanel" Margin="10,8,10,8">
-                            <TextBlock Text="権限プリセット" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
-                            <RadioButton x:Name="FullRadio" Content="フル編集 (全操作を許可)" GroupName="PresetGroup" Checked="OnPresetChecked" Cursor="Hand" Margin="0,2" />
-                            <RadioButton x:Name="StandardRadio" Content="標準編集 (シーン削除等の操作制限)" GroupName="PresetGroup" Checked="OnPresetChecked" Cursor="Hand" Margin="0,2" />
-                            <RadioButton x:Name="ReadOnlyRadio" Content="閲覧専用 (編集不可・閲覧のみ)" GroupName="PresetGroup" Checked="OnPresetChecked" Cursor="Hand" Margin="0,2" />
-                            <RadioButton x:Name="LiveMirrorRadio" Content="ライブミラーリング (ホスト画面・再生完全同期)" GroupName="PresetGroup" Checked="OnPresetChecked" Cursor="Hand" Margin="0,2" />
+                            <TextBlock Text="{x:Static loc:Texts.PermissionPreset}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
+                            <RadioButton x:Name="FullRadio" Content="{x:Static loc:Texts.FullEditDetail}" GroupName="PresetGroup" Checked="OnPresetChecked" Cursor="Hand" Margin="0,2" />
+                            <RadioButton x:Name="StandardRadio" Content="{x:Static loc:Texts.StandardEditDetail}" GroupName="PresetGroup" Checked="OnPresetChecked" Cursor="Hand" Margin="0,2" />
+                            <RadioButton x:Name="ReadOnlyRadio" Content="{x:Static loc:Texts.ReadOnlyDetail}" GroupName="PresetGroup" Checked="OnPresetChecked" Cursor="Hand" Margin="0,2" />
+                            <RadioButton x:Name="LiveMirrorRadio" Content="{x:Static loc:Texts.LiveMirrorDetail}" GroupName="PresetGroup" Checked="OnPresetChecked" Cursor="Hand" Margin="0,2" />
 
                             <Separator Margin="0,10" />
 
-                            <TextBlock Text="詳細ルールのカスタマイズ" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
-                            <CheckBox x:Name="AddItemsCheck" Content="アイテムの追加を許可" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="DeleteItemsCheck" Content="アイテムの削除を許可" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="DeleteOthersCheck" Content="他の人が追加したアイテムも削除を許可"
+                            <TextBlock Text="{x:Static loc:Texts.CustomizeRules}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
+                            <CheckBox x:Name="AddItemsCheck" Content="{x:Static loc:Texts.AllowAddItems}" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="DeleteItemsCheck" Content="{x:Static loc:Texts.AllowDeleteItems}" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="DeleteOthersCheck" Content="{x:Static loc:Texts.AllowDeleteOthersItems}"
                                       IsEnabled="{Binding IsChecked, ElementName=DeleteItemsCheck}"
                                       Cursor="Hand" Margin="18,2,0,3" FontSize="11" />
-                            <CheckBox x:Name="MoveItemsCheck" Content="アイテムの移動・長さの変更を許可" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="EditPropsCheck" Content="アイテムの編集を許可" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="AddScenesCheck" Content="シーン（タイムライン）の追加を許可" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="DeleteScenesCheck" Content="シーン（タイムライン）の削除を許可" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="ShareFilesCheck" Content="素材ファイルの送信を許可" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="ShareVideosCheck" Content="動画" IsEnabled="{Binding IsChecked, ElementName=ShareFilesCheck}" Cursor="Hand" Margin="18,2,0,2" FontSize="11" />
-                            <CheckBox x:Name="ShareImagesCheck" Content="画像" IsEnabled="{Binding IsChecked, ElementName=ShareFilesCheck}" Cursor="Hand" Margin="18,2,0,2" FontSize="11" />
-                            <CheckBox x:Name="ShareAudioCheck" Content="音声" IsEnabled="{Binding IsChecked, ElementName=ShareFilesCheck}" Cursor="Hand" Margin="18,2,0,3" FontSize="11" />
-                            <CheckBox x:Name="SyncSeekCheck" Content="ホストのシーク位置・画面に自動追従する" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="MoveItemsCheck" Content="{x:Static loc:Texts.AllowMoveItems}" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="EditPropsCheck" Content="{x:Static loc:Texts.AllowEditItems}" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="AddScenesCheck" Content="{x:Static loc:Texts.AllowAddScenes}" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="DeleteScenesCheck" Content="{x:Static loc:Texts.AllowDeleteScenes}" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="ShareFilesCheck" Content="{x:Static loc:Texts.AllowSendFiles}" Cursor="Hand" Margin="0,3" />
+                            <CheckBox x:Name="ShareVideosCheck" Content="{x:Static loc:Texts.Video}" IsEnabled="{Binding IsChecked, ElementName=ShareFilesCheck}" Cursor="Hand" Margin="18,2,0,2" FontSize="11" />
+                            <CheckBox x:Name="ShareImagesCheck" Content="{x:Static loc:Texts.Image}" IsEnabled="{Binding IsChecked, ElementName=ShareFilesCheck}" Cursor="Hand" Margin="18,2,0,2" FontSize="11" />
+                            <CheckBox x:Name="ShareAudioCheck" Content="{x:Static loc:Texts.Audio}" IsEnabled="{Binding IsChecked, ElementName=ShareFilesCheck}" Cursor="Hand" Margin="18,2,0,3" FontSize="11" />
+                            <CheckBox x:Name="SyncSeekCheck" Content="{x:Static loc:Texts.AutoFollowHost}" Cursor="Hand" Margin="0,3" />
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>
@@ -112,7 +113,7 @@
 
             <Button x:Name="KickButton" Click="OnKickClick" Cursor="Hand"
                     HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,2,0"
-                    Padding="6,3" Background="Transparent" BorderThickness="0" ToolTip="キック">
+                    Padding="6,3" Background="Transparent" BorderThickness="0" ToolTip="{x:Static loc:Texts.Kick}">
                 <Path Data="{DynamicResource {x:Static icons:GeometryKeys.AccountRemove}}" Fill="#FF5252"
                       Width="14" Height="14" Stretch="Uniform" />
             </Button>
@@ -124,13 +125,13 @@
                 <Path Data="{DynamicResource {x:Static icons:GeometryKeys.Refresh}}"
                       Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
                       Width="11" Height="11" Stretch="Uniform" Margin="0,0,5,0" />
-                <TextBlock Text="この人の状態で同期" VerticalAlignment="Center" />
+                <TextBlock Text="{x:Static loc:Texts.SyncFromThisUser}" VerticalAlignment="Center" />
             </StackPanel>
         </Button>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0">
-            <Button Content="適用" Click="OnApplyClick" Cursor="Hand" Width="90" Height="26" Margin="0" IsDefault="True" />
-            <Button Content="キャンセル" Click="OnCancelClick" Cursor="Hand" Width="90" Height="26" Margin="0" IsCancel="True" />
+            <Button Content="{x:Static loc:Texts.Apply}" Click="OnApplyClick" Cursor="Hand" Width="90" Height="26" Margin="0" IsDefault="True" />
+            <Button Content="{x:Static loc:Texts.Cancel}" Click="OnCancelClick" Cursor="Hand" Width="90" Height="26" Margin="0" IsCancel="True" />
         </StackPanel>
     </Grid>
 </Window>

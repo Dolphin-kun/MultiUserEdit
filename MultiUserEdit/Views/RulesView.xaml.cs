@@ -79,17 +79,17 @@ namespace MultiUserEdit.Views
             GlobalSyncSeekCheck.IsChecked = perm.CanSyncSeekPosition;
         }
 
-        private static string StateText(bool allowed) => allowed ? "許可" : "制限中";
+        private static string StateText(bool allowed) => allowed ? Texts.Allowed : Texts.Restricted;
 
         private void LoadGuestPermissionStatus(UserPermission perm)
         {
             GuestLevelText.Text = perm.Level switch
             {
-                PermissionLevel.Full => "フル編集",
-                PermissionLevel.Standard => "標準編集",
-                PermissionLevel.ReadOnly => "閲覧のみ",
-                PermissionLevel.LiveMirror => "ライブミラーリング",
-                _ => "不明"
+                PermissionLevel.Full => Texts.FullEdit,
+                PermissionLevel.Standard => Texts.StandardEdit,
+                PermissionLevel.ReadOnly => Texts.ReadOnly,
+                PermissionLevel.LiveMirror => Texts.LiveMirror,
+                _ => Texts.Unknown
             };
 
             GuestAddText.Text = StateText(perm.CanAddItems);
@@ -103,7 +103,7 @@ namespace MultiUserEdit.Views
             GuestShareVideosText.Text = StateText(perm.CanShareFiles && perm.CanShareVideos);
             GuestShareImagesText.Text = StateText(perm.CanShareFiles && perm.CanShareImages);
             GuestShareAudioText.Text = StateText(perm.CanShareFiles && perm.CanShareAudio);
-            GuestSyncSeekText.Text = perm.CanSyncSeekPosition ? "オン" : "オフ";
+            GuestSyncSeekText.Text = perm.CanSyncSeekPosition ? Texts.On : Texts.Off;
         }
 
         private PermissionLevel SelectedLevel()
@@ -143,7 +143,7 @@ namespace MultiUserEdit.Views
             };
 
             viewModel.UpdateGlobalPermission(newPerm);
-            MessageBox.Show("全参加者にルールを適用しました。", "ルールを適用しました", MessageBoxButton.OK);
+            MessageBox.Show(Texts.RulesAppliedMessage, Texts.RulesAppliedTitle, MessageBoxButton.OK);
         }
     }
 }

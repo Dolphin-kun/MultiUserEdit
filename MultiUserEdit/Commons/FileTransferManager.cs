@@ -252,7 +252,7 @@ namespace MultiUserEdit.Commons
             if (FileSendBlockedReason?.Invoke(filePath) is { } blockedReason)
             {
                 sendDecisions[filePath] = false;
-                ErrorNotifier.NotifyList("素材を送信できませんでした", blockedReason, ErrorNotifier.Quote(Path.GetFileName(filePath)));
+                ErrorNotifier.NotifyList(Texts.SendFailedTitle, blockedReason, ErrorNotifier.Quote(Path.GetFileName(filePath)));
                 return Task.FromResult(false);
             }
 
@@ -260,10 +260,10 @@ namespace MultiUserEdit.Commons
             {
                 sendDecisions[filePath] = false;
                 ErrorNotifier.NotifyList(
-                    "素材を送信できませんでした",
-                    "以下のファイルは、拡張子が共有設定で許可されていないため送信できません。",
+                    Texts.SendFailedTitle,
+                    Texts.SendExtensionBlocked,
                     ErrorNotifier.Quote(Path.GetFileName(filePath)),
-                    "設定 → ファイル → 共有可能なファイル形式 から許可してください。");
+                    Texts.AllowInSettingsNote);
                 return Task.FromResult(false);
             }
 
@@ -317,16 +317,16 @@ namespace MultiUserEdit.Commons
             if (fileNames.Count == 0) return false;
 
             const int MaxListed = 15;
-            var message = "以下のファイルを送信してもよろしいですか？\n\n"
+            var message = Texts.SendConfirm + "\n\n"
                 + string.Join("\n", fileNames.Take(MaxListed).Select(ErrorNotifier.Quote))
-                + (fileNames.Count > MaxListed ? $"\n（ほか {fileNames.Count - MaxListed} 件）" : string.Empty);
+                + (fileNames.Count > MaxListed ? "\n" + string.Format(Texts.MoreItems, fileNames.Count - MaxListed) : string.Empty);
 
             var confirmed = false;
             System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 confirmed = System.Windows.MessageBox.Show(
                     message,
-                    "ファイル送信の確認",
+                    Texts.SendConfirmTitle,
                     System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.Yes;
             });
 
@@ -500,10 +500,10 @@ namespace MultiUserEdit.Commons
         private static void NotifyBlocked(string fileName)
         {
             ErrorNotifier.NotifyList(
-                "素材を受け取れませんでした",
-                "以下のファイルは、拡張子が共有設定で許可されていないため受け取れません。",
+                Texts.ReceiveFailedTitle,
+                Texts.ReceiveExtensionBlocked,
                 ErrorNotifier.Quote(Path.GetFileName(fileName)),
-                "設定 → ファイル → 共有可能なファイル形式 から許可してください。");
+                Texts.AllowInSettingsNote);
         }
 
         internal async Task HandleFileRequestAsync(FileRequestEvent evt, SessionClient sessionClient, Guid executorId)
@@ -795,19 +795,15 @@ namespace MultiUserEdit.Commons
 
         private static bool AskReceive(string fileName, long fileSize, string ownerName)
         {
-            var sender = string.IsNullOrEmpty(ownerName) ? "ほかの参加者" : $"{ownerName} さん";
-            var message = $"{sender} から、サイズの大きい素材ファイルが届こうとしています。\n\n"
-                + $"ファイル名: {Path.GetFileName(fileName)}\n"
-                + $"サイズ: {FormatSize(fileSize)}\n\n"
-                + "受け取りますか？\n"
-                + "「いいえ」を選ぶと、このファイルは受信しません。";
+            var sender = string.IsNullOrEmpty(ownerName) ? Texts.OtherParticipant : string.Format(Texts.Honorific, ownerName);
+            var message = string.Format(Texts.LargeFileIncoming, sender, Path.GetFileName(fileName), FormatSize(fileSize));
 
             var accepted = false;
             System.Windows.Application.Current?.Dispatcher.Invoke(() =>
             {
                 accepted = System.Windows.MessageBox.Show(
                     message,
-                    "大きい素材ファイルの受け取り",
+                    Texts.LargeFileTitle,
                     System.Windows.MessageBoxButton.YesNo) == System.Windows.MessageBoxResult.Yes;
             });
 
@@ -885,8 +881,8 @@ namespace MultiUserEdit.Commons
             if (!HasRoomFor(evt.FileSize))
             {
                 ErrorNotifier.NotifyList(
-                    "空き容量が足りません",
-                    "空き容量が足りないため、以下のファイルを受信しませんでした。",
+                    Texts.DiskFullTitle,
+                    Texts.DiskFullLead,
                     ErrorNotifier.Quote(evt.FileName));
                 DeclineTransfer?.Invoke(evt.ExecutorId, evt.TransferId);
                 return;
@@ -1039,10 +1035,10 @@ namespace MultiUserEdit.Commons
                     try { File.Delete(transfer.TempPath); } catch { }
 
                     ErrorNotifier.NotifyList(
-                        "ファイルが正しく届きませんでした",
-                        "以下のファイルは、中身が送り主のものと一致しなかったため破棄しました。",
+                        Texts.CorruptedTitle,
+                        Texts.CorruptedLead,
                         ErrorNotifier.Quote(transfer.FileName),
-                        "「データを同期する」を実行すると、もう一度受信できます。");
+                        Texts.ResyncToReceiveNote);
                     return;
                 }
 

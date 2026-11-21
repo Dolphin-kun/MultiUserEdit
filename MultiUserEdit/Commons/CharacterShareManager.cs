@@ -208,11 +208,8 @@ namespace MultiUserEdit.Commons
         private static string? AskForCustomVoiceDirectory(string characterName)
         {
             var answer = MessageBox.Show(
-                $"キャラクター「{characterName}」はカスタムボイスを使用しています。\n"
-                + "音声ファイルは共有されないため、お使いの環境にある音声フォルダを指定してください。\n\n"
-                + "一度指定すると、次からは自動で設定されます。\n"
-                + "今すぐ指定しますか？（あとから YMM4 のキャラクター設定でも変更できます）",
-                "カスタムボイスのフォルダ",
+                string.Format(Texts.CustomVoiceAsk, characterName),
+                Texts.CustomVoiceTitle,
                 MessageBoxButton.YesNo);
 
             if (answer != MessageBoxResult.Yes) return null;
@@ -221,7 +218,7 @@ namespace MultiUserEdit.Commons
             {
                 var dialog = new OpenFolderDialog
                 {
-                    Title = $"「{characterName}」の音声フォルダを選択"
+                    Title = string.Format(Texts.SelectVoiceFolder, characterName)
                 };
 
                 return dialog.ShowDialog() == true ? dialog.FolderName : null;
@@ -283,11 +280,10 @@ namespace MultiUserEdit.Commons
             foreach (var name in missingFiles)
             {
                 ErrorNotifier.NotifyList(
-                    "立ち絵の素材を受け取れませんでした",
-                    $"キャラクター「{characterName}」の、以下の立ち絵素材が届かないまま時間切れになりました。",
+                    Texts.TachieNotReceivedTitle,
+                    string.Format(Texts.TachieNotReceivedLead, characterName),
                     ErrorNotifier.Quote(Path.GetFileName(TachieFileResolver.ToLocalSeparators(name))),
-                    "キャラクターは作成しましたが、立ち絵は表示されません。\n"
-                    + "通信環境を確認して、プロジェクトを開き直すと表示される場合があります。");
+                    Texts.TachieNotReceivedNote);
             }
         }
 
@@ -310,11 +306,11 @@ namespace MultiUserEdit.Commons
 
                 if (character == null)
                 {
-                    failure = "キャラクターの設定を読み取れませんでした。";
+                    failure = Texts.CharacterSettingsUnreadable;
                 }
                 else if (characters == null)
                 {
-                    failure = $"YMM4のキャラクター一覧を取得できませんでした。({CharacterSettingsAccessor.UnavailableReason})";
+                    failure = string.Format(Texts.CharacterListUnavailable, CharacterSettingsAccessor.UnavailableReason);
                 }
                 else
                 {
@@ -339,9 +335,8 @@ namespace MultiUserEdit.Commons
             }
 
             MessageBox.Show(
-                $"キャラクター「{evt.CharacterName}」を追加できませんでした。\n{failure}\n\n" +
-                "同名のキャラクターがある場合はそちらに紐づけて続行します。",
-                "キャラクターの読み込み",
+                string.Format(Texts.CharacterAddFailed, evt.CharacterName, failure),
+                Texts.CharacterImport,
                 MessageBoxButton.OK);
 
             Decide(evt.CharacterName, evt.CharacterName);

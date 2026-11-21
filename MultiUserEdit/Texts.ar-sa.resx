@@ -1,0 +1,445 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+<data name="CurrentCulture" xml:space="preserve"><value>ar-sa</value></data>
+<data name="PluginName" xml:space="preserve"><value>التحرير التعاوني</value></data>
+<data name="Host" xml:space="preserve"><value>المضيف</value></data>
+<data name="Guest" xml:space="preserve"><value>ضيف</value></data>
+<data name="Unknown" xml:space="preserve"><value>غير معروف</value></data>
+<data name="DefaultUserName" xml:space="preserve"><value>مستخدم</value></data>
+<data name="Collaborator" xml:space="preserve"><value>المتعاون</value></data>
+<data name="OtherParticipant" xml:space="preserve"><value>مشارك آخر</value></data>
+<data name="ThisUser" xml:space="preserve"><value>هذا المستخدم</value></data>
+<data name="Me" xml:space="preserve"><value>أنا</value></data>
+<data name="Honorific" xml:space="preserve"><value>{0}</value></data>
+<data name="ListSeparator" xml:space="preserve"><value>، </value></data>
+<data name="Send" xml:space="preserve"><value>إرسال</value></data>
+<data name="Receive" xml:space="preserve"><value>استقبال</value></data>
+<data name="Allowed" xml:space="preserve"><value>مسموح</value></data>
+<data name="Restricted" xml:space="preserve"><value>مقيّد</value></data>
+<data name="On" xml:space="preserve"><value>تشغيل</value></data>
+<data name="Off" xml:space="preserve"><value>إيقاف</value></data>
+<data name="OK" xml:space="preserve"><value>موافق</value></data>
+<data name="Apply" xml:space="preserve"><value>تطبيق</value></data>
+<data name="Cancel" xml:space="preserve"><value>إلغاء</value></data>
+<data name="Close" xml:space="preserve"><value>إغلاق</value></data>
+<data name="Add" xml:space="preserve"><value>إضافة</value></data>
+<data name="Delete" xml:space="preserve"><value>حذف</value></data>
+<data name="Edit" xml:space="preserve"><value>تحرير</value></data>
+<data name="Refresh" xml:space="preserve"><value>تحديث</value></data>
+<data name="StatusOnline" xml:space="preserve"><value>متصل</value></data>
+<data name="StatusAway" xml:space="preserve"><value>بعيد</value></data>
+<data name="StatusDisconnected" xml:space="preserve"><value>منقطع</value></data>
+<data name="StatusOffline" xml:space="preserve"><value>غير متصل</value></data>
+<data name="UserAway" xml:space="preserve"><value>{0} (بعيد)</value></data>
+<data name="UserOperating" xml:space="preserve"><value>{0} يحرّر</value></data>
+<data name="Back" xml:space="preserve"><value>رجوع</value></data>
+<data name="Settings" xml:space="preserve"><value>الإعدادات</value></data>
+<data name="Home" xml:space="preserve"><value>الرئيسية</value></data>
+<data name="Rules" xml:space="preserve"><value>القواعد</value></data>
+<data name="Files" xml:space="preserve"><value>الملفات</value></data>
+<data name="Profile" xml:space="preserve"><value>الملف الشخصي</value></data>
+<data name="Display" xml:space="preserve"><value>العرض</value></data>
+<data name="Integration" xml:space="preserve"><value>التكامل</value></data>
+<data name="About" xml:space="preserve"><value>حول</value></data>
+<data name="Connected" xml:space="preserve"><value>متصل</value></data>
+<data name="NotConnected" xml:space="preserve"><value>غير متصل</value></data>
+<data name="DivergenceHint" xml:space="preserve"><value>إذا كان الأمر يقلقك فقم بالمزامنة. عند المزامنة ستُفقد تغييراتك التي لم تصل بعد.</value></data>
+<data name="SyncData" xml:space="preserve"><value>مزامنة البيانات</value></data>
+<data name="SyncDataAction" xml:space="preserve"><value>مزامنة البيانات</value></data>
+<data name="NewVersionPublishedFormat" xml:space="preserve"><value>الإصدار {0} متاح</value></data>
+<data name="LatestOnlyPleaseUpdate" xml:space="preserve"><value>يعمل التحرير التعاوني فقط بين أحدث إصدارات الإضافة. يُرجى التحديث.</value></data>
+<data name="OpenUpdatePage" xml:space="preserve"><value>فتح صفحة التحديث</value></data>
+<data name="Room" xml:space="preserve"><value>الغرفة</value></data>
+<data name="SmallRoomLabel" xml:space="preserve"><value>غرفة صغيرة (حتى {0})</value></data>
+<data name="LargeRoomLabel" xml:space="preserve"><value>غرفة كبيرة (حتى {0})</value></data>
+<data name="SmallRoomTip" xml:space="preserve"><value>لعدد قليل من الأشخاص. يتصل فورًا.</value></data>
+<data name="LargeRoomTip" xml:space="preserve"><value>لعدد كبير من الأشخاص. يستخدم خادم ترحيل مخصصًا. إذا استمر عدد قليل من الأشخاص لفترة، تنتقل تلقائيًا إلى غرفة صغيرة.</value></data>
+<data name="CreateRoom" xml:space="preserve"><value>إنشاء غرفة</value></data>
+<data name="JoinExistingRoom" xml:space="preserve"><value>الانضمام إلى غرفة موجودة</value></data>
+<data name="JoinFromClipboard" xml:space="preserve"><value>الانضمام عبر الرابط في الحافظة</value></data>
+<data name="Join" xml:space="preserve"><value>انضمام</value></data>
+<data name="SyncDataTip" xml:space="preserve"><value>يعيد مطابقة مخططك الزمني مع المضيف</value></data>
+<data name="Disconnect" xml:space="preserve"><value>قطع الاتصال</value></data>
+<data name="CopyId" xml:space="preserve"><value>نسخ المعرّف</value></data>
+<data name="CopyInviteLink" xml:space="preserve"><value>نسخ رابط الدعوة</value></data>
+<data name="ParticipantList" xml:space="preserve"><value>المشاركون</value></data>
+<data name="ParticipantCount" xml:space="preserve"><value>({0})</value></data>
+<data name="UserColor" xml:space="preserve"><value>لون المستخدم</value></data>
+<data name="OpenUserInfo" xml:space="preserve"><value>فتح معلومات المستخدم</value></data>
+<data name="CharacterImport" xml:space="preserve"><value>استيراد الشخصية</value></data>
+<data name="NewCharacterAdded" xml:space="preserve"><value>تمت إضافة شخصية جديدة</value></data>
+<data name="LinkToExisting" xml:space="preserve"><value>ربطها بشخصية موجودة</value></data>
+<data name="ImportAsNew" xml:space="preserve"><value>استيرادها كشخصية جديدة</value></data>
+<data name="ImportAsNewHint" xml:space="preserve"><value>يضيف نسخة مطابقة من إعدادات المُرسِل. تُستخدم المواد المشتركة.</value></data>
+<data name="FromOwner" xml:space="preserve"><value>(من {0})</value></data>
+<data name="CannotCreateCharacter" xml:space="preserve"><value>تعذّر الحصول على إعدادات الشخصية من المُرسِل، لذا لا يمكن إنشاء شخصية جديدة.</value></data>
+<data name="CharacterName" xml:space="preserve"><value>اسم الشخصية</value></data>
+<data name="SameNameExists" xml:space="preserve"><value>توجد شخصية بالاسم نفسه بالفعل.</value></data>
+<data name="FileTransfers" xml:space="preserve"><value>إدارة الملفات المرسلة والمستلمة</value></data>
+<data name="ToggleTransferList" xml:space="preserve"><value>إظهار أو إخفاء الملفات قيد النقل</value></data>
+<data name="CancelReceive" xml:space="preserve"><value>إيقاف الاستلام</value></data>
+<data name="OpenSaveFolder" xml:space="preserve"><value>فتح مجلد الحفظ</value></data>
+<data name="ClearAll" xml:space="preserve"><value>مسح الكل</value></data>
+<data name="ColumnType" xml:space="preserve"><value>النوع</value></data>
+<data name="ColumnSender" xml:space="preserve"><value>المُرسِل</value></data>
+<data name="ColumnFileName" xml:space="preserve"><value>اسم الملف</value></data>
+<data name="ColumnSize" xml:space="preserve"><value>الحجم</value></data>
+<data name="ColumnAction" xml:space="preserve"><value>إجراء</value></data>
+<data name="DeleteFile" xml:space="preserve"><value>حذف الملف</value></data>
+<data name="OperationRules" xml:space="preserve"><value>قواعد التحرير</value></data>
+<data name="OperationRulesDescription" xml:space="preserve"><value>حدّد ما يُسمح للمشاركين بفعله. لتغييره لشخص واحد، استخدم قائمة المشاركين في الصفحة الرئيسية.</value></data>
+<data name="Preset" xml:space="preserve"><value>إعداد مسبق</value></data>
+<data name="FullEdit" xml:space="preserve"><value>تحرير كامل</value></data>
+<data name="StandardEdit" xml:space="preserve"><value>تحرير قياسي</value></data>
+<data name="ReadOnly" xml:space="preserve"><value>عرض فقط</value></data>
+<data name="LiveMirror" xml:space="preserve"><value>النسخ المباشر</value></data>
+<data name="StandardEditLimitScenes" xml:space="preserve"><value>تحرير قياسي (عمليات المشاهد مقيّدة)</value></data>
+<data name="LiveMirrorFollowHost" xml:space="preserve"><value>النسخ المباشر (عرض فقط مع متابعة المضيف)</value></data>
+<data name="Item" xml:space="preserve"><value>العناصر</value></data>
+<data name="DeleteOthersItems" xml:space="preserve"><value>يمكنه أيضًا حذف العناصر التي أضافها الآخرون</value></data>
+<data name="MoveAndResize" xml:space="preserve"><value>النقل وتغيير المدة</value></data>
+<data name="SceneTimeline" xml:space="preserve"><value>المشاهد (المخططات الزمنية)</value></data>
+<data name="Other" xml:space="preserve"><value>أخرى</value></data>
+<data name="SendMaterialFiles" xml:space="preserve"><value>إرسال ملفات المواد</value></data>
+<data name="FollowHostPlayback" xml:space="preserve"><value>متابعة موضع التشغيل لدى المضيف</value></data>
+<data name="FollowHostPlaybackShort" xml:space="preserve"><value>متابعة تشغيل المضيف</value></data>
+<data name="ApplyToAll" xml:space="preserve"><value>تطبيق على جميع المشاركين</value></data>
+<data name="YourRules" xml:space="preserve"><value>قواعد التحرير الخاصة بك</value></data>
+<data name="YourRulesDescription" xml:space="preserve"><value>ما يسمح لك المضيف بفعله.</value></data>
+<data name="PermissionLevel" xml:space="preserve"><value>مستوى الصلاحية</value></data>
+<data name="OthersAddedItems" xml:space="preserve"><value>العناصر التي أضافها الآخرون</value></data>
+<data name="RulesAppliedMessage" xml:space="preserve"><value>تم تطبيق القواعد على جميع المشاركين.</value></data>
+<data name="RulesAppliedTitle" xml:space="preserve"><value>تم تطبيق القواعد</value></data>
+<data name="UserInfo" xml:space="preserve"><value>معلومات المستخدم</value></data>
+<data name="UserInfoTitle" xml:space="preserve"><value>معلومات {0}</value></data>
+<data name="EditTime" xml:space="preserve"><value>وقت التحرير:</value></data>
+<data name="TotalTime" xml:space="preserve"><value>إجمالي وقت المشاركة:</value></data>
+<data name="DisplayName" xml:space="preserve"><value>الاسم المعروض</value></data>
+<data name="SelfIntroduction" xml:space="preserve"><value>نبذة عني</value></data>
+<data name="CannotEditOthersProfile" xml:space="preserve"><value>لا يمكنك تعديل الملفات الشخصية للمشاركين الآخرين.</value></data>
+<data name="Permission" xml:space="preserve"><value>الصلاحيات</value></data>
+<data name="PermissionPreset" xml:space="preserve"><value>إعداد الصلاحيات المسبق</value></data>
+<data name="FullEditDetail" xml:space="preserve"><value>تحرير كامل (كل العمليات مسموحة)</value></data>
+<data name="StandardEditDetail" xml:space="preserve"><value>تحرير قياسي (حذف المشاهد وما شابه مقيّد)</value></data>
+<data name="ReadOnlyDetail" xml:space="preserve"><value>عرض فقط (بدون تحرير)</value></data>
+<data name="LiveMirrorDetail" xml:space="preserve"><value>النسخ المباشر (مزامنة كاملة مع عرض المضيف وتشغيله)</value></data>
+<data name="CustomizeRules" xml:space="preserve"><value>تخصيص القواعد</value></data>
+<data name="AllowAddItems" xml:space="preserve"><value>السماح بإضافة العناصر</value></data>
+<data name="AllowDeleteItems" xml:space="preserve"><value>السماح بحذف العناصر</value></data>
+<data name="AllowDeleteOthersItems" xml:space="preserve"><value>السماح أيضًا بحذف العناصر التي أضافها الآخرون</value></data>
+<data name="AllowMoveItems" xml:space="preserve"><value>السماح بنقل العناصر وتغيير مدتها</value></data>
+<data name="AllowEditItems" xml:space="preserve"><value>السماح بتحرير العناصر</value></data>
+<data name="AllowAddScenes" xml:space="preserve"><value>السماح بإضافة المشاهد (المخططات الزمنية)</value></data>
+<data name="AllowDeleteScenes" xml:space="preserve"><value>السماح بحذف المشاهد (المخططات الزمنية)</value></data>
+<data name="AllowSendFiles" xml:space="preserve"><value>السماح بإرسال ملفات المواد</value></data>
+<data name="AutoFollowHost" xml:space="preserve"><value>متابعة موضع المضيف وعرضه تلقائيًا</value></data>
+<data name="Kick" xml:space="preserve"><value>طرد</value></data>
+<data name="SyncFromThisUser" xml:space="preserve"><value>المزامنة مع حالة هذا الشخص</value></data>
+<data name="KickConfirmProfile" xml:space="preserve"><value>هل تريد إخراج «{0}» من الغرفة؟</value></data>
+<data name="KickUserTitle" xml:space="preserve"><value>طرد المستخدم</value></data>
+<data name="Version" xml:space="preserve"><value>الإصدار</value></data>
+<data name="CurrentVersion" xml:space="preserve"><value>الإصدار الحالي:</value></data>
+<data name="LatestVersion" xml:space="preserve"><value>أحدث إصدار:</value></data>
+<data name="NewVersionAvailable" xml:space="preserve"><value>يتوفر إصدار جديد.</value></data>
+<data name="OpenDownloadPage" xml:space="preserve"><value>فتح صفحة التنزيل</value></data>
+<data name="CopyrightTitle" xml:space="preserve"><value>حقوق النشر وشروط الاستخدام</value></data>
+<data name="CopyrightNotice" xml:space="preserve"><value>يتحمّل المُرسِل مسؤولية حقوق النشر وشروط استخدام المواد (الصور والفيديو والصوت وغيرها) التي تُنقل أو تُشارك. احرص عند إرسال المواد المدفوعة أو غيرها مما يُمنع إعادة توزيعه.</value></data>
+<data name="Timeline" xml:space="preserve"><value>المخطط الزمني</value></data>
+<data name="ShowOperatorName" xml:space="preserve"><value>إظهار الأسماء على العناصر قيد التحرير</value></data>
+<data name="ShowOperatorNameHint" xml:space="preserve"><value>عند الإيقاف، تُعرض العناصر التي يحررها مشاركون آخرون بلون الإطار فقط.</value></data>
+<data name="FileSharingCache" xml:space="preserve"><value>مشاركة الملفات وذاكرة التخزين المؤقت</value></data>
+<data name="ReceivedFileStorage" xml:space="preserve"><value>طريقة حفظ الملفات المستلمة</value></data>
+<data name="TemporaryStorage" xml:space="preserve"><value>حفظ مؤقت أثناء الجلسة (يُحذف عند الخروج)</value></data>
+<data name="TemporaryStorageTip" xml:space="preserve"><value>يحذف جميع المواد المخزنة مؤقتًا عند إغلاق YMM4</value></data>
+<data name="KeepStorage" xml:space="preserve"><value>الاحتفاظ على القرص (إعادة استخدام ذاكرة التخزين المؤقت لاحقًا)</value></data>
+<data name="KeepStorageTip" xml:space="preserve"><value>يحفظ في مجلد مؤقت ويحمّل منه في المرات القادمة</value></data>
+<data name="ConfirmLargeReceive" xml:space="preserve"><value>السؤال قبل استلام ملفات المواد الكبيرة</value></data>
+<data name="ConfirmLargeReceiveTip" xml:space="preserve"><value>عند إرسال ملف كبير إليك، يسأل أولًا عما إذا كنت تريد استلامه</value></data>
+<data name="ConfirmSize" xml:space="preserve"><value>السؤال ابتداءً من</value></data>
+<data name="MBOrMore" xml:space="preserve"><value>ميغابايت أو أكثر</value></data>
+<data name="SendLimits" xml:space="preserve"><value>الإرسال</value></data>
+<data name="ConfirmBeforeSend" xml:space="preserve"><value>السؤال قبل إرسال ملفات المواد</value></data>
+<data name="ConfirmBeforeSendTip" xml:space="preserve"><value>يعرض تأكيدًا قبل إرسال ملفات الفيديو والصور والصوت وغيرها تلقائيًا إلى المستخدمين الآخرين</value></data>
+<data name="ShareableExtensions" xml:space="preserve"><value>الامتدادات القابلة للمشاركة</value></data>
+<data name="SelectAll" xml:space="preserve"><value>تحديد الكل</value></data>
+<data name="DeselectAll" xml:space="preserve"><value>إلغاء تحديد الكل</value></data>
+<data name="ResetToDefault" xml:space="preserve"><value>إعادة التعيين إلى الافتراضي</value></data>
+<data name="RemoveFormat" xml:space="preserve"><value>إزالة هذه الصيغة من القائمة</value></data>
+<data name="AddFormatHint" xml:space="preserve"><value>* يمكن إضافة الصيغ غير الموجودة في القائمة (مثل .m2v) من هنا. تُحظر الامتدادات غير المسموح بها (مثل .exe و.bat) تلقائيًا ولا تُنقل.</value></data>
+<data name="WebDeepLink" xml:space="preserve"><value>رابط الويب العميق</value></data>
+<data name="WebDeepLinkDescription" xml:space="preserve"><value>إعداد بروتوكول يتيح فتح YMM4 بنقرة واحدة من المتصفح والانضمام تلقائيًا. (يُسجَّل تلقائيًا عند بدء التشغيل)</value></data>
+<data name="CurrentStatus" xml:space="preserve"><value>الحالة الحالية:</value></data>
+<data name="Registered" xml:space="preserve"><value>مسجّل (مفعّل)</value></data>
+<data name="NotRegistered" xml:space="preserve"><value>غير مسجّل</value></data>
+<data name="Reregister" xml:space="preserve"><value>إعادة التسجيل</value></data>
+<data name="Unregister" xml:space="preserve"><value>إلغاء التسجيل</value></data>
+<data name="DescriptionHint" xml:space="preserve"><value>حتى 140 حرفًا و3 أسطر (تُدمج الأسطر الزائدة تلقائيًا)</value></data>
+<data name="Image" xml:space="preserve"><value>الصور</value></data>
+<data name="Video" xml:space="preserve"><value>الفيديو</value></data>
+<data name="Audio" xml:space="preserve"><value>الصوت</value></data>
+<data name="Ymm4AndOther" xml:space="preserve"><value>YMM4 وغيرها</value></data>
+<data name="AddedFormats" xml:space="preserve"><value>الصيغ المضافة</value></data>
+<data name="ReceivedDone" xml:space="preserve"><value>تم الاستلام</value></data>
+<data name="SentDone" xml:space="preserve"><value>تم الإرسال</value></data>
+<data name="SendSkipped" xml:space="preserve"><value>لم يُرسل لأن المستلم يملكه بالفعل</value></data>
+<data name="PerSecond" xml:space="preserve"><value>{0}/ث</value></data>
+<data name="RemainingSeconds" xml:space="preserve"><value>متبقٍ {0:F0} ث</value></data>
+<data name="RemainingMinutes" xml:space="preserve"><value>متبقٍ {0:F0} د</value></data>
+<data name="RemainingHours" xml:space="preserve"><value>متبقٍ {0:F1} س</value></data>
+<data name="FromUser" xml:space="preserve"><value>من {0}</value></data>
+<data name="TransferBoth" xml:space="preserve"><value>إرسال {0} / استقبال {1}: {2}</value></data>
+<data name="SendingOne" xml:space="preserve"><value>جارٍ إرسال {0}</value></data>
+<data name="SendingMany" xml:space="preserve"><value>جارٍ إرسال {0} و{1} أخرى</value></data>
+<data name="DownloadingOne" xml:space="preserve"><value>جارٍ تنزيل {0}</value></data>
+<data name="DownloadingMany" xml:space="preserve"><value>جارٍ تنزيل {0} و{1} أخرى</value></data>
+<data name="FilesBoth" xml:space="preserve"><value>جارٍ النقل (إرسال {0} / استقبال {1})</value></data>
+<data name="FilesSending" xml:space="preserve"><value>جارٍ الإرسال ({0})</value></data>
+<data name="FilesReceiving" xml:space="preserve"><value>جارٍ الاستقبال ({0})</value></data>
+<data name="FilesIdle" xml:space="preserve"><value>لا توجد عمليات نقل</value></data>
+<data name="MoreItems" xml:space="preserve"><value>(و{0} أخرى)</value></data>
+<data name="CancelReceiveConfirm" xml:space="preserve"><value>سيتم إيقاف استلام «{0}».
+هل أنت متأكد؟</value></data>
+<data name="CancelReceiveTitle" xml:space="preserve"><value>إيقاف الاستلام</value></data>
+<data name="ClearAllConfirm" xml:space="preserve"><value>سيتم حذف جميع ملفات المواد المستلمة.
+هل أنت متأكد؟</value></data>
+<data name="ClearAllTitle" xml:space="preserve"><value>تأكيد مسح الكل</value></data>
+<data name="CannotChangeItemTitle" xml:space="preserve"><value>لا يمكن تغيير العنصر</value></data>
+<data name="CannotChangeItemMessage" xml:space="preserve"><value>لا تسمح إعدادات المضيف بنقل العناصر أو تحريرها في هذه الغرفة.
+سيُعاد التغيير إلى حالة المضيف.</value></data>
+<data name="SyncAllConfirm" xml:space="preserve"><value>سيتم استبدال المخطط الزمني لجميع المشاركين بمخططك.
+هل تريد المتابعة؟</value></data>
+<data name="DeepLinkRegistered" xml:space="preserve"><value>تم تسجيل رابط الويب العميق (ymm4-multi-user-edit://) في Windows.</value></data>
+<data name="RegisterDone" xml:space="preserve"><value>اكتمل التسجيل</value></data>
+<data name="DeepLinkUnregistered" xml:space="preserve"><value>تم إلغاء تسجيل رابط الويب العميق (ymm4-multi-user-edit://).</value></data>
+<data name="UnregisterDone" xml:space="preserve"><value>تم إلغاء التسجيل</value></data>
+<data name="KickConfirm" xml:space="preserve"><value>هل تريد طرد {0} من الغرفة؟</value></data>
+<data name="KickConfirmTitle" xml:space="preserve"><value>تأكيد الطرد</value></data>
+<data name="SceneUnavailableTitle" xml:space="preserve"><value>تعذّر تجهيز مشهد</value></data>
+<data name="SceneUnavailableLead" xml:space="preserve"><value>تعذّر تجهيز المشهد التالي على هذا الجهاز.</value></data>
+<data name="SceneUnavailableNote" xml:space="preserve"><value>لن يُعرض محتواه.</value></data>
+<data name="SyncFromConfirm" xml:space="preserve"><value>سيتم حذف جميع العناصر في مخططك الزمني الحالي ومزامنته مع حالة {0}.
+هل تريد المتابعة؟</value></data>
+<data name="PeerSyncedData" xml:space="preserve"><value>قام {0} بمزامنة البيانات.</value></data>
+<data name="InitialSyncConfirm" xml:space="preserve"><value>للانضمام إلى الغرفة، سيتم حذف جميع العناصر في مخططك الزمني الحالي ومزامنته مع حالة المضيف.
+هل تريد الحذف وبدء المزامنة؟</value></data>
+<data name="InitialSyncTitle" xml:space="preserve"><value>تأكيد المزامنة الأولية</value></data>
+<data name="SceneDefaultName" xml:space="preserve"><value>المشهد {0}</value></data>
+<data name="MediaNotReceivedTitle" xml:space="preserve"><value>تعذّر استلام ملفات الفيديو أو الصوت</value></data>
+<data name="MediaNotReceivedLead" xml:space="preserve"><value>لم يصل الملف التالي الذي يستخدمه عنصر {0}، لذا تعذّرت إضافة العنصر.</value></data>
+<data name="ResyncToReceiveNote" xml:space="preserve"><value>شغّل «مزامنة البيانات» لاستلامه مرة أخرى.</value></data>
+<data name="NewVersionLatestOnly" xml:space="preserve"><value>يتوفر إصدار جديد ({0}).
+يعمل التحرير التعاوني فقط بين أحدث إصدارات الإضافة.</value></data>
+<data name="NewVersionNextTime" xml:space="preserve"><value>يتوفر إصدار جديد ({0}).
+يعمل التحرير التعاوني فقط بين أحدث الإصدارات، لذا لن تتمكن من الاتصال في المرة القادمة حتى تقوم بالتحديث.</value></data>
+<data name="OpenUpdatePageQuestion" xml:space="preserve"><value>{0}
+
+هل تريد فتح صفحة التحديث؟</value></data>
+<data name="UpdateRequiredTitle" xml:space="preserve"><value>يلزم تحديث الإضافة</value></data>
+<data name="RelayConnectFailed" xml:space="preserve"><value>تعذّر الاتصال بخادم الترحيل الخاص بالغرف الكبيرة.
+
+السبب: {0}
+
+تستخدم الغرف الصغيرة خادمًا مختلفًا، لذا إذا فشل هذا وحده فالسبب غالبًا شبكتك أو برنامج الحماية.
+يُرجى إبلاغ المضيف بما تعرضه هذه النافذة.</value></data>
+<data name="RelayConnectFailedCreate" xml:space="preserve"><value>تعذّر الاتصال بخادم الترحيل الخاص بالغرف الكبيرة.
+
+السبب: {0}
+
+هل تريد إنشاء الغرفة على أي حال؟ (قد لا يتمكن المشاركون من الاتصال أيضًا)</value></data>
+<data name="RelayUnavailableTitle" xml:space="preserve"><value>يتعذّر الوصول إلى خادم الترحيل</value></data>
+<data name="ConnectionError" xml:space="preserve"><value>خطأ في الاتصال</value></data>
+<data name="HostIsNewer" xml:space="preserve"><value>تم قطع الاتصال لأن إصدارك ({1}) أقدم من إضافة المضيف ({0}).</value></data>
+<data name="HostIsOlder" xml:space="preserve"><value>تم قطع الاتصال لأن إضافة المضيف ({0}) قديمة.
+اطلب من المضيف تحديث الإضافة.</value></data>
+<data name="ConnectionLostTitle" xml:space="preserve"><value>انقطع الاتصال</value></data>
+<data name="ConnectionLostMessage" xml:space="preserve"><value>انقطع الاتصال بخادم التعاون وتعذّرت استعادته.
+تحقق من شبكتك وانضم إلى الغرفة مرة أخرى.</value></data>
+<data name="DivergenceWarning" xml:space="preserve"><value>ربما اختلف محتواك عن محتوى {0} (المضيف) أثناء انقطاع الاتصال.</value></data>
+<data name="OutdatedPlugin" xml:space="preserve"><value>إضافتك ({0}) قديمة ولا يمكنها الاتصال بخادم التعاون.
+أحدث إصدار هو {1}.</value></data>
+<data name="RoomFull" xml:space="preserve"><value>وصلت هذه الغرفة إلى الحد الأقصى للمشاركين.</value></data>
+<data name="RoomFullAskLarge" xml:space="preserve"><value>وصلت هذه الغرفة إلى الحد الأقصى للمشاركين.
+اطلب من المضيف إنشاء غرفة كبيرة.</value></data>
+<data name="RoomFullTitle" xml:space="preserve"><value>الغرفة ممتلئة</value></data>
+<data name="RoomExpired" xml:space="preserve"><value>أُغلقت هذه الغرفة تلقائيًا لعدم وجود نشاط لفترة.
+اطلب من المضيف إنشاء غرفة جديدة.</value></data>
+<data name="RoomHostKeyRejected" xml:space="preserve"><value>لا يمكنك الاتصال بهذه الغرفة بصفتك المضيف.
+يُرجى إنشاء غرفة جديدة.</value></data>
+<data name="RoomNotFound" xml:space="preserve"><value>الغرفة غير موجودة. تحقق من معرّف الغرفة.</value></data>
+<data name="KickedMessage" xml:space="preserve"><value>طردك المضيف من الغرفة وتم قطع الاتصال.</value></data>
+<data name="KickedTitle" xml:space="preserve"><value>إشعار الطرد</value></data>
+<data name="HostNoResponse" xml:space="preserve"><value>مرّت نحو {1:0} دقيقة منذ انقطاع الاتصال بـ {0} ولا توجد استجابة.
+ربما توقف YMM4 عن العمل أو انقطع الاتصال.
+
+لا تزال الغرفة مفتوحة، لذا يمكنك انتظار عودته.
+هل تريد مواصلة الانتظار؟ (اختر لا لقطع الاتصال)</value></data>
+<data name="HostNoResponseTitle" xml:space="preserve"><value>لا توجد استجابة من المضيف</value></data>
+<data name="HostDidNotReturn" xml:space="preserve"><value>لم يعد الاتصال بالمضيف، لذا سيتم قطع الاتصال.</value></data>
+<data name="HostClosedRoom" xml:space="preserve"><value>أغلق المضيف الغرفة وتم قطع الاتصال.</value></data>
+<data name="KeepTimelineQuestion" xml:space="preserve"><value>{0}
+
+هل تريد الاحتفاظ بالمخطط الزمني الذي أنشأتموه معًا في هذا المشروع؟
+نعم: الاحتفاظ به ومواصلة التحرير.
+لا: حذف كل العناصر التي أُضيفت أثناء التحرير التعاوني.</value></data>
+<data name="RoomEndedTitle" xml:space="preserve"><value>انتهت الغرفة</value></data>
+<data name="SendBlockedAll" xml:space="preserve"><value>لا تسمح إعدادات المضيف بإرسال ملفات المواد في هذه الغرفة.</value></data>
+<data name="SendBlockedVideo" xml:space="preserve"><value>لا تسمح إعدادات المضيف بإرسال ملفات الفيديو في هذه الغرفة.</value></data>
+<data name="SendBlockedImage" xml:space="preserve"><value>لا تسمح إعدادات المضيف بإرسال ملفات الصور في هذه الغرفة.</value></data>
+<data name="SendBlockedAudio" xml:space="preserve"><value>لا تسمح إعدادات المضيف بإرسال ملفات الصوت في هذه الغرفة.</value></data>
+<data name="CannotDeleteItemTitle" xml:space="preserve"><value>لا يمكن حذف العنصر</value></data>
+<data name="DeleteOwnOnly" xml:space="preserve"><value>لا تسمح لك إعدادات المضيف إلا بحذف العناصر التي أضفتها.
+تمت استعادة العناصر المحذوفة.</value></data>
+<data name="DeleteNotAllowed" xml:space="preserve"><value>لا تسمح إعدادات المضيف بحذف العناصر في هذه الغرفة.
+تمت استعادة العناصر المحذوفة.</value></data>
+<data name="CannotAddItemTitle" xml:space="preserve"><value>لا يمكن إضافة العنصر</value></data>
+<data name="AddNotAllowed" xml:space="preserve"><value>لا تسمح إعدادات المضيف بإضافة العناصر في هذه الغرفة.
+تمت إزالة العناصر المضافة.</value></data>
+<data name="CustomVoiceAsk" xml:space="preserve"><value>تستخدم الشخصية «{0}» صوتًا مخصصًا.
+لا تتم مشاركة ملفات الصوت، لذا اختر مجلد الصوت الموجود على جهازك.
+
+بعد اختياره مرة واحدة سيُضبط تلقائيًا في المرات القادمة.
+هل تريد اختياره الآن؟ (يمكنك أيضًا تغييره لاحقًا من إعدادات الشخصيات في YMM4)</value></data>
+<data name="CustomVoiceTitle" xml:space="preserve"><value>مجلد الصوت المخصص</value></data>
+<data name="SelectVoiceFolder" xml:space="preserve"><value>اختر مجلد الصوت لـ «{0}»</value></data>
+<data name="TachieNotReceivedTitle" xml:space="preserve"><value>تعذّر استلام مواد صورة الشخصية</value></data>
+<data name="TachieNotReceivedLead" xml:space="preserve"><value>لم تصل مادة الصورة التالية للشخصية «{0}» في الوقت المحدد.</value></data>
+<data name="TachieNotReceivedNote" xml:space="preserve"><value>تم إنشاء الشخصية، لكن صورتها لن تُعرض.
+تحقق من شبكتك؛ قد تظهر عند إعادة فتح المشروع.</value></data>
+<data name="CharacterSettingsUnreadable" xml:space="preserve"><value>تعذّرت قراءة إعدادات الشخصية.</value></data>
+<data name="CharacterListUnavailable" xml:space="preserve"><value>تعذّر الحصول على قائمة شخصيات YMM4. ({0})</value></data>
+<data name="CharacterAddFailed" xml:space="preserve"><value>تعذّرت إضافة الشخصية «{0}».
+{1}
+
+إذا وُجدت شخصية بالاسم نفسه فسيتم ربطها بها والمتابعة.</value></data>
+<data name="CharacterListUnreadable" xml:space="preserve"><value>تعذّرت قراءة قائمة الشخصيات.</value></data>
+<data name="CharacterSettingsTypeMissing" xml:space="preserve"><value>لم يُعثر على النوع CharacterSettings.</value></data>
+<data name="CharacterSettingsInstanceMissing" xml:space="preserve"><value>تعذّر الحصول على مثيل CharacterSettings.</value></data>
+<data name="CharacterSettingsListMissing" xml:space="preserve"><value>لم يُعثر على CharacterSettings.Characters.</value></data>
+<data name="MediaNotReceivedAddedLead" xml:space="preserve"><value>لم يصل الملف التالي الذي يستخدمه عنصر أضافه {0}، لذا تعذّرت إضافة العنصر.</value></data>
+<data name="ResendFromSenderNote" xml:space="preserve"><value>سيُرسل مرة أخرى عندما يشغّل المُرسِل «مزامنة البيانات».</value></data>
+<data name="ItemNeedsPluginNote" xml:space="preserve"><value>تعذّرت إضافة العنصر. ثبّت الإضافة لعرضه.</value></data>
+<data name="ItemAddFailedTitle" xml:space="preserve"><value>تعذّرت إضافة العنصر</value></data>
+<data name="ItemAddFailedDetail" xml:space="preserve"><value>النوع: {0}
+{1}</value></data>
+<data name="NoRoomOnLayer" xml:space="preserve"><value>لا توجد مساحة فارغة قرب الطبقة {0}، لذا تعذّر وضع عنصر أضافه متعاون.</value></data>
+<data name="SendFailedTitle" xml:space="preserve"><value>تعذّر إرسال مادة</value></data>
+<data name="SendExtensionBlocked" xml:space="preserve"><value>لا يمكن إرسال الملف التالي لأن امتداده غير مسموح به في إعدادات المشاركة.</value></data>
+<data name="AllowInSettingsNote" xml:space="preserve"><value>اسمح به من الإعدادات ← الملفات ← الامتدادات القابلة للمشاركة.</value></data>
+<data name="SendConfirm" xml:space="preserve"><value>هل تريد إرسال الملفات التالية؟</value></data>
+<data name="SendConfirmTitle" xml:space="preserve"><value>تأكيد إرسال الملفات</value></data>
+<data name="ReceiveFailedTitle" xml:space="preserve"><value>تعذّر استلام مادة</value></data>
+<data name="ReceiveExtensionBlocked" xml:space="preserve"><value>لا يمكن استلام الملف التالي لأن امتداده غير مسموح به في إعدادات المشاركة.</value></data>
+<data name="LargeFileIncoming" xml:space="preserve"><value>يرسل إليك {0} ملف مواد كبيرًا.
+
+اسم الملف: {1}
+الحجم: {2}
+
+هل تريد استلامه؟
+إذا اخترت لا فلن يُستلم هذا الملف.</value></data>
+<data name="LargeFileTitle" xml:space="preserve"><value>استلام ملف مواد كبير</value></data>
+<data name="DiskFullTitle" xml:space="preserve"><value>لا توجد مساحة فارغة كافية</value></data>
+<data name="DiskFullLead" xml:space="preserve"><value>لم يُستلم الملف التالي لعدم وجود مساحة فارغة كافية.</value></data>
+<data name="CorruptedTitle" xml:space="preserve"><value>لم يصل ملف بشكل صحيح</value></data>
+<data name="CorruptedLead" xml:space="preserve"><value>تم تجاهل الملف التالي لأن محتواه لم يطابق ما لدى المُرسِل.</value></data>
+<data name="NetHttpStatus" xml:space="preserve"><value>أعاد الخادم HTTP {0}.</value></data>
+<data name="NetTls" xml:space="preserve"><value>تعذّر التحقق من الاتصال المشفّر. قد يكون السبب فحص حركة المرور من برنامج الحماية أو وكيل.</value></data>
+<data name="NetWebSocket" xml:space="preserve"><value>تعذّر إنشاء الاتصال ({0}).</value></data>
+<data name="NetTimeout" xml:space="preserve"><value>لم يستجب الخادم (انتهت المهلة).</value></data>
+<data name="NetDns" xml:space="preserve"><value>تعذّر تحليل اسم الخادم (DNS). قد يحل التغيير إلى DNS آخر (مثل 1.1.1.1) المشكلة.</value></data>
+<data name="NetNoResponse" xml:space="preserve"><value>تعذّر الاتصال بالخادم (لا استجابة). قد يكون برنامج الحماية أو الموجّه يحظر المنفذ 443.</value></data>
+<data name="NetRefused" xml:space="preserve"><value>رفض الخادم الاتصال.</value></data>
+<data name="NetUnreachable" xml:space="preserve"><value>لا يوجد مسار إلى الخادم. ربما لا يدعم اتصالك IPv4.</value></data>
+<data name="NetBlocked" xml:space="preserve"><value>تم حظر الاتصال. تحقق من إعدادات برنامج الحماية.</value></data>
+<data name="NetFailed" xml:space="preserve"><value>فشل الاتصال ({0}).</value></data>
+<data name="MissingHereTitle" xml:space="preserve"><value>إضافات أو خطوط مفقودة</value></data>
+<data name="MissingThereTitle" xml:space="preserve"><value>يوجد ما ينقص لدى الطرف الآخر</value></data>
+<data name="PeerPluginMissingLead" xml:space="preserve"><value>الإضافة التالية التي يستخدمها {0} غير مثبّتة على هذا الجهاز.</value></data>
+<data name="PluginMissingNote" xml:space="preserve"><value>لن تُعرض العناصر والتأثيرات التي تستخدمها على هذا الجهاز.</value></data>
+<data name="PeerFontMissingLead" xml:space="preserve"><value>الخط التالي الذي يستخدمه {0} غير مثبّت على هذا الجهاز.</value></data>
+<data name="FontMissingNote" xml:space="preserve"><value>يُستخدم خط بديل، لذا سيبدو مختلفًا.</value></data>
+<data name="PeerScreenNote" xml:space="preserve"><value>على شاشة ذلك المشارك يبدو مختلفًا أو لا يظهر العنصر.</value></data>
+<data name="MyPluginMissingLead" xml:space="preserve"><value>الإضافة التالية التي تستخدمها غير مثبّتة على جهاز المشارك الآخر.</value></data>
+<data name="MyFontMissingLead" xml:space="preserve"><value>الخط التالي الذي تستخدمه غير مثبّت على جهاز المشارك الآخر.</value></data>
+<data name="OwnersFew" xml:space="preserve"><value> ({0})</value></data>
+<data name="OwnersMany" xml:space="preserve"><value> ({0} و{1} آخرون)</value></data>
+<data name="MigratedMessage" xml:space="preserve"><value>استمر وجود عدد قليل من الأشخاص لفترة، لذا انتقلت الغرفة إلى غرفة صغيرة.
+تغيّر معرّف الغرفة، لذا احصل على رابط دعوة جديد قبل دعوة أي شخص آخر.</value></data>
+<data name="MigratedTitle" xml:space="preserve"><value>تم نقل الغرفة</value></data>
+<data name="ProjectTooLargeTitle" xml:space="preserve"><value>المشروع كبير جدًا</value></data>
+<data name="ProjectTooLargeMessage" xml:space="preserve"><value>تم إيقاف المزامنة لأن مشروع المشارك الآخر كبير جدًا.</value></data>
+<data name="Checking" xml:space="preserve"><value>جارٍ التحقق...</value></data>
+<data name="NotPublished" xml:space="preserve"><value>غير منشور</value></data>
+<data name="FetchFailed" xml:space="preserve"><value>تعذّر الحصول عليه</value></data>
+<data name="VoiceFailedTitle" xml:space="preserve"><value>تعذّر إنشاء صوت</value></data>
+<data name="VoiceCharacterMissingLead" xml:space="preserve"><value>تعذّر إنشاء الصوت لأن الشخصية التالية غير موجودة على هذا الجهاز.</value></data>
+<data name="VoiceCharacterMissingNote" xml:space="preserve"><value>جهّز شخصية بالاسم نفسه أو اقبل الشخصية المشتركة.</value></data>
+<data name="VoiceNotSetLead" xml:space="preserve"><value>تعذّر إنشاء الصوت لأن الشخصية التالية ليس لها صوت محدد.</value></data>
+<data name="VoiceNotSetNote" xml:space="preserve"><value>اختر صوتًا من إعدادات الشخصية.</value></data>
+<data name="VoiceEngineMismatchLead" xml:space="preserve"><value>تعذّر إنشاء الصوت لأن الشخصية التالية تستخدم نوع صوت (محرك صوت) مختلفًا عن المُرسِل.</value></data>
+<data name="VoiceEngineMismatchNote" xml:space="preserve"><value>اضبط صوت الشخصية على محرك الصوت نفسه الذي يستخدمه المُرسِل.</value></data>
+<data name="VoiceEngineErrorLead" xml:space="preserve"><value>تعذّر على محرك الصوت في هذا الجهاز إنشاء صوت الشخصية التالية.</value></data>
+<data name="VoiceEngineErrorNote" xml:space="preserve"><value>تأكد من أن محرك الصوت قيد التشغيل وأنك وافقت على شروط استخدامه.</value></data>
+<data name="VoiceEngineSlowLead" xml:space="preserve"><value>محرك الصوت للشخصية التالية لا يستجيب، لذا ستُنشأ أصوات أخرى أولًا.</value></data>
+<data name="VoiceEngineSlowNote" xml:space="preserve"><value>تأكد من أن محرك الصوت قيد التشغيل وأنه لا توجد نافذة تأكيد مفتوحة.</value></data>
+<data name="PeerDataUnreadableTitle" xml:space="preserve"><value>تعذّرت قراءة بيانات المشارك الآخر</value></data>
+<data name="PeerDataUnreadableMessage" xml:space="preserve"><value>تعذّر تفسير ما تم استلامه من المشارك الآخر.
+تأكد من أنكما تستخدمان الإصدار نفسه من MultiUserEdit.</value></data>
+</root>

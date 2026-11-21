@@ -123,9 +123,8 @@ namespace MultiUserEdit.Commons
 
         public static void NotifyMoved() =>
             Application.Current?.Dispatcher.InvokeAsync(() => MessageBox.Show(
-                "人数が少ない状態が続いたため、小さい部屋へ移動しました。\n"
-                + "ルームIDが変わっているので、新しく招待する場合は招待リンクを取り直してください。",
-                "部屋を移動しました",
+                Texts.MigratedMessage,
+                Texts.MigratedTitle,
                 MessageBoxButton.OK));
     }
 }

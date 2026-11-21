@@ -15,9 +15,9 @@
 
         private static string FormatSpeed(double bytesPerSecond)
         {
-            if (bytesPerSecond >= 1024 * 1024) return $"{bytesPerSecond / (1024 * 1024):F1} MB/秒";
-            if (bytesPerSecond >= 1024) return $"{bytesPerSecond / 1024:F0} KB/秒";
-            return $"{bytesPerSecond:F0} B/秒";
+            if (bytesPerSecond >= 1024 * 1024) return string.Format(Texts.PerSecond, $"{bytesPerSecond / (1024 * 1024):F1} MB");
+            if (bytesPerSecond >= 1024) return string.Format(Texts.PerSecond, $"{bytesPerSecond / 1024:F0} KB");
+            return string.Format(Texts.PerSecond, $"{bytesPerSecond:F0} B");
         }
         public bool IsUploading => UploadCount > 0;
 
@@ -29,19 +29,19 @@
 
                 if (UploadCount > 0 && DownloadCount > 0)
                 {
-                    return $"送信 {UploadCount}件 / 受信 {DownloadCount}件: {CurrentFileName}";
+                    return string.Format(Texts.TransferBoth, UploadCount, DownloadCount, CurrentFileName);
                 }
 
                 if (IsUploading)
                 {
                     return UploadCount == 1
-                        ? $"{CurrentFileName} を送信中"
-                        : $"{CurrentFileName} ほか{UploadCount - 1}件を送信中";
+                        ? string.Format(Texts.SendingOne, CurrentFileName)
+                        : string.Format(Texts.SendingMany, CurrentFileName, UploadCount - 1);
                 }
 
                 return DownloadCount == 1
-                    ? $"{CurrentFileName} をダウンロード中"
-                    : $"{CurrentFileName} ほか{DownloadCount - 1}件をダウンロード中";
+                    ? string.Format(Texts.DownloadingOne, CurrentFileName)
+                    : string.Format(Texts.DownloadingMany, CurrentFileName, DownloadCount - 1);
             }
         }
     }

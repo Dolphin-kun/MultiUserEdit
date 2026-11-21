@@ -5,7 +5,7 @@
         public const int MaxDescriptionLength = 140;
         public const int MaxDescriptionLines = 3;
 
-        public const string DescriptionHint = "140文字・3行まで（超えた分は自動でまとめられます）";
+        public static string DescriptionHint => Texts.DescriptionHint;
 
         public static string NormalizeDescription(string? text)
         {

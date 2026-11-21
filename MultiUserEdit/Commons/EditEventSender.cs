@@ -266,6 +266,8 @@ namespace MultiUserEdit.Commons
                         continue;
                     }
 
+                    if (PositionProperties.Contains(property.Name)) continue;
+
                     var before = previous[property.Name];
                     if (before != null && JToken.DeepEquals(before, property.Value)) continue;
 
@@ -292,6 +294,8 @@ namespace MultiUserEdit.Commons
         }
 
         private const string TypeProperty = "$type";
+
+        private static readonly HashSet<string> PositionProperties = [nameof(IItem.Frame), nameof(IItem.Layer), nameof(IItem.Length)];
 
         public Func<IItem, bool>? IsItemAlive { get; set; }
 
@@ -348,6 +352,7 @@ namespace MultiUserEdit.Commons
 
         private const int CoalesceDelayMilliseconds = 8;
         private const int MinimumSendIntervalMilliseconds = 16;
+        private const int PropertySendIntervalMilliseconds = 50;
 
         public Task SendItemUpdatedThrottledAsync(IItem item, int timelineIndex)
         {
@@ -365,7 +370,7 @@ namespace MultiUserEdit.Commons
                 if (state.FlushScheduled) return Task.CompletedTask;
 
                 var elapsed = (DateTime.UtcNow - state.LastSent).TotalMilliseconds;
-                var delay = (int)Math.Max(CoalesceDelayMilliseconds, MinimumSendIntervalMilliseconds - elapsed);
+                var delay = (int)Math.Max(CoalesceDelayMilliseconds, PropertySendIntervalMilliseconds - elapsed);
 
                 state.FlushScheduled = true;
                 _ = Task.Delay(delay).ContinueWith(_ =>

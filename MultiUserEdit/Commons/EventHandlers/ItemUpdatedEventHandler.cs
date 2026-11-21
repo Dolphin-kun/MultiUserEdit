@@ -25,7 +25,7 @@ namespace MultiUserEdit.Commons.EventHandlers
                     item));
                 ResourceAvailabilityChecker.Notify(editEvent.ItemId, editEvent.ExecutorId,
                     viewModel.GetUserName(editEvent.ExecutorId), itemJson, null);
-                var previousSerif = VoiceSynthesizer.GetSerif(item);
+                var previousVoice = VoiceSynthesizer.Capture(item);
 
                 JsonConvert.PopulateObject(itemJson, item, ItemSerializerOptions.Default);
                 viewModel.EventSender?.ClearBaseline(editEvent.ItemId);
@@ -33,7 +33,7 @@ namespace MultiUserEdit.Commons.EventHandlers
                 CharacterResolver.TryResolveCharacter(item);
                 SceneResolver.ResolveSceneId(item, viewModel.Scenes);
 
-                VoiceSynthesizer.RequestIfSerifChanged(item, previousSerif);
+                VoiceSynthesizer.RequestIfVoiceChanged(item, previousVoice);
 
                 var missingFiles = MediaFileResolver.GetMissingFileNames(
                     editEvent.MediaFileNames, TachieFileResolver.GetBaseDirectory(item));

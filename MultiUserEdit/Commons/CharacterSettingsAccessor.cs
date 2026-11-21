@@ -25,7 +25,7 @@ namespace MultiUserEdit.Commons
                     return characters;
                 }
 
-                UnavailableReason ??= "キャラクター一覧を読み取れませんでした。";
+                UnavailableReason ??= Texts.CharacterListUnreadable;
                 return null;
             }
             catch (Exception ex)
@@ -60,21 +60,21 @@ namespace MultiUserEdit.Commons
                 var settingsType = typeof(Character).Assembly.GetType("YukkuriMovieMaker.Settings.CharacterSettings");
                 if (settingsType == null)
                 {
-                    UnavailableReason = "CharacterSettings 型が見つかりません。";
+                    UnavailableReason = Texts.CharacterSettingsTypeMissing;
                     return;
                 }
 
                 settingsInstance = FindDefaultInstance(settingsType);
                 if (settingsInstance == null)
                 {
-                    UnavailableReason = "CharacterSettings のインスタンスを取得できません。";
+                    UnavailableReason = Texts.CharacterSettingsInstanceMissing;
                     return;
                 }
 
                 charactersProperty = settingsType.GetProperty("Characters", BindingFlags.Public | BindingFlags.Instance);
                 if (charactersProperty == null)
                 {
-                    UnavailableReason = "CharacterSettings.Characters が見つかりません。";
+                    UnavailableReason = Texts.CharacterSettingsListMissing;
                     return;
                 }
 

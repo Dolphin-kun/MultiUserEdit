@@ -1,0 +1,445 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+<data name="CurrentCulture" xml:space="preserve"><value>en-us</value></data>
+<data name="PluginName" xml:space="preserve"><value>Collaborative Editing</value></data>
+<data name="Host" xml:space="preserve"><value>Host</value></data>
+<data name="Guest" xml:space="preserve"><value>Guest</value></data>
+<data name="Unknown" xml:space="preserve"><value>Unknown</value></data>
+<data name="DefaultUserName" xml:space="preserve"><value>User</value></data>
+<data name="Collaborator" xml:space="preserve"><value>Collaborator</value></data>
+<data name="OtherParticipant" xml:space="preserve"><value>Another participant</value></data>
+<data name="ThisUser" xml:space="preserve"><value>This user</value></data>
+<data name="Me" xml:space="preserve"><value>Me</value></data>
+<data name="Honorific" xml:space="preserve"><value>{0}</value></data>
+<data name="ListSeparator" xml:space="preserve"><value>, </value></data>
+<data name="Send" xml:space="preserve"><value>Send</value></data>
+<data name="Receive" xml:space="preserve"><value>Receive</value></data>
+<data name="Allowed" xml:space="preserve"><value>Allowed</value></data>
+<data name="Restricted" xml:space="preserve"><value>Restricted</value></data>
+<data name="On" xml:space="preserve"><value>On</value></data>
+<data name="Off" xml:space="preserve"><value>Off</value></data>
+<data name="OK" xml:space="preserve"><value>OK</value></data>
+<data name="Apply" xml:space="preserve"><value>Apply</value></data>
+<data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
+<data name="Close" xml:space="preserve"><value>Close</value></data>
+<data name="Add" xml:space="preserve"><value>Add</value></data>
+<data name="Delete" xml:space="preserve"><value>Delete</value></data>
+<data name="Edit" xml:space="preserve"><value>Edit</value></data>
+<data name="Refresh" xml:space="preserve"><value>Refresh</value></data>
+<data name="StatusOnline" xml:space="preserve"><value>Online</value></data>
+<data name="StatusAway" xml:space="preserve"><value>Away</value></data>
+<data name="StatusDisconnected" xml:space="preserve"><value>Disconnected</value></data>
+<data name="StatusOffline" xml:space="preserve"><value>Offline</value></data>
+<data name="UserAway" xml:space="preserve"><value>{0} (Away)</value></data>
+<data name="UserOperating" xml:space="preserve"><value>{0} is editing</value></data>
+<data name="Back" xml:space="preserve"><value>Back</value></data>
+<data name="Settings" xml:space="preserve"><value>Settings</value></data>
+<data name="Home" xml:space="preserve"><value>Home</value></data>
+<data name="Rules" xml:space="preserve"><value>Rules</value></data>
+<data name="Files" xml:space="preserve"><value>Files</value></data>
+<data name="Profile" xml:space="preserve"><value>Profile</value></data>
+<data name="Display" xml:space="preserve"><value>Display</value></data>
+<data name="Integration" xml:space="preserve"><value>Integration</value></data>
+<data name="About" xml:space="preserve"><value>About</value></data>
+<data name="Connected" xml:space="preserve"><value>Connected</value></data>
+<data name="NotConnected" xml:space="preserve"><value>Not connected</value></data>
+<data name="DivergenceHint" xml:space="preserve"><value>If this concerns you, sync now. Any of your changes that have not reached the others will be lost.</value></data>
+<data name="SyncData" xml:space="preserve"><value>Sync data</value></data>
+<data name="SyncDataAction" xml:space="preserve"><value>Sync data</value></data>
+<data name="NewVersionPublishedFormat" xml:space="preserve"><value>Version {0} is available</value></data>
+<data name="LatestOnlyPleaseUpdate" xml:space="preserve"><value>Collaborative editing works only between the latest plugin versions. Please update.</value></data>
+<data name="OpenUpdatePage" xml:space="preserve"><value>Open update page</value></data>
+<data name="Room" xml:space="preserve"><value>Room</value></data>
+<data name="SmallRoomLabel" xml:space="preserve"><value>Small room (up to {0})</value></data>
+<data name="LargeRoomLabel" xml:space="preserve"><value>Large room (up to {0})</value></data>
+<data name="SmallRoomTip" xml:space="preserve"><value>For a few people. Connects right away.</value></data>
+<data name="LargeRoomTip" xml:space="preserve"><value>For many people. Uses a dedicated relay server. If only a few people stay for a while, the room moves to a small room automatically.</value></data>
+<data name="CreateRoom" xml:space="preserve"><value>Create room</value></data>
+<data name="JoinExistingRoom" xml:space="preserve"><value>Join an existing room</value></data>
+<data name="JoinFromClipboard" xml:space="preserve"><value>Join from the link in the clipboard</value></data>
+<data name="Join" xml:space="preserve"><value>Join</value></data>
+<data name="SyncDataTip" xml:space="preserve"><value>Makes your timeline match the host's again</value></data>
+<data name="Disconnect" xml:space="preserve"><value>Disconnect</value></data>
+<data name="CopyId" xml:space="preserve"><value>Copy ID</value></data>
+<data name="CopyInviteLink" xml:space="preserve"><value>Copy invite link</value></data>
+<data name="ParticipantList" xml:space="preserve"><value>Participants</value></data>
+<data name="ParticipantCount" xml:space="preserve"><value>({0})</value></data>
+<data name="UserColor" xml:space="preserve"><value>User color</value></data>
+<data name="OpenUserInfo" xml:space="preserve"><value>Open user info</value></data>
+<data name="CharacterImport" xml:space="preserve"><value>Import character</value></data>
+<data name="NewCharacterAdded" xml:space="preserve"><value>A new character was added</value></data>
+<data name="LinkToExisting" xml:space="preserve"><value>Link to an existing character</value></data>
+<data name="ImportAsNew" xml:space="preserve"><value>Import as a new character</value></data>
+<data name="ImportAsNewHint" xml:space="preserve"><value>Adds an exact copy of the sender's settings. The shared assets are used.</value></data>
+<data name="FromOwner" xml:space="preserve"><value>(from {0})</value></data>
+<data name="CannotCreateCharacter" xml:space="preserve"><value>The character settings could not be obtained from the sender, so a new character cannot be created.</value></data>
+<data name="CharacterName" xml:space="preserve"><value>Character name</value></data>
+<data name="SameNameExists" xml:space="preserve"><value>A character with the same name already exists.</value></data>
+<data name="FileTransfers" xml:space="preserve"><value>Sent and received files</value></data>
+<data name="ToggleTransferList" xml:space="preserve"><value>Show or hide files being transferred</value></data>
+<data name="CancelReceive" xml:space="preserve"><value>Stop receiving</value></data>
+<data name="OpenSaveFolder" xml:space="preserve"><value>Open save folder</value></data>
+<data name="ClearAll" xml:space="preserve"><value>Clear all</value></data>
+<data name="ColumnType" xml:space="preserve"><value>Type</value></data>
+<data name="ColumnSender" xml:space="preserve"><value>Sender</value></data>
+<data name="ColumnFileName" xml:space="preserve"><value>File name</value></data>
+<data name="ColumnSize" xml:space="preserve"><value>Size</value></data>
+<data name="ColumnAction" xml:space="preserve"><value>Action</value></data>
+<data name="DeleteFile" xml:space="preserve"><value>Delete file</value></data>
+<data name="OperationRules" xml:space="preserve"><value>Editing rules</value></data>
+<data name="OperationRulesDescription" xml:space="preserve"><value>Choose what participants are allowed to do. To change it for one person, use the participant list on the Home page.</value></data>
+<data name="Preset" xml:space="preserve"><value>Preset</value></data>
+<data name="FullEdit" xml:space="preserve"><value>Full editing</value></data>
+<data name="StandardEdit" xml:space="preserve"><value>Standard editing</value></data>
+<data name="ReadOnly" xml:space="preserve"><value>View only</value></data>
+<data name="LiveMirror" xml:space="preserve"><value>Live mirroring</value></data>
+<data name="StandardEditLimitScenes" xml:space="preserve"><value>Standard editing (scene operations restricted)</value></data>
+<data name="LiveMirrorFollowHost" xml:space="preserve"><value>Live mirroring (view only, follows the host)</value></data>
+<data name="Item" xml:space="preserve"><value>Items</value></data>
+<data name="DeleteOthersItems" xml:space="preserve"><value>Can also delete items added by others</value></data>
+<data name="MoveAndResize" xml:space="preserve"><value>Move and change length</value></data>
+<data name="SceneTimeline" xml:space="preserve"><value>Scenes (timelines)</value></data>
+<data name="Other" xml:space="preserve"><value>Other</value></data>
+<data name="SendMaterialFiles" xml:space="preserve"><value>Sending asset files</value></data>
+<data name="FollowHostPlayback" xml:space="preserve"><value>Follow the host's playback position</value></data>
+<data name="FollowHostPlaybackShort" xml:space="preserve"><value>Follow host's playback</value></data>
+<data name="ApplyToAll" xml:space="preserve"><value>Apply to all participants</value></data>
+<data name="YourRules" xml:space="preserve"><value>Your editing rules</value></data>
+<data name="YourRulesDescription" xml:space="preserve"><value>What the host allows you to do.</value></data>
+<data name="PermissionLevel" xml:space="preserve"><value>Permission level</value></data>
+<data name="OthersAddedItems" xml:space="preserve"><value>Items added by others</value></data>
+<data name="RulesAppliedMessage" xml:space="preserve"><value>The rules were applied to all participants.</value></data>
+<data name="RulesAppliedTitle" xml:space="preserve"><value>Rules applied</value></data>
+<data name="UserInfo" xml:space="preserve"><value>User info</value></data>
+<data name="UserInfoTitle" xml:space="preserve"><value>About {0}</value></data>
+<data name="EditTime" xml:space="preserve"><value>Editing time:</value></data>
+<data name="TotalTime" xml:space="preserve"><value>Total time joined:</value></data>
+<data name="DisplayName" xml:space="preserve"><value>Display name</value></data>
+<data name="SelfIntroduction" xml:space="preserve"><value>About me</value></data>
+<data name="CannotEditOthersProfile" xml:space="preserve"><value>You cannot edit other participants' profiles.</value></data>
+<data name="Permission" xml:space="preserve"><value>Permissions</value></data>
+<data name="PermissionPreset" xml:space="preserve"><value>Permission preset</value></data>
+<data name="FullEditDetail" xml:space="preserve"><value>Full editing (everything allowed)</value></data>
+<data name="StandardEditDetail" xml:space="preserve"><value>Standard editing (scene deletion and similar restricted)</value></data>
+<data name="ReadOnlyDetail" xml:space="preserve"><value>View only (no editing)</value></data>
+<data name="LiveMirrorDetail" xml:space="preserve"><value>Live mirroring (fully synced with the host's view and playback)</value></data>
+<data name="CustomizeRules" xml:space="preserve"><value>Customize rules</value></data>
+<data name="AllowAddItems" xml:space="preserve"><value>Allow adding items</value></data>
+<data name="AllowDeleteItems" xml:space="preserve"><value>Allow deleting items</value></data>
+<data name="AllowDeleteOthersItems" xml:space="preserve"><value>Also allow deleting items added by others</value></data>
+<data name="AllowMoveItems" xml:space="preserve"><value>Allow moving items and changing their length</value></data>
+<data name="AllowEditItems" xml:space="preserve"><value>Allow editing items</value></data>
+<data name="AllowAddScenes" xml:space="preserve"><value>Allow adding scenes (timelines)</value></data>
+<data name="AllowDeleteScenes" xml:space="preserve"><value>Allow deleting scenes (timelines)</value></data>
+<data name="AllowSendFiles" xml:space="preserve"><value>Allow sending asset files</value></data>
+<data name="AutoFollowHost" xml:space="preserve"><value>Automatically follow the host's seek position and view</value></data>
+<data name="Kick" xml:space="preserve"><value>Kick</value></data>
+<data name="SyncFromThisUser" xml:space="preserve"><value>Sync to this person's state</value></data>
+<data name="KickConfirmProfile" xml:space="preserve"><value>Remove "{0}" from the room?</value></data>
+<data name="KickUserTitle" xml:space="preserve"><value>Kick user</value></data>
+<data name="Version" xml:space="preserve"><value>Version</value></data>
+<data name="CurrentVersion" xml:space="preserve"><value>Current version:</value></data>
+<data name="LatestVersion" xml:space="preserve"><value>Latest version:</value></data>
+<data name="NewVersionAvailable" xml:space="preserve"><value>A new version is available.</value></data>
+<data name="OpenDownloadPage" xml:space="preserve"><value>Open download page</value></data>
+<data name="CopyrightTitle" xml:space="preserve"><value>Copyright and terms of use</value></data>
+<data name="CopyrightNotice" xml:space="preserve"><value>The sender is responsible for the copyright and terms of use of assets (images, videos, audio, etc.) that are transferred or shared. Take care when sending paid assets or others whose redistribution is prohibited.</value></data>
+<data name="Timeline" xml:space="preserve"><value>Timeline</value></data>
+<data name="ShowOperatorName" xml:space="preserve"><value>Show names on items being edited</value></data>
+<data name="ShowOperatorNameHint" xml:space="preserve"><value>When off, items other participants are editing are shown only by the color of their frame.</value></data>
+<data name="FileSharingCache" xml:space="preserve"><value>File sharing and cache</value></data>
+<data name="ReceivedFileStorage" xml:space="preserve"><value>How received files are kept</value></data>
+<data name="TemporaryStorage" xml:space="preserve"><value>Keep only during the session (deleted on exit)</value></data>
+<data name="TemporaryStorageTip" xml:space="preserve"><value>Deletes all cached assets when YMM4 exits</value></data>
+<data name="KeepStorage" xml:space="preserve"><value>Keep on disk (reuse the cache next time)</value></data>
+<data name="KeepStorageTip" xml:space="preserve"><value>Saves to a temporary folder and loads from there next time</value></data>
+<data name="ConfirmLargeReceive" xml:space="preserve"><value>Ask before receiving large asset files</value></data>
+<data name="ConfirmLargeReceiveTip" xml:space="preserve"><value>When a large file is sent to you, asks first whether to receive it</value></data>
+<data name="ConfirmSize" xml:space="preserve"><value>Ask from</value></data>
+<data name="MBOrMore" xml:space="preserve"><value>MB or more</value></data>
+<data name="SendLimits" xml:space="preserve"><value>Sending</value></data>
+<data name="ConfirmBeforeSend" xml:space="preserve"><value>Ask before sending asset files</value></data>
+<data name="ConfirmBeforeSendTip" xml:space="preserve"><value>Shows a confirmation before videos, images, audio and other files are sent to other users automatically</value></data>
+<data name="ShareableExtensions" xml:space="preserve"><value>Shareable extensions</value></data>
+<data name="SelectAll" xml:space="preserve"><value>Select all</value></data>
+<data name="DeselectAll" xml:space="preserve"><value>Deselect all</value></data>
+<data name="ResetToDefault" xml:space="preserve"><value>Reset to default</value></data>
+<data name="RemoveFormat" xml:space="preserve"><value>Remove this format from the list</value></data>
+<data name="AddFormatHint" xml:space="preserve"><value>* Formats not in the list (e.g. .m2v) can be added here. Extensions that are not allowed (such as .exe and .bat) are blocked automatically and never transferred.</value></data>
+<data name="WebDeepLink" xml:space="preserve"><value>Web deep link</value></data>
+<data name="WebDeepLinkDescription" xml:space="preserve"><value>Protocol setting that lets one click in the browser open YMM4 and join automatically. (Registered automatically at startup)</value></data>
+<data name="CurrentStatus" xml:space="preserve"><value>Current status:</value></data>
+<data name="Registered" xml:space="preserve"><value>Registered (enabled)</value></data>
+<data name="NotRegistered" xml:space="preserve"><value>Not registered</value></data>
+<data name="Reregister" xml:space="preserve"><value>Register again</value></data>
+<data name="Unregister" xml:space="preserve"><value>Unregister</value></data>
+<data name="DescriptionHint" xml:space="preserve"><value>Up to 140 characters and 3 lines (extra lines are merged automatically)</value></data>
+<data name="Image" xml:space="preserve"><value>Images</value></data>
+<data name="Video" xml:space="preserve"><value>Videos</value></data>
+<data name="Audio" xml:space="preserve"><value>Audio</value></data>
+<data name="Ymm4AndOther" xml:space="preserve"><value>YMM4 and other</value></data>
+<data name="AddedFormats" xml:space="preserve"><value>Added formats</value></data>
+<data name="ReceivedDone" xml:space="preserve"><value>Received</value></data>
+<data name="SentDone" xml:space="preserve"><value>Sent</value></data>
+<data name="SendSkipped" xml:space="preserve"><value>Not sent because the recipient already has it</value></data>
+<data name="PerSecond" xml:space="preserve"><value>{0}/s</value></data>
+<data name="RemainingSeconds" xml:space="preserve"><value>{0:F0} s left</value></data>
+<data name="RemainingMinutes" xml:space="preserve"><value>{0:F0} min left</value></data>
+<data name="RemainingHours" xml:space="preserve"><value>{0:F1} h left</value></data>
+<data name="FromUser" xml:space="preserve"><value>from {0}</value></data>
+<data name="TransferBoth" xml:space="preserve"><value>Sending {0} / Receiving {1}: {2}</value></data>
+<data name="SendingOne" xml:space="preserve"><value>Sending {0}</value></data>
+<data name="SendingMany" xml:space="preserve"><value>Sending {0} and {1} more</value></data>
+<data name="DownloadingOne" xml:space="preserve"><value>Downloading {0}</value></data>
+<data name="DownloadingMany" xml:space="preserve"><value>Downloading {0} and {1} more</value></data>
+<data name="FilesBoth" xml:space="preserve"><value>Transferring (sending {0} / receiving {1})</value></data>
+<data name="FilesSending" xml:space="preserve"><value>Sending ({0})</value></data>
+<data name="FilesReceiving" xml:space="preserve"><value>Receiving ({0})</value></data>
+<data name="FilesIdle" xml:space="preserve"><value>Nothing is being transferred</value></data>
+<data name="MoreItems" xml:space="preserve"><value>(and {0} more)</value></data>
+<data name="CancelReceiveConfirm" xml:space="preserve"><value>Stop receiving "{0}".
+Are you sure?</value></data>
+<data name="CancelReceiveTitle" xml:space="preserve"><value>Stop receiving</value></data>
+<data name="ClearAllConfirm" xml:space="preserve"><value>All received asset files will be deleted.
+Are you sure?</value></data>
+<data name="ClearAllTitle" xml:space="preserve"><value>Clear all</value></data>
+<data name="CannotChangeItemTitle" xml:space="preserve"><value>Cannot change the item</value></data>
+<data name="CannotChangeItemMessage" xml:space="preserve"><value>The host's settings do not allow moving or editing items in this room.
+Your change will be reverted to the host's state.</value></data>
+<data name="SyncAllConfirm" xml:space="preserve"><value>Every participant's timeline will be overwritten with yours.
+Continue?</value></data>
+<data name="DeepLinkRegistered" xml:space="preserve"><value>The web deep link (ymm4-multi-user-edit://) was registered with Windows.</value></data>
+<data name="RegisterDone" xml:space="preserve"><value>Registered</value></data>
+<data name="DeepLinkUnregistered" xml:space="preserve"><value>The web deep link (ymm4-multi-user-edit://) was unregistered.</value></data>
+<data name="UnregisterDone" xml:space="preserve"><value>Unregistered</value></data>
+<data name="KickConfirm" xml:space="preserve"><value>Kick {0} from the room?</value></data>
+<data name="KickConfirmTitle" xml:space="preserve"><value>Kick</value></data>
+<data name="SceneUnavailableTitle" xml:space="preserve"><value>Could not prepare a scene</value></data>
+<data name="SceneUnavailableLead" xml:space="preserve"><value>The following scene could not be prepared on this PC.</value></data>
+<data name="SceneUnavailableNote" xml:space="preserve"><value>Its contents will not be shown.</value></data>
+<data name="SyncFromConfirm" xml:space="preserve"><value>All items on your current timeline will be deleted and synced to {0}'s state.
+Continue?</value></data>
+<data name="PeerSyncedData" xml:space="preserve"><value>{0} synced the data.</value></data>
+<data name="InitialSyncConfirm" xml:space="preserve"><value>To join the room, all items on your current timeline will be deleted and synced to the host's state.
+Delete them and start syncing?</value></data>
+<data name="InitialSyncTitle" xml:space="preserve"><value>Initial sync</value></data>
+<data name="SceneDefaultName" xml:space="preserve"><value>Scene {0}</value></data>
+<data name="MediaNotReceivedTitle" xml:space="preserve"><value>Could not receive video or audio files</value></data>
+<data name="MediaNotReceivedLead" xml:space="preserve"><value>The following file used by {0}'s item did not arrive, so the item could not be added.</value></data>
+<data name="ResyncToReceiveNote" xml:space="preserve"><value>Run "Sync data" to receive it again.</value></data>
+<data name="NewVersionLatestOnly" xml:space="preserve"><value>A new version ({0}) is available.
+Collaborative editing works only between the latest plugin versions.</value></data>
+<data name="NewVersionNextTime" xml:space="preserve"><value>A new version ({0}) is available.
+Collaborative editing works only between the latest plugin versions, so you will not be able to connect next time until you update.</value></data>
+<data name="OpenUpdatePageQuestion" xml:space="preserve"><value>{0}
+
+Open the update page?</value></data>
+<data name="UpdateRequiredTitle" xml:space="preserve"><value>Plugin update required</value></data>
+<data name="RelayConnectFailed" xml:space="preserve"><value>Could not connect to the relay server for large rooms.
+
+Cause: {0}
+
+Small rooms use a different server, so if only this one fails, your network or security software is usually the cause.
+Please tell the host what this window says.</value></data>
+<data name="RelayConnectFailedCreate" xml:space="preserve"><value>Could not connect to the relay server for large rooms.
+
+Cause: {0}
+
+Create the room anyway? (Participants may not be able to connect either)</value></data>
+<data name="RelayUnavailableTitle" xml:space="preserve"><value>Cannot reach the relay server</value></data>
+<data name="ConnectionError" xml:space="preserve"><value>Connection error</value></data>
+<data name="HostIsNewer" xml:space="preserve"><value>Disconnected because your version ({1}) is older than the host's plugin ({0}).</value></data>
+<data name="HostIsOlder" xml:space="preserve"><value>Disconnected because the host's plugin ({0}) is out of date.
+Ask the host to update the plugin.</value></data>
+<data name="ConnectionLostTitle" xml:space="preserve"><value>Disconnected</value></data>
+<data name="ConnectionLostMessage" xml:space="preserve"><value>The connection to the collaboration server was lost and could not be restored.
+Check your network and join the room again.</value></data>
+<data name="DivergenceWarning" xml:space="preserve"><value>Your contents may have drifted from {0}'s (host) while the connection was interrupted.</value></data>
+<data name="OutdatedPlugin" xml:space="preserve"><value>Your plugin ({0}) is out of date and cannot connect to the collaboration server.
+The latest version is {1}.</value></data>
+<data name="RoomFull" xml:space="preserve"><value>This room has reached its participant limit.</value></data>
+<data name="RoomFullAskLarge" xml:space="preserve"><value>This room has reached its participant limit.
+Ask the host to create a large room.</value></data>
+<data name="RoomFullTitle" xml:space="preserve"><value>Room is full</value></data>
+<data name="RoomExpired" xml:space="preserve"><value>This room was closed automatically because there was no activity for a while.
+Ask the host to create a new room.</value></data>
+<data name="RoomHostKeyRejected" xml:space="preserve"><value>You cannot connect to this room as the host.
+Please create a new room.</value></data>
+<data name="RoomNotFound" xml:space="preserve"><value>The room does not exist. Check the room ID.</value></data>
+<data name="KickedMessage" xml:space="preserve"><value>You were kicked from the room by the host and have been disconnected.</value></data>
+<data name="KickedTitle" xml:space="preserve"><value>Kicked</value></data>
+<data name="HostNoResponse" xml:space="preserve"><value>About {1:0} minutes have passed since the connection to {0} was lost, and there is no response.
+YMM4 may have crashed, or the connection may be down.
+
+The room itself is still open, so you can wait for them to come back.
+Keep waiting? (Choose No to disconnect)</value></data>
+<data name="HostNoResponseTitle" xml:space="preserve"><value>No response from the host</value></data>
+<data name="HostDidNotReturn" xml:space="preserve"><value>The connection to the host did not come back, so you will be disconnected.</value></data>
+<data name="HostClosedRoom" xml:space="preserve"><value>The host closed the room, so you have been disconnected.</value></data>
+<data name="KeepTimelineQuestion" xml:space="preserve"><value>{0}
+
+Keep the timeline you made together in this project?
+Yes: keep it and continue editing.
+No: delete every item added during collaborative editing.</value></data>
+<data name="RoomEndedTitle" xml:space="preserve"><value>The room has ended</value></data>
+<data name="SendBlockedAll" xml:space="preserve"><value>The host's settings do not allow sending asset files in this room.</value></data>
+<data name="SendBlockedVideo" xml:space="preserve"><value>The host's settings do not allow sending video files in this room.</value></data>
+<data name="SendBlockedImage" xml:space="preserve"><value>The host's settings do not allow sending image files in this room.</value></data>
+<data name="SendBlockedAudio" xml:space="preserve"><value>The host's settings do not allow sending audio files in this room.</value></data>
+<data name="CannotDeleteItemTitle" xml:space="preserve"><value>Cannot delete the item</value></data>
+<data name="DeleteOwnOnly" xml:space="preserve"><value>The host's settings only let you delete items you added.
+The deleted items were restored.</value></data>
+<data name="DeleteNotAllowed" xml:space="preserve"><value>The host's settings do not allow deleting items in this room.
+The deleted items were restored.</value></data>
+<data name="CannotAddItemTitle" xml:space="preserve"><value>Cannot add the item</value></data>
+<data name="AddNotAllowed" xml:space="preserve"><value>The host's settings do not allow adding items in this room.
+The added items were removed.</value></data>
+<data name="CustomVoiceAsk" xml:space="preserve"><value>The character "{0}" uses a custom voice.
+Voice files are not shared, so choose the voice folder on your PC.
+
+Once you choose it, it will be set automatically from then on.
+Choose it now? (You can also change it later in YMM4's character settings)</value></data>
+<data name="CustomVoiceTitle" xml:space="preserve"><value>Custom voice folder</value></data>
+<data name="SelectVoiceFolder" xml:space="preserve"><value>Choose the voice folder for "{0}"</value></data>
+<data name="TachieNotReceivedTitle" xml:space="preserve"><value>Could not receive character image assets</value></data>
+<data name="TachieNotReceivedLead" xml:space="preserve"><value>The following image asset for the character "{0}" did not arrive in time.</value></data>
+<data name="TachieNotReceivedNote" xml:space="preserve"><value>The character was created, but its image will not be shown.
+Check your network; reopening the project may show it.</value></data>
+<data name="CharacterSettingsUnreadable" xml:space="preserve"><value>Could not read the character settings.</value></data>
+<data name="CharacterListUnavailable" xml:space="preserve"><value>Could not get YMM4's character list. ({0})</value></data>
+<data name="CharacterAddFailed" xml:space="preserve"><value>Could not add the character "{0}".
+{1}
+
+If a character with the same name exists, it will be linked to that one instead.</value></data>
+<data name="CharacterListUnreadable" xml:space="preserve"><value>Could not read the character list.</value></data>
+<data name="CharacterSettingsTypeMissing" xml:space="preserve"><value>The CharacterSettings type was not found.</value></data>
+<data name="CharacterSettingsInstanceMissing" xml:space="preserve"><value>Could not get the CharacterSettings instance.</value></data>
+<data name="CharacterSettingsListMissing" xml:space="preserve"><value>CharacterSettings.Characters was not found.</value></data>
+<data name="MediaNotReceivedAddedLead" xml:space="preserve"><value>The following file used by an item {0} added did not arrive, so the item could not be added.</value></data>
+<data name="ResendFromSenderNote" xml:space="preserve"><value>It will be sent again when the sender runs "Sync data".</value></data>
+<data name="ItemNeedsPluginNote" xml:space="preserve"><value>The item could not be added. Install the plugin to show it.</value></data>
+<data name="ItemAddFailedTitle" xml:space="preserve"><value>Could not add the item</value></data>
+<data name="ItemAddFailedDetail" xml:space="preserve"><value>Type: {0}
+{1}</value></data>
+<data name="NoRoomOnLayer" xml:space="preserve"><value>There is no free space around layer {0}, so an item a collaborator added could not be placed.</value></data>
+<data name="SendFailedTitle" xml:space="preserve"><value>Could not send an asset</value></data>
+<data name="SendExtensionBlocked" xml:space="preserve"><value>The following file cannot be sent because its extension is not allowed in the sharing settings.</value></data>
+<data name="AllowInSettingsNote" xml:space="preserve"><value>Allow it in Settings → Files → Shareable extensions.</value></data>
+<data name="SendConfirm" xml:space="preserve"><value>Send the following files?</value></data>
+<data name="SendConfirmTitle" xml:space="preserve"><value>Send files</value></data>
+<data name="ReceiveFailedTitle" xml:space="preserve"><value>Could not receive an asset</value></data>
+<data name="ReceiveExtensionBlocked" xml:space="preserve"><value>The following file cannot be received because its extension is not allowed in the sharing settings.</value></data>
+<data name="LargeFileIncoming" xml:space="preserve"><value>{0} is sending you a large asset file.
+
+File name: {1}
+Size: {2}
+
+Receive it?
+If you choose No, this file will not be received.</value></data>
+<data name="LargeFileTitle" xml:space="preserve"><value>Receive a large asset file</value></data>
+<data name="DiskFullTitle" xml:space="preserve"><value>Not enough free space</value></data>
+<data name="DiskFullLead" xml:space="preserve"><value>The following file was not received because there is not enough free space.</value></data>
+<data name="CorruptedTitle" xml:space="preserve"><value>A file did not arrive correctly</value></data>
+<data name="CorruptedLead" xml:space="preserve"><value>The following file was discarded because its contents did not match the sender's.</value></data>
+<data name="NetHttpStatus" xml:space="preserve"><value>The server returned HTTP {0}.</value></data>
+<data name="NetTls" xml:space="preserve"><value>Could not verify the encrypted connection. Traffic inspection by security software or a proxy may be the cause.</value></data>
+<data name="NetWebSocket" xml:space="preserve"><value>Could not establish the connection ({0}).</value></data>
+<data name="NetTimeout" xml:space="preserve"><value>The server did not respond (timeout).</value></data>
+<data name="NetDns" xml:space="preserve"><value>Could not resolve the server name (DNS). Switching to another DNS (e.g. 1.1.1.1) may fix it.</value></data>
+<data name="NetNoResponse" xml:space="preserve"><value>Could not connect to the server (no response). Security software or a router may be blocking port 443.</value></data>
+<data name="NetRefused" xml:space="preserve"><value>The server refused the connection.</value></data>
+<data name="NetUnreachable" xml:space="preserve"><value>There is no route to the server. Your connection may not support IPv4.</value></data>
+<data name="NetBlocked" xml:space="preserve"><value>The connection was blocked. Check your security software settings.</value></data>
+<data name="NetFailed" xml:space="preserve"><value>Communication failed ({0}).</value></data>
+<data name="MissingHereTitle" xml:space="preserve"><value>Missing plugins or fonts</value></data>
+<data name="MissingThereTitle" xml:space="preserve"><value>Something is missing on the other side</value></data>
+<data name="PeerPluginMissingLead" xml:space="preserve"><value>The following plugin used by {0} is not installed on this PC.</value></data>
+<data name="PluginMissingNote" xml:space="preserve"><value>Items and effects that use it will not be shown on this PC.</value></data>
+<data name="PeerFontMissingLead" xml:space="preserve"><value>The following font used by {0} is not installed on this PC.</value></data>
+<data name="FontMissingNote" xml:space="preserve"><value>A substitute font is used, so it will look different.</value></data>
+<data name="PeerScreenNote" xml:space="preserve"><value>On that participant's screen, it looks different or the item is not shown.</value></data>
+<data name="MyPluginMissingLead" xml:space="preserve"><value>The following plugin you use is not installed on the other participant's PC.</value></data>
+<data name="MyFontMissingLead" xml:space="preserve"><value>The following font you use is not installed on the other participant's PC.</value></data>
+<data name="OwnersFew" xml:space="preserve"><value> ({0})</value></data>
+<data name="OwnersMany" xml:space="preserve"><value> ({0} and {1} more)</value></data>
+<data name="MigratedMessage" xml:space="preserve"><value>Only a few people stayed for a while, so the room moved to a small room.
+The room ID has changed, so get a new invite link before inviting anyone else.</value></data>
+<data name="MigratedTitle" xml:space="preserve"><value>Moved to another room</value></data>
+<data name="ProjectTooLargeTitle" xml:space="preserve"><value>The project is too large</value></data>
+<data name="ProjectTooLargeMessage" xml:space="preserve"><value>Syncing was stopped because the other participant's project is too large.</value></data>
+<data name="Checking" xml:space="preserve"><value>Checking...</value></data>
+<data name="NotPublished" xml:space="preserve"><value>Not released</value></data>
+<data name="FetchFailed" xml:space="preserve"><value>Could not get it</value></data>
+<data name="VoiceFailedTitle" xml:space="preserve"><value>Could not create a voice</value></data>
+<data name="VoiceCharacterMissingLead" xml:space="preserve"><value>The voice could not be created because the following character does not exist on this PC.</value></data>
+<data name="VoiceCharacterMissingNote" xml:space="preserve"><value>Prepare a character with the same name, or accept the shared character.</value></data>
+<data name="VoiceNotSetLead" xml:space="preserve"><value>The voice could not be created because the following character has no voice set.</value></data>
+<data name="VoiceNotSetNote" xml:space="preserve"><value>Choose a voice in the character settings.</value></data>
+<data name="VoiceEngineMismatchLead" xml:space="preserve"><value>The voice could not be created because the following character uses a different kind of voice (voice engine) from the sender's.</value></data>
+<data name="VoiceEngineMismatchNote" xml:space="preserve"><value>Set the character's voice to the same voice engine as the sender's.</value></data>
+<data name="VoiceEngineErrorLead" xml:space="preserve"><value>The voice engine on this PC could not create the voice for the following character.</value></data>
+<data name="VoiceEngineErrorNote" xml:space="preserve"><value>Check that the voice engine is running and that you have agreed to its terms of use.</value></data>
+<data name="VoiceEngineSlowLead" xml:space="preserve"><value>The voice engine for the following character is not responding, so other voices will be created first.</value></data>
+<data name="VoiceEngineSlowNote" xml:space="preserve"><value>Check that the voice engine is running and that no confirmation window is left open.</value></data>
+<data name="PeerDataUnreadableTitle" xml:space="preserve"><value>Could not read the other participant's data</value></data>
+<data name="PeerDataUnreadableMessage" xml:space="preserve"><value>Could not interpret what was received from the other participant.
+Check that you are both using the same version of MultiUserEdit.</value></data>
+</root>
