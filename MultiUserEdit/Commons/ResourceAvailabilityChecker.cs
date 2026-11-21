@@ -9,8 +9,8 @@ namespace MultiUserEdit.Commons
     internal static class ResourceAvailabilityChecker
     {
         private static readonly TimeSpan QuietPeriod = TimeSpan.FromSeconds(1.5);
-        public const string MissingHereTitle = "プラグイン・フォントが見つかりません";
-        public const string MissingThereTitle = "相手の環境にないものがあります";
+        public static string MissingHereTitle => Texts.MissingHereTitle;
+        public static string MissingThereTitle => Texts.MissingThereTitle;
 
         private static readonly HashSet<string> FontPropertyNames =
             new(["Font", "FontName", "FontFamily"], StringComparer.OrdinalIgnoreCase);
@@ -156,23 +156,23 @@ namespace MultiUserEdit.Commons
                 MissingReported?.Invoke(senderId, fonts, plugins);
             }
 
-            var who = senders.Count == 1 ? senders.First() : "共同編集相手";
+            var who = senders.Count == 1 ? senders.First() : Texts.Collaborator;
 
             foreach (var plugin in newPlugins)
             {
                 ErrorNotifier.NotifyList(MissingHereTitle,
-                    $"{who} が使用している以下のプラグインが、この環境にありません。",
+                    string.Format(Texts.PeerPluginMissingLead, who),
                     ErrorNotifier.Quote(plugin),
-                    "該当するアイテムや効果は、この環境では表示されません。",
+                    Texts.PluginMissingNote,
                     once: false);
             }
 
             foreach (var font in newFonts)
             {
                 ErrorNotifier.NotifyList(MissingHereTitle,
-                    $"{who} が使用している以下のフォントが、この環境にありません。",
+                    string.Format(Texts.PeerFontMissingLead, who),
                     ErrorNotifier.Quote(font),
-                    "代わりのフォントで表示されるため、見た目が異なります。",
+                    Texts.FontMissingNote,
                     once: false);
             }
         }
@@ -232,13 +232,13 @@ namespace MultiUserEdit.Commons
                 reportedPluginOwners.Clear();
             }
 
-            const string note = "その参加者の画面では、表示が異なるか、アイテムが表示されていません。";
+            var note = Texts.PeerScreenNote;
 
             foreach (var line in pluginLines)
-                ErrorNotifier.NotifyList(MissingThereTitle, "あなたが使用している以下のプラグインが、相手の環境にありません。", line, note, once: false);
+                ErrorNotifier.NotifyList(MissingThereTitle, Texts.MyPluginMissingLead, line, note, once: false);
 
             foreach (var line in fontLines)
-                ErrorNotifier.NotifyList(MissingThereTitle, "あなたが使用している以下のフォントが、相手の環境にありません。", line, note, once: false);
+                ErrorNotifier.NotifyList(MissingThereTitle, Texts.MyFontMissingLead, line, note, once: false);
         }
 
         private static List<string> BuildLines(Dictionary<string, SortedSet<string>> source, HashSet<string> alreadyTold)
@@ -252,9 +252,8 @@ namespace MultiUserEdit.Commons
                 var who = owners.Count switch
                 {
                     0 => string.Empty,
-                    1 => $"（{owners.First()} さん）",
-                    <= 3 => $"（{string.Join("、", owners)} さん）",
-                    _ => $"（{owners.First()} さん ほか {owners.Count - 1} 人）"
+                    <= 3 => string.Format(Texts.OwnersFew, string.Join(Texts.ListSeparator, owners)),
+                    _ => string.Format(Texts.OwnersMany, owners.First(), owners.Count - 1)
                 };
 
                 lines.Add(ErrorNotifier.Quote(name) + who);

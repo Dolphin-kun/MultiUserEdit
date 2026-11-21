@@ -158,9 +158,9 @@ namespace MultiUserEdit.ViewModels
 
         public bool IsConnected => CurrentSession?.IsConnected ?? false;
 
-        public static string SmallRoomLabel => $"小さい部屋（最大{Networking.SessionClient.SmallRoomLimit}人）";
+        public static string SmallRoomLabel => string.Format(Texts.SmallRoomLabel, Networking.SessionClient.SmallRoomLimit);
 
-        public static string LargeRoomLabel => $"大きい部屋（最大{Networking.SessionClient.LargeRoomLimit}人）";
+        public static string LargeRoomLabel => string.Format(Texts.LargeRoomLabel, Networking.SessionClient.LargeRoomLimit);
 
         public bool IsLargeRoomSelected
         {

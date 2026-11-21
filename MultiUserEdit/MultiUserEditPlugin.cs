@@ -9,9 +9,8 @@ namespace MultiUserEdit
     [PluginDetails(AuthorName = "いるかぁぁ", ContentId = "nc505669")]
     public class MultiUserEditPlugin : IToolPlugin
     {
-        public const string PluginName = "共同編集";
 
-        public string Name => PluginName;
+        public string Name => Texts.PluginName;
         public Type ViewModelType => typeof(MultiUserEditViewModel);
         public Type ViewType => typeof(MultiUserEditView);
 

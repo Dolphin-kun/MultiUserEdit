@@ -139,7 +139,7 @@ namespace MultiUserEdit.Commons
                 if (!string.IsNullOrEmpty(list.Lead)) builder.Append(list.Lead).Append("\n\n");
 
                 builder.Append(string.Join("\n", list.Items.Take(MaxListed)));
-                if (list.Items.Count > MaxListed) builder.Append($"\n（ほか {list.Items.Count - MaxListed} 件）");
+                if (list.Items.Count > MaxListed) builder.Append('\n').Append(string.Format(Texts.MoreItems, list.Items.Count - MaxListed));
 
                 if (!string.IsNullOrEmpty(list.Note)) builder.Append("\n\n").Append(list.Note);
 

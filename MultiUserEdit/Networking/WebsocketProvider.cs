@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Channels;
 using MultiUserEdit.Commons.Events;
 
 namespace MultiUserEdit.Networking
@@ -18,7 +19,6 @@ namespace MultiUserEdit.Networking
         private ClientWebSocket? webSocket;
         private CancellationTokenSource? cts;
         private Task? receiveTask;
-        private readonly SemaphoreSlim sendLock = new(1, 1);
         private readonly SemaphoreSlim connectionLock = new(1, 1);
 
         private int generation;
@@ -63,13 +63,36 @@ namespace MultiUserEdit.Networking
             return new HttpMessageInvoker(handler);
         }
 
-        public WebsocketProvider() : this(Guid.NewGuid().ToString())
+        private static readonly TimeSpan BatchWindow = TimeSpan.FromMilliseconds(50);
+        private const int MaxBatchItems = 256;
+        private const int MaxBatchBytes = 512 * 1024;
+        private const int MaxEnvelopeDepth = 2;
+
+        private readonly bool coalesce;
+
+        private sealed class Outgoing(object data, string? targetId, IReadOnlyList<string>? targetIds, int generation, bool coalescible)
+        {
+            public object Data { get; } = data;
+            public string? TargetId { get; } = targetId;
+            public IReadOnlyList<string>? TargetIds { get; } = targetIds;
+            public int Generation { get; } = generation;
+            public bool Coalescible { get; } = coalescible;
+            public DateTime QueuedAt { get; } = DateTime.UtcNow;
+            public TaskCompletionSource Done { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        }
+
+        private readonly Channel<Outgoing> outgoing =
+            Channel.CreateUnbounded<Outgoing>(new UnboundedChannelOptions { SingleReader = true });
+
+        public WebsocketProvider(bool coalesce = false) : this(Guid.NewGuid().ToString(), coalesce)
         {
         }
 
-        public WebsocketProvider(string userId)
+        public WebsocketProvider(string userId, bool coalesce = false)
         {
             this.userId = userId;
+            this.coalesce = coalesce;
+            _ = Task.Run(WriteLoopAsync);
         }
 
         public async Task ConnectAsync(string url, IReadOnlyDictionary<string, string> headers)
@@ -170,29 +193,168 @@ namespace MultiUserEdit.Networking
 
         public Task SendAsync(string? targetId, object data) => SendCoreAsync(data, targetId, null);
 
-        private readonly ArrayBufferWriter<byte> sendBuffer = new(8192);
-
-        private async Task SendCoreAsync(object data, string? targetId, IReadOnlyList<string>? targetIds)
+        private Task SendCoreAsync(object data, string? targetId, IReadOnlyList<string>? targetIds)
         {
-            if (webSocket?.State != WebSocketState.Open) return;
+            if (webSocket?.State != WebSocketState.Open) return Task.CompletedTask;
 
-            await sendLock.WaitAsync();
-            try
+            var item = new Outgoing(data, targetId, targetIds, Volatile.Read(ref generation), coalesce && IsCoalescible(data));
+            return outgoing.Writer.TryWrite(item) ? item.Done.Task : Task.CompletedTask;
+        }
+
+        private static bool IsCoalescible(object data) =>
+            data is EditEvent and not (UserLeftEvent or FileTransferStartEvent or FileChunkEvent or SyncScenesChunkEvent);
+
+        private static bool SameRoute(Outgoing a, Outgoing b)
+        {
+            if (a.TargetId != b.TargetId) return false;
+            if (a.TargetIds == null || b.TargetIds == null) return a.TargetIds == null && b.TargetIds == null;
+
+            return a.TargetIds.SequenceEqual(b.TargetIds);
+        }
+
+        private async Task WriteLoopAsync()
+        {
+            var reader = outgoing.Reader;
+            var batch = new List<Outgoing>();
+
+            while (await reader.WaitToReadAsync())
             {
-                var socket = webSocket;
-                if (socket?.State != WebSocketState.Open) return;
+                if (!reader.TryRead(out var first)) continue;
 
-                sendBuffer.ResetWrittenCount();
-                WritePayload(sendBuffer, data, targetId, targetIds);
+                batch.Clear();
+                batch.Add(first);
 
-                await socket.SendAsync(sendBuffer.WrittenMemory, WebSocketMessageType.Text, true, CancellationToken.None);
+                if (first.Coalescible)
+                {
+                    var wait = BatchWindow - (DateTime.UtcNow - first.QueuedAt);
+                    if (wait > TimeSpan.Zero) await Task.Delay(wait);
+
+                    while (batch.Count < MaxBatchItems
+                           && reader.TryPeek(out var next)
+                           && next.Coalescible
+                           && next.Generation == first.Generation
+                           && SameRoute(first, next)
+                           && reader.TryRead(out next))
+                    {
+                        batch.Add(next);
+                    }
+                }
+
+                try
+                {
+                    await WriteAsync(batch);
+                }
+                catch (WebSocketException) { }
+                catch (ObjectDisposedException) { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[WebsocketProvider] send failed: {ex.Message}");
+                }
+                finally
+                {
+                    foreach (var item in batch) item.Done.TrySetResult();
+                }
             }
-            catch (WebSocketException) { }
-            catch (ObjectDisposedException) { }
-            finally
+        }
+
+        private async Task WriteAsync(List<Outgoing> batch)
+        {
+            var first = batch[0];
+            if (first.Generation != Volatile.Read(ref generation)) return;
+
+            var socket = webSocket;
+            if (socket?.State != WebSocketState.Open) return;
+
+            var (edits, cursor) = Condense(batch);
+
+            var payloads = new List<byte[]>(edits.Count);
+            foreach (var item in edits) payloads.Add(Serialize(item.Data, item.TargetId, item.TargetIds));
+
+            var start = 0;
+            while (start < payloads.Count)
             {
-                sendLock.Release();
+                var end = start;
+                var size = 0;
+                while (end < payloads.Count && (end == start || size + payloads[end].Length <= MaxBatchBytes))
+                {
+                    size += payloads[end].Length;
+                    end++;
+                }
+
+                var message = end - start == 1 ? payloads[start] : BuildBatch(first, payloads, start, end);
+                await socket.SendAsync(message, WebSocketMessageType.Text, true, CancellationToken.None);
+                start = end;
             }
+
+            if (cursor != null)
+                await socket.SendAsync(Serialize(cursor.Data, cursor.TargetId, cursor.TargetIds), WebSocketMessageType.Text, true, CancellationToken.None);
+        }
+
+        private static (List<Outgoing> Edits, Outgoing? Cursor) Condense(List<Outgoing> batch)
+        {
+            Outgoing? cursor = null;
+            var seenMoves = new HashSet<Guid>();
+            var kept = new List<Outgoing>(batch.Count);
+
+            for (var i = batch.Count - 1; i >= 0; i--)
+            {
+                var item = batch[i];
+
+                if (item.Data is CursorMovedEvent)
+                {
+                    cursor ??= item;
+                    continue;
+                }
+
+                if (item.Data is ItemMovedEvent moved && !seenMoves.Add(moved.ItemId)) continue;
+
+                kept.Add(item);
+            }
+
+            kept.Reverse();
+            return (kept, cursor);
+        }
+
+        private byte[] Serialize(object data, string? targetId, IReadOnlyList<string>? targetIds)
+        {
+            var buffer = new ArrayBufferWriter<byte>(512);
+            WritePayload(buffer, data, targetId, targetIds);
+            return buffer.WrittenSpan.ToArray();
+        }
+
+        private byte[] BuildBatch(Outgoing route, List<byte[]> payloads, int start, int end)
+        {
+            var buffer = new ArrayBufferWriter<byte>(payloads.Skip(start).Take(end - start).Sum(p => p.Length) + 256);
+            using (var writer = new Utf8JsonWriter(buffer))
+            {
+                writer.WriteStartObject();
+                writer.WriteString("senderId", userId);
+
+                if (route.TargetId == null) writer.WriteNull("targetId");
+                else writer.WriteString("targetId", route.TargetId);
+
+                if (route.TargetIds == null)
+                {
+                    writer.WriteNull("targetIds");
+                }
+                else
+                {
+                    writer.WriteStartArray("targetIds");
+                    foreach (var id in route.TargetIds) writer.WriteStringValue(id);
+                    writer.WriteEndArray();
+                }
+
+                writer.WriteStartObject("data");
+                writer.WriteString("type", "batch");
+                writer.WriteStartArray("items");
+                for (var i = start; i < end; i++) writer.WriteRawValue(payloads[i], skipInputValidation: true);
+                writer.WriteEndArray();
+                writer.WriteEndObject();
+
+                writer.WriteEndObject();
+            }
+
+            return buffer.WrittenSpan.ToArray();
         }
 
         private void WritePayload(IBufferWriter<byte> target, object data, string? targetId, IReadOnlyList<string>? targetIds)
@@ -283,16 +445,7 @@ namespace MultiUserEdit.Networking
                         using var doc = JsonDocument.Parse(json);
                         var root = doc.RootElement;
 
-                        if (IsBatch(root))
-                        {
-                            foreach (var item in root.GetProperty("data").GetProperty("items").EnumerateArray())
-                            {
-                                if (HandlePayload(item, ref roomNotFound, ref roomNotFoundReason, ref roomNotFoundLatestVersion)) return;
-                            }
-                            continue;
-                        }
-
-                        if (HandlePayload(root, ref roomNotFound, ref roomNotFoundReason, ref roomNotFoundLatestVersion)) return;
+                        if (HandleEnvelope(root, 0, ref roomNotFound, ref roomNotFoundReason, ref roomNotFoundLatestVersion)) return;
                     }
                     catch (JsonException ex)
                     {
@@ -322,15 +475,41 @@ namespace MultiUserEdit.Networking
             }
         }
 
-        private static bool IsBatch(JsonElement root) =>
-            root.TryGetProperty("senderId", out var sender)
-            && sender.GetString() == "server"
-            && root.TryGetProperty("data", out var data)
-            && data.ValueKind == JsonValueKind.Object
-            && data.TryGetProperty("type", out var type)
-            && type.GetString() == "batch"
-            && data.TryGetProperty("items", out var items)
-            && items.ValueKind == JsonValueKind.Array;
+        private static bool IsBatch(JsonElement root, out string? sender, out JsonElement items)
+        {
+            sender = null;
+            items = default;
+
+            if (root.ValueKind != JsonValueKind.Object) return false;
+            if (!root.TryGetProperty("senderId", out var senderProp) || senderProp.ValueKind != JsonValueKind.String) return false;
+            if (!root.TryGetProperty("data", out var data) || data.ValueKind != JsonValueKind.Object) return false;
+            if (!data.TryGetProperty("type", out var type) || type.ValueKind != JsonValueKind.String || type.GetString() != "batch") return false;
+            if (!data.TryGetProperty("items", out items) || items.ValueKind != JsonValueKind.Array) return false;
+
+            sender = senderProp.GetString();
+            return sender != null;
+        }
+
+        private bool HandleEnvelope(JsonElement root, int depth, ref bool roomNotFound, ref string? roomNotFoundReason, ref string? roomNotFoundLatestVersion)
+        {
+            if (!IsBatch(root, out var sender, out var items))
+                return HandlePayload(root, ref roomNotFound, ref roomNotFoundReason, ref roomNotFoundLatestVersion);
+
+            if (depth >= MaxEnvelopeDepth) return false;
+
+            foreach (var item in items.EnumerateArray())
+            {
+                if (sender != "server")
+                {
+                    if (!item.TryGetProperty("senderId", out var inner) || inner.GetString() != sender) continue;
+                    if (IsBatch(item, out _, out _)) continue;
+                }
+
+                if (HandleEnvelope(item, depth + 1, ref roomNotFound, ref roomNotFoundReason, ref roomNotFoundLatestVersion)) return true;
+            }
+
+            return false;
+        }
 
         private bool HandlePayload(JsonElement root, ref bool roomNotFound, ref string? roomNotFoundReason, ref string? roomNotFoundLatestVersion)
         {
@@ -404,9 +583,8 @@ namespace MultiUserEdit.Networking
                     System.Diagnostics.Debug.WriteLine($"[WebsocketProvider] Event Deserialize Exception: {ex.Message}");
 
                     Commons.ErrorNotifier.NotifyOnce(
-                        "相手のプラグインを読み取れませんでした",
-                        "相手から受け取った内容を解釈できませんでした。\n"
-                        + "同じバージョンのMultiUserEditを使っているか確認してください。");
+                        Texts.PeerDataUnreadableTitle,
+                        Texts.PeerDataUnreadableMessage);
                 }
             }
 

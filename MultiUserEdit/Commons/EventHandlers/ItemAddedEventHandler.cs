@@ -64,10 +64,10 @@ namespace MultiUserEdit.Commons.EventHandlers
                     foreach (var name in missingFiles)
                     {
                         ErrorNotifier.NotifyList(
-                            "動画・音声ファイルを受信できませんでした",
-                            $"{viewModel.GetUserName(editEvent.ExecutorId)} が追加したアイテムで使われている以下のファイルが届かなかったため、アイテムを追加できませんでした。",
+                            Texts.MediaNotReceivedTitle,
+                            string.Format(Texts.MediaNotReceivedAddedLead, viewModel.GetUserName(editEvent.ExecutorId)),
                             ErrorNotifier.Quote(name),
-                            "送信側で「データを同期する」を実行すると、もう一度送信されます。");
+                            Texts.ResendFromSenderNote);
                     }
                     return;
                 }
@@ -102,15 +102,15 @@ namespace MultiUserEdit.Commons.EventHandlers
                 {
                     ErrorNotifier.NotifyList(
                         ResourceAvailabilityChecker.MissingHereTitle,
-                        $"{viewModel.GetUserName(editEvent.ExecutorId)} が使用している以下のプラグインが、この環境にありません。",
+                        string.Format(Texts.PeerPluginMissingLead, viewModel.GetUserName(editEvent.ExecutorId)),
                         ErrorNotifier.Quote(pluginName),
-                        "該当するアイテムは追加できませんでした。プラグインを導入すると表示できます。");
+                        Texts.ItemNeedsPluginNote);
                     return;
                 }
 
                 ErrorNotifier.NotifyOnce(
-                    "アイテムを追加できませんでした",
-                    $"種類: {editEvent.ItemTypeName}\n{ex.Message}");
+                    Texts.ItemAddFailedTitle,
+                    string.Format(Texts.ItemAddFailedDetail, editEvent.ItemTypeName, ex.Message));
             }
         }
 
@@ -127,8 +127,8 @@ namespace MultiUserEdit.Commons.EventHandlers
             if (!timeline.TryAddItems([item], editEvent.Frame, editEvent.Layer, false))
             {
                 ErrorNotifier.NotifyOnce(
-                    "アイテムを追加できませんでした",
-                    $"レイヤー {editEvent.Layer + 1} 付近に空きが無いため、共同編集相手が追加したアイテムを配置できませんでした。");
+                    Texts.ItemAddFailedTitle,
+                    string.Format(Texts.NoRoomOnLayer, editEvent.Layer + 1));
                 return null;
             }
 

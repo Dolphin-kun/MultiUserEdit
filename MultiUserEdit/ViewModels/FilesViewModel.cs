@@ -29,10 +29,10 @@ namespace MultiUserEdit.ViewModels
                 var uploads = ActiveTransfers.Count(t => t.IsUpload);
                 var downloads = ActiveTransfers.Count - uploads;
 
-                if (uploads > 0 && downloads > 0) return $"送受信中 (送信 {uploads}件 / 受信 {downloads}件)";
-                if (uploads > 0) return $"送信中 ({uploads}件)";
-                if (downloads > 0) return $"受信中 ({downloads}件)";
-                return "送受信はありません";
+                if (uploads > 0 && downloads > 0) return string.Format(Texts.FilesBoth, uploads, downloads);
+                if (uploads > 0) return string.Format(Texts.FilesSending, uploads);
+                if (downloads > 0) return string.Format(Texts.FilesReceiving, downloads);
+                return Texts.FilesIdle;
             }
         }
 
@@ -156,8 +156,8 @@ namespace MultiUserEdit.ViewModels
             if (param is not TransferItemInfo transfer || !transfer.CanCancel) return;
 
             var confirmed = System.Windows.MessageBox.Show(
-                $"「{transfer.DisplayName}」の受け取りを中止します。\nよろしいですか？",
-                "受け取りの中止",
+                string.Format(Texts.CancelReceiveConfirm, transfer.DisplayName),
+                Texts.CancelReceiveTitle,
                 System.Windows.MessageBoxButton.OKCancel) == System.Windows.MessageBoxResult.OK;
 
             if (!confirmed) return;
@@ -185,8 +185,8 @@ namespace MultiUserEdit.ViewModels
         private void ExecuteCleanFolder(object? param)
         {
             var confirmed = System.Windows.MessageBox.Show(
-                "受信した素材ファイルをすべて削除します。\nよろしいですか？",
-                "全消去の確認",
+                Texts.ClearAllConfirm,
+                Texts.ClearAllTitle,
                 System.Windows.MessageBoxButton.OKCancel) == System.Windows.MessageBoxResult.OK;
 
             if (!confirmed) return;

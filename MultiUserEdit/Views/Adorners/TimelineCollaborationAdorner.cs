@@ -221,7 +221,7 @@ namespace MultiUserEdit.Views.Adorners
 
                 drawingContext.DrawLine(pen, new Point(x, 0), new Point(x, RenderSize.Height));
 
-                var label = participant.Status == UserStatus.Away ? $"{participant.UserName} (離席中)" : participant.UserName;
+                var label = participant.Status == UserStatus.Away ? string.Format(Texts.UserAway, participant.UserName) : participant.UserName;
                 drawingContext.DrawText(CreateText(label, 12, brush, dpi), new Point(x + 4, 4));
             }
         }
@@ -372,7 +372,7 @@ namespace MultiUserEdit.Views.Adorners
                     var top = group.Min(r => r.Top);
                     var left = group.Where(r => r.Top <= top + 0.5).Min(r => r.Left);
 
-                    var text = CreateText($"{owner.UserName} が操作中", 11, GetReadableForeground(owner.ThemeColor), dpi);
+                    var text = CreateText(string.Format(Texts.UserOperating, owner.UserName), 11, GetReadableForeground(owner.ThemeColor), dpi);
                     var tagHeight = text.Height + 2;
                     var tagTop = top - tagHeight >= 0 ? top - tagHeight : top;
                     var tag = new Rect(left, tagTop, text.Width + 8, tagHeight);

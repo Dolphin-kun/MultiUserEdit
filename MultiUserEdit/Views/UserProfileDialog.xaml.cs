@@ -62,10 +62,10 @@ namespace MultiUserEdit.Views
 
         private void InitializeHeader()
         {
-            Title = $"{participant.UserName} の情報";
+            Title = string.Format(Texts.UserInfoTitle, participant.UserName);
             UserNameText.Text = participant.UserName;
             ColorSwatch.Fill = new SolidColorBrush(participant.ThemeColor);
-            RoleText.Text = participant.Role == UserRole.Host ? "ホスト" : "ゲスト";
+            RoleText.Text = participant.RoleText;
 
             DescriptionText.Text = ProfileText.ToSingleLine(participant.Description);
             DescriptionText.Visibility = string.IsNullOrWhiteSpace(participant.Description)
@@ -165,8 +165,8 @@ namespace MultiUserEdit.Views
         private void OnKickClick(object sender, RoutedEventArgs e)
         {
             var result = MessageBox.Show(
-                $"「{participant.UserName}」を部屋から退出させますか？",
-                "ユーザーのキック",
+                string.Format(Texts.KickConfirmProfile, participant.UserName),
+                Texts.KickUserTitle,
                 MessageBoxButton.OKCancel);
 
             if (result != MessageBoxResult.OK) return;

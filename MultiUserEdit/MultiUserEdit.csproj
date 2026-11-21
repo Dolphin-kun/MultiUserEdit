@@ -5,7 +5,7 @@
 		<Nullable>enable</Nullable>
 		<UseWPF>true</UseWPF>
 
-		<Version>1.2.4</Version>
+		<Version>1.2.5</Version>
 
 		<!--Pdb内にソースコードのフルパスを含めない-->
 		<RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</RepoRoot>
@@ -34,8 +34,26 @@
 		</Reference>
 	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\YukkuriMovieMaker.Generator\YukkuriMovieMaker.Generator\YukkuriMovieMaker.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<AdditionalFiles Include="**/*.csv" />
+	</ItemGroup>
+
+	<Import Project="..\YukkuriMovieMaker.Generator\YukkuriMovieMaker.Generator.targets" />
+
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="mkdir &quot;$(YMM4DirPath)user\plugin\$(ProjectName)&quot; &gt; NUL 2&gt;&amp;1&#xD;&#xA;copy &quot;$(TargetPath)&quot; &quot;$(YMM4DirPath)user\plugin\$(ProjectName)\&quot;" />
-		<Exec Command="mkdir &quot;$(SubYMM4DirPath)user\plugin\$(ProjectName)&quot; &gt; NUL 2&gt;&amp;1&#xD;&#xA;copy &quot;$(TargetPath)&quot; &quot;$(SubYMM4DirPath)user\plugin\$(ProjectName)\&quot;" />
+		<PropertyGroup>
+			<PluginOutputDir>$(YMM4DirPath)user\plugin\$(ProjectName)\</PluginOutputDir>
+			<SubPluginOutputDir>$(SubYMM4DirPath)user\plugin\$(ProjectName)\</SubPluginOutputDir>
+		</PropertyGroup>
+		<ItemGroup>
+			<SatelliteAssemblyOutput Include="$(TargetDir)**\$(TargetName).resources.dll" />
+		</ItemGroup>
+		<MakeDir Directories="$(PluginOutputDir)" />
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginOutputDir)" ContinueOnError="WarnAndContinue" />
+		<Copy SourceFiles="@(SatelliteAssemblyOutput)" DestinationFiles="@(SatelliteAssemblyOutput->'$(PluginOutputDir)%(RecursiveDir)%(Filename)%(Extension)')" ContinueOnError="WarnAndContinue" />
+		<MakeDir Directories="$(SubPluginOutputDir)" Condition="'$(SubYMM4DirPath)' != ''" />
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SubPluginOutputDir)" ContinueOnError="WarnAndContinue" Condition="'$(SubYMM4DirPath)' != ''" />
+		<Copy SourceFiles="@(SatelliteAssemblyOutput)" DestinationFiles="@(SatelliteAssemblyOutput->'$(SubPluginOutputDir)%(RecursiveDir)%(Filename)%(Extension)')" ContinueOnError="WarnAndContinue" Condition="'$(SubYMM4DirPath)' != ''" />
 	</Target>
 </Project>

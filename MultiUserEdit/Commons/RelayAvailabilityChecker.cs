@@ -1,4 +1,4 @@
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Security.Authentication;
@@ -19,7 +19,7 @@ namespace MultiUserEdit.Commons
 
                 return response.IsSuccessStatusCode
                     ? (true, string.Empty)
-                    : (false, $"サーバーが HTTP {(int)response.StatusCode} を返しました。");
+                    : (false, string.Format(Texts.NetHttpStatus, (int)response.StatusCode));
             }
             catch (Exception ex)
             {
@@ -37,14 +37,14 @@ namespace MultiUserEdit.Commons
                         return DescribeSocketError(socketError.SocketErrorCode);
 
                     case AuthenticationException:
-                        return "暗号化通信の確認に失敗しました。セキュリティソフトの通信検査やプロキシが原因の可能性があります。";
+                        return Texts.NetTls;
 
                     case WebSocketException webSocketError:
-                        return $"接続を確立できませんでした（{webSocketError.WebSocketErrorCode}）。";
+                        return string.Format(Texts.NetWebSocket, webSocketError.WebSocketErrorCode);
 
                     case TaskCanceledException:
                     case TimeoutException:
-                        return "サーバーの応答がありませんでした（タイムアウト）。";
+                        return Texts.NetTimeout;
                 }
             }
 
@@ -54,16 +54,16 @@ namespace MultiUserEdit.Commons
         private static string DescribeSocketError(SocketError error) => error switch
         {
             SocketError.HostNotFound or SocketError.NoData =>
-                "サーバー名を解決できませんでした（DNS）。別の DNS（例: 1.1.1.1）に変えると直ることがあります。",
+                Texts.NetDns,
             SocketError.TimedOut =>
-                "サーバーに接続できませんでした（応答なし）。セキュリティソフトやルーターが 443 番の通信を止めている可能性があります。",
+                Texts.NetNoResponse,
             SocketError.ConnectionRefused =>
-                "サーバーに接続を拒否されました。",
+                Texts.NetRefused,
             SocketError.NetworkUnreachable or SocketError.HostUnreachable =>
-                "サーバーまでの経路がありません。IPv4 で接続できない回線の可能性があります。",
+                Texts.NetUnreachable,
             SocketError.AccessDenied =>
-                "通信がブロックされました。セキュリティソフトの設定を確認してください。",
-            _ => $"通信に失敗しました（{error}）。"
+                Texts.NetBlocked,
+            _ => string.Format(Texts.NetFailed, error)
         };
     }
 }

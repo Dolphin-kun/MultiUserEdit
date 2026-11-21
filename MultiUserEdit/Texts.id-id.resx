@@ -1,0 +1,445 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+<data name="CurrentCulture" xml:space="preserve"><value>id-id</value></data>
+<data name="PluginName" xml:space="preserve"><value>Pengeditan Bersama</value></data>
+<data name="Host" xml:space="preserve"><value>Host</value></data>
+<data name="Guest" xml:space="preserve"><value>Tamu</value></data>
+<data name="Unknown" xml:space="preserve"><value>Tidak diketahui</value></data>
+<data name="DefaultUserName" xml:space="preserve"><value>Pengguna</value></data>
+<data name="Collaborator" xml:space="preserve"><value>Kolaborator</value></data>
+<data name="OtherParticipant" xml:space="preserve"><value>Peserta lain</value></data>
+<data name="ThisUser" xml:space="preserve"><value>Pengguna ini</value></data>
+<data name="Me" xml:space="preserve"><value>Saya</value></data>
+<data name="Honorific" xml:space="preserve"><value>{0}</value></data>
+<data name="ListSeparator" xml:space="preserve"><value>, </value></data>
+<data name="Send" xml:space="preserve"><value>Kirim</value></data>
+<data name="Receive" xml:space="preserve"><value>Terima</value></data>
+<data name="Allowed" xml:space="preserve"><value>Diizinkan</value></data>
+<data name="Restricted" xml:space="preserve"><value>Dibatasi</value></data>
+<data name="On" xml:space="preserve"><value>Aktif</value></data>
+<data name="Off" xml:space="preserve"><value>Nonaktif</value></data>
+<data name="OK" xml:space="preserve"><value>OK</value></data>
+<data name="Apply" xml:space="preserve"><value>Terapkan</value></data>
+<data name="Cancel" xml:space="preserve"><value>Batal</value></data>
+<data name="Close" xml:space="preserve"><value>Tutup</value></data>
+<data name="Add" xml:space="preserve"><value>Tambah</value></data>
+<data name="Delete" xml:space="preserve"><value>Hapus</value></data>
+<data name="Edit" xml:space="preserve"><value>Edit</value></data>
+<data name="Refresh" xml:space="preserve"><value>Muat ulang</value></data>
+<data name="StatusOnline" xml:space="preserve"><value>Daring</value></data>
+<data name="StatusAway" xml:space="preserve"><value>Sedang pergi</value></data>
+<data name="StatusDisconnected" xml:space="preserve"><value>Terputus</value></data>
+<data name="StatusOffline" xml:space="preserve"><value>Luring</value></data>
+<data name="UserAway" xml:space="preserve"><value>{0} (Sedang pergi)</value></data>
+<data name="UserOperating" xml:space="preserve"><value>{0} sedang mengedit</value></data>
+<data name="Back" xml:space="preserve"><value>Kembali</value></data>
+<data name="Settings" xml:space="preserve"><value>Pengaturan</value></data>
+<data name="Home" xml:space="preserve"><value>Beranda</value></data>
+<data name="Rules" xml:space="preserve"><value>Aturan</value></data>
+<data name="Files" xml:space="preserve"><value>File</value></data>
+<data name="Profile" xml:space="preserve"><value>Profil</value></data>
+<data name="Display" xml:space="preserve"><value>Tampilan</value></data>
+<data name="Integration" xml:space="preserve"><value>Integrasi</value></data>
+<data name="About" xml:space="preserve"><value>Tentang</value></data>
+<data name="Connected" xml:space="preserve"><value>Terhubung</value></data>
+<data name="NotConnected" xml:space="preserve"><value>Tidak terhubung</value></data>
+<data name="DivergenceHint" xml:space="preserve"><value>Jika ragu, lakukan sinkronisasi. Perubahan Anda yang belum terkirim akan hilang.</value></data>
+<data name="SyncData" xml:space="preserve"><value>Sinkronkan data</value></data>
+<data name="SyncDataAction" xml:space="preserve"><value>Sinkronkan data</value></data>
+<data name="NewVersionPublishedFormat" xml:space="preserve"><value>Versi {0} sudah tersedia</value></data>
+<data name="LatestOnlyPleaseUpdate" xml:space="preserve"><value>Pengeditan bersama hanya dapat digunakan antar plugin versi terbaru. Silakan perbarui.</value></data>
+<data name="OpenUpdatePage" xml:space="preserve"><value>Buka halaman pembaruan</value></data>
+<data name="Room" xml:space="preserve"><value>Ruang</value></data>
+<data name="SmallRoomLabel" xml:space="preserve"><value>Ruang kecil (maks. {0})</value></data>
+<data name="LargeRoomLabel" xml:space="preserve"><value>Ruang besar (maks. {0})</value></data>
+<data name="SmallRoomTip" xml:space="preserve"><value>Untuk sedikit orang. Langsung terhubung.</value></data>
+<data name="LargeRoomTip" xml:space="preserve"><value>Untuk banyak orang. Menggunakan server relai khusus. Jika jumlah orang tetap sedikit untuk beberapa waktu, otomatis pindah ke ruang kecil.</value></data>
+<data name="CreateRoom" xml:space="preserve"><value>Buat ruang</value></data>
+<data name="JoinExistingRoom" xml:space="preserve"><value>Gabung ke ruang yang ada</value></data>
+<data name="JoinFromClipboard" xml:space="preserve"><value>Gabung dari tautan di papan klip</value></data>
+<data name="Join" xml:space="preserve"><value>Gabung</value></data>
+<data name="SyncDataTip" xml:space="preserve"><value>Menyamakan kembali isi timeline dengan milik host</value></data>
+<data name="Disconnect" xml:space="preserve"><value>Putuskan</value></data>
+<data name="CopyId" xml:space="preserve"><value>Salin ID</value></data>
+<data name="CopyInviteLink" xml:space="preserve"><value>Salin tautan undangan</value></data>
+<data name="ParticipantList" xml:space="preserve"><value>Daftar peserta</value></data>
+<data name="ParticipantCount" xml:space="preserve"><value>({0} orang)</value></data>
+<data name="UserColor" xml:space="preserve"><value>Warna pengguna</value></data>
+<data name="OpenUserInfo" xml:space="preserve"><value>Buka info pengguna</value></data>
+<data name="CharacterImport" xml:space="preserve"><value>Impor karakter</value></data>
+<data name="NewCharacterAdded" xml:space="preserve"><value>Karakter baru telah ditambahkan</value></data>
+<data name="LinkToExisting" xml:space="preserve"><value>Tautkan ke karakter yang ada</value></data>
+<data name="ImportAsNew" xml:space="preserve"><value>Impor sebagai karakter baru</value></data>
+<data name="ImportAsNewHint" xml:space="preserve"><value>Menambahkan salinan persis pengaturan pengirim. Materi yang dibagikan akan digunakan.</value></data>
+<data name="FromOwner" xml:space="preserve"><value>(dari {0})</value></data>
+<data name="CannotCreateCharacter" xml:space="preserve"><value>Pengaturan karakter tidak dapat diperoleh dari pengirim, jadi karakter baru tidak dapat dibuat.</value></data>
+<data name="CharacterName" xml:space="preserve"><value>Nama karakter</value></data>
+<data name="SameNameExists" xml:space="preserve"><value>Karakter dengan nama yang sama sudah ada.</value></data>
+<data name="FileTransfers" xml:space="preserve"><value>Kelola file terkirim dan diterima</value></data>
+<data name="ToggleTransferList" xml:space="preserve"><value>Buka/tutup daftar file yang sedang ditransfer</value></data>
+<data name="CancelReceive" xml:space="preserve"><value>Hentikan penerimaan</value></data>
+<data name="OpenSaveFolder" xml:space="preserve"><value>Buka folder penyimpanan</value></data>
+<data name="ClearAll" xml:space="preserve"><value>Hapus semua</value></data>
+<data name="ColumnType" xml:space="preserve"><value>Jenis</value></data>
+<data name="ColumnSender" xml:space="preserve"><value>Pengirim</value></data>
+<data name="ColumnFileName" xml:space="preserve"><value>Nama file</value></data>
+<data name="ColumnSize" xml:space="preserve"><value>Ukuran</value></data>
+<data name="ColumnAction" xml:space="preserve"><value>Aksi</value></data>
+<data name="DeleteFile" xml:space="preserve"><value>Hapus file</value></data>
+<data name="OperationRules" xml:space="preserve"><value>Aturan pengeditan</value></data>
+<data name="OperationRulesDescription" xml:space="preserve"><value>Tentukan tindakan yang diizinkan bagi peserta. Untuk mengubahnya per orang, atur dari daftar peserta di Beranda.</value></data>
+<data name="Preset" xml:space="preserve"><value>Preset</value></data>
+<data name="FullEdit" xml:space="preserve"><value>Edit penuh</value></data>
+<data name="StandardEdit" xml:space="preserve"><value>Edit standar</value></data>
+<data name="ReadOnly" xml:space="preserve"><value>Hanya lihat</value></data>
+<data name="LiveMirror" xml:space="preserve"><value>Pencerminan langsung</value></data>
+<data name="StandardEditLimitScenes" xml:space="preserve"><value>Edit standar (operasi adegan dibatasi)</value></data>
+<data name="LiveMirrorFollowHost" xml:space="preserve"><value>Pencerminan langsung (hanya lihat + mengikuti host)</value></data>
+<data name="Item" xml:space="preserve"><value>Item</value></data>
+<data name="DeleteOthersItems" xml:space="preserve"><value>Juga dapat menghapus item yang ditambahkan orang lain</value></data>
+<data name="MoveAndResize" xml:space="preserve"><value>Pindah dan ubah durasi</value></data>
+<data name="SceneTimeline" xml:space="preserve"><value>Adegan (timeline)</value></data>
+<data name="Other" xml:space="preserve"><value>Lainnya</value></data>
+<data name="SendMaterialFiles" xml:space="preserve"><value>Kirim file materi</value></data>
+<data name="FollowHostPlayback" xml:space="preserve"><value>Ikuti posisi pemutaran host</value></data>
+<data name="FollowHostPlaybackShort" xml:space="preserve"><value>Ikuti pemutaran host</value></data>
+<data name="ApplyToAll" xml:space="preserve"><value>Terapkan ke semua peserta</value></data>
+<data name="YourRules" xml:space="preserve"><value>Aturan pengeditan Anda</value></data>
+<data name="YourRulesDescription" xml:space="preserve"><value>Tindakan yang diizinkan host untuk Anda.</value></data>
+<data name="PermissionLevel" xml:space="preserve"><value>Tingkat izin</value></data>
+<data name="OthersAddedItems" xml:space="preserve"><value>Item yang ditambahkan orang lain</value></data>
+<data name="RulesAppliedMessage" xml:space="preserve"><value>Aturan telah diterapkan ke semua peserta.</value></data>
+<data name="RulesAppliedTitle" xml:space="preserve"><value>Aturan diterapkan</value></data>
+<data name="UserInfo" xml:space="preserve"><value>Info pengguna</value></data>
+<data name="UserInfoTitle" xml:space="preserve"><value>Info {0}</value></data>
+<data name="EditTime" xml:space="preserve"><value>Waktu edit:</value></data>
+<data name="TotalTime" xml:space="preserve"><value>Total waktu bergabung:</value></data>
+<data name="DisplayName" xml:space="preserve"><value>Nama tampilan</value></data>
+<data name="SelfIntroduction" xml:space="preserve"><value>Tentang saya</value></data>
+<data name="CannotEditOthersProfile" xml:space="preserve"><value>Anda tidak dapat mengedit profil peserta lain.</value></data>
+<data name="Permission" xml:space="preserve"><value>Izin</value></data>
+<data name="PermissionPreset" xml:space="preserve"><value>Preset izin</value></data>
+<data name="FullEditDetail" xml:space="preserve"><value>Edit penuh (semua diizinkan)</value></data>
+<data name="StandardEditDetail" xml:space="preserve"><value>Edit standar (hapus adegan dan sejenisnya dibatasi)</value></data>
+<data name="ReadOnlyDetail" xml:space="preserve"><value>Hanya lihat (tidak bisa mengedit)</value></data>
+<data name="LiveMirrorDetail" xml:space="preserve"><value>Pencerminan langsung (sinkron penuh dengan layar dan pemutaran host)</value></data>
+<data name="CustomizeRules" xml:space="preserve"><value>Sesuaikan aturan</value></data>
+<data name="AllowAddItems" xml:space="preserve"><value>Izinkan menambah item</value></data>
+<data name="AllowDeleteItems" xml:space="preserve"><value>Izinkan menghapus item</value></data>
+<data name="AllowDeleteOthersItems" xml:space="preserve"><value>Izinkan juga menghapus item yang ditambahkan orang lain</value></data>
+<data name="AllowMoveItems" xml:space="preserve"><value>Izinkan memindah item dan mengubah durasinya</value></data>
+<data name="AllowEditItems" xml:space="preserve"><value>Izinkan mengedit item</value></data>
+<data name="AllowAddScenes" xml:space="preserve"><value>Izinkan menambah adegan (timeline)</value></data>
+<data name="AllowDeleteScenes" xml:space="preserve"><value>Izinkan menghapus adegan (timeline)</value></data>
+<data name="AllowSendFiles" xml:space="preserve"><value>Izinkan mengirim file materi</value></data>
+<data name="AutoFollowHost" xml:space="preserve"><value>Otomatis mengikuti posisi dan tampilan host</value></data>
+<data name="Kick" xml:space="preserve"><value>Keluarkan</value></data>
+<data name="SyncFromThisUser" xml:space="preserve"><value>Sinkronkan ke kondisi orang ini</value></data>
+<data name="KickConfirmProfile" xml:space="preserve"><value>Keluarkan "{0}" dari ruang?</value></data>
+<data name="KickUserTitle" xml:space="preserve"><value>Keluarkan pengguna</value></data>
+<data name="Version" xml:space="preserve"><value>Versi</value></data>
+<data name="CurrentVersion" xml:space="preserve"><value>Versi saat ini:</value></data>
+<data name="LatestVersion" xml:space="preserve"><value>Versi terbaru:</value></data>
+<data name="NewVersionAvailable" xml:space="preserve"><value>Versi baru sudah tersedia.</value></data>
+<data name="OpenDownloadPage" xml:space="preserve"><value>Buka halaman unduhan</value></data>
+<data name="CopyrightTitle" xml:space="preserve"><value>Hak cipta dan ketentuan penggunaan</value></data>
+<data name="CopyrightNotice" xml:space="preserve"><value>Hak cipta dan ketentuan penggunaan materi (gambar, video, audio, dll.) yang ditransfer atau dibagikan menjadi tanggung jawab pengirim. Berhati-hatilah saat mengirim materi berbayar atau materi lain yang dilarang didistribusikan ulang.</value></data>
+<data name="Timeline" xml:space="preserve"><value>Timeline</value></data>
+<data name="ShowOperatorName" xml:space="preserve"><value>Tampilkan nama pada item yang sedang diedit</value></data>
+<data name="ShowOperatorNameHint" xml:space="preserve"><value>Jika dinonaktifkan, item yang sedang diedit peserta lain hanya ditandai dengan warna bingkai.</value></data>
+<data name="FileSharingCache" xml:space="preserve"><value>Berbagi file dan cache</value></data>
+<data name="ReceivedFileStorage" xml:space="preserve"><value>Cara menyimpan file yang diterima</value></data>
+<data name="TemporaryStorage" xml:space="preserve"><value>Simpan sementara selama sesi (dihapus saat keluar)</value></data>
+<data name="TemporaryStorageTip" xml:space="preserve"><value>Menghapus semua materi cache saat YMM4 ditutup</value></data>
+<data name="KeepStorage" xml:space="preserve"><value>Simpan di penyimpanan (pakai cache lagi lain kali)</value></data>
+<data name="KeepStorageTip" xml:space="preserve"><value>Menyimpan ke folder sementara dan memuat dari sana lain kali</value></data>
+<data name="ConfirmLargeReceive" xml:space="preserve"><value>Tanyakan sebelum menerima file materi besar</value></data>
+<data name="ConfirmLargeReceiveTip" xml:space="preserve"><value>Saat file besar dikirim, tanyakan dulu apakah akan diterima</value></data>
+<data name="ConfirmSize" xml:space="preserve"><value>Tanyakan mulai</value></data>
+<data name="MBOrMore" xml:space="preserve"><value>MB atau lebih</value></data>
+<data name="SendLimits" xml:space="preserve"><value>Pengiriman</value></data>
+<data name="ConfirmBeforeSend" xml:space="preserve"><value>Tanyakan sebelum mengirim file materi</value></data>
+<data name="ConfirmBeforeSendTip" xml:space="preserve"><value>Menampilkan konfirmasi sebelum video, gambar, audio, dan file lain dikirim otomatis ke pengguna lain</value></data>
+<data name="ShareableExtensions" xml:space="preserve"><value>Ekstensi yang dapat dibagikan</value></data>
+<data name="SelectAll" xml:space="preserve"><value>Pilih semua</value></data>
+<data name="DeselectAll" xml:space="preserve"><value>Batalkan semua</value></data>
+<data name="ResetToDefault" xml:space="preserve"><value>Kembalikan ke default</value></data>
+<data name="RemoveFormat" xml:space="preserve"><value>Hapus format ini dari daftar</value></data>
+<data name="AddFormatHint" xml:space="preserve"><value>* Format yang tidak ada di daftar (mis. .m2v) dapat ditambahkan di sini. Ekstensi yang tidak diizinkan (seperti .exe dan .bat) diblokir otomatis dan tidak ditransfer.</value></data>
+<data name="WebDeepLink" xml:space="preserve"><value>Tautan dalam web</value></data>
+<data name="WebDeepLinkDescription" xml:space="preserve"><value>Pengaturan protokol untuk membuka YMM4 dan bergabung otomatis dengan sekali klik dari browser. (Didaftarkan otomatis saat mulai)</value></data>
+<data name="CurrentStatus" xml:space="preserve"><value>Status saat ini:</value></data>
+<data name="Registered" xml:space="preserve"><value>Terdaftar (aktif)</value></data>
+<data name="NotRegistered" xml:space="preserve"><value>Belum terdaftar</value></data>
+<data name="Reregister" xml:space="preserve"><value>Daftarkan ulang</value></data>
+<data name="Unregister" xml:space="preserve"><value>Batalkan pendaftaran</value></data>
+<data name="DescriptionHint" xml:space="preserve"><value>Maks. 140 karakter dan 3 baris (kelebihannya digabung otomatis)</value></data>
+<data name="Image" xml:space="preserve"><value>Gambar</value></data>
+<data name="Video" xml:space="preserve"><value>Video</value></data>
+<data name="Audio" xml:space="preserve"><value>Audio</value></data>
+<data name="Ymm4AndOther" xml:space="preserve"><value>YMM4 dan lainnya</value></data>
+<data name="AddedFormats" xml:space="preserve"><value>Format tambahan</value></data>
+<data name="ReceivedDone" xml:space="preserve"><value>Diterima</value></data>
+<data name="SentDone" xml:space="preserve"><value>Terkirim</value></data>
+<data name="SendSkipped" xml:space="preserve"><value>Tidak dikirim karena penerima sudah memilikinya</value></data>
+<data name="PerSecond" xml:space="preserve"><value>{0}/dtk</value></data>
+<data name="RemainingSeconds" xml:space="preserve"><value>Sisa {0:F0} dtk</value></data>
+<data name="RemainingMinutes" xml:space="preserve"><value>Sisa {0:F0} mnt</value></data>
+<data name="RemainingHours" xml:space="preserve"><value>Sisa {0:F1} jam</value></data>
+<data name="FromUser" xml:space="preserve"><value>dari {0}</value></data>
+<data name="TransferBoth" xml:space="preserve"><value>Mengirim {0} / Menerima {1}: {2}</value></data>
+<data name="SendingOne" xml:space="preserve"><value>Mengirim {0}</value></data>
+<data name="SendingMany" xml:space="preserve"><value>Mengirim {0} dan {1} lainnya</value></data>
+<data name="DownloadingOne" xml:space="preserve"><value>Mengunduh {0}</value></data>
+<data name="DownloadingMany" xml:space="preserve"><value>Mengunduh {0} dan {1} lainnya</value></data>
+<data name="FilesBoth" xml:space="preserve"><value>Mentransfer (mengirim {0} / menerima {1})</value></data>
+<data name="FilesSending" xml:space="preserve"><value>Mengirim ({0})</value></data>
+<data name="FilesReceiving" xml:space="preserve"><value>Menerima ({0})</value></data>
+<data name="FilesIdle" xml:space="preserve"><value>Tidak ada transfer</value></data>
+<data name="MoreItems" xml:space="preserve"><value>(dan {0} lainnya)</value></data>
+<data name="CancelReceiveConfirm" xml:space="preserve"><value>Penerimaan "{0}" akan dihentikan.
+Lanjutkan?</value></data>
+<data name="CancelReceiveTitle" xml:space="preserve"><value>Hentikan penerimaan</value></data>
+<data name="ClearAllConfirm" xml:space="preserve"><value>Semua file materi yang diterima akan dihapus.
+Lanjutkan?</value></data>
+<data name="ClearAllTitle" xml:space="preserve"><value>Konfirmasi hapus semua</value></data>
+<data name="CannotChangeItemTitle" xml:space="preserve"><value>Item tidak dapat diubah</value></data>
+<data name="CannotChangeItemMessage" xml:space="preserve"><value>Pengaturan host tidak mengizinkan memindah atau mengedit item di ruang ini.
+Perubahan akan dikembalikan ke kondisi host.</value></data>
+<data name="SyncAllConfirm" xml:space="preserve"><value>Timeline semua peserta akan ditimpa dengan milik Anda.
+Lanjutkan?</value></data>
+<data name="DeepLinkRegistered" xml:space="preserve"><value>Tautan dalam web (ymm4-multi-user-edit://) telah didaftarkan ke Windows.</value></data>
+<data name="RegisterDone" xml:space="preserve"><value>Pendaftaran selesai</value></data>
+<data name="DeepLinkUnregistered" xml:space="preserve"><value>Pendaftaran tautan dalam web (ymm4-multi-user-edit://) telah dibatalkan.</value></data>
+<data name="UnregisterDone" xml:space="preserve"><value>Pembatalan selesai</value></data>
+<data name="KickConfirm" xml:space="preserve"><value>Keluarkan {0} dari ruang?</value></data>
+<data name="KickConfirmTitle" xml:space="preserve"><value>Konfirmasi keluarkan</value></data>
+<data name="SceneUnavailableTitle" xml:space="preserve"><value>Adegan tidak dapat disiapkan</value></data>
+<data name="SceneUnavailableLead" xml:space="preserve"><value>Adegan berikut tidak dapat disiapkan di PC ini.</value></data>
+<data name="SceneUnavailableNote" xml:space="preserve"><value>Isinya tidak akan ditampilkan.</value></data>
+<data name="SyncFromConfirm" xml:space="preserve"><value>Semua item di timeline saat ini akan dihapus dan disinkronkan ke kondisi {0}.
+Lanjutkan?</value></data>
+<data name="PeerSyncedData" xml:space="preserve"><value>{0} menjalankan sinkronisasi data.</value></data>
+<data name="InitialSyncConfirm" xml:space="preserve"><value>Untuk bergabung ke ruang, semua item di timeline saat ini akan dihapus dan disinkronkan ke kondisi host.
+Hapus dan mulai sinkronisasi?</value></data>
+<data name="InitialSyncTitle" xml:space="preserve"><value>Konfirmasi sinkronisasi awal</value></data>
+<data name="SceneDefaultName" xml:space="preserve"><value>Adegan {0}</value></data>
+<data name="MediaNotReceivedTitle" xml:space="preserve"><value>File video/audio tidak dapat diterima</value></data>
+<data name="MediaNotReceivedLead" xml:space="preserve"><value>File berikut yang digunakan item milik {0} tidak sampai, jadi item tidak dapat ditambahkan.</value></data>
+<data name="ResyncToReceiveNote" xml:space="preserve"><value>Jalankan "Sinkronkan data" untuk menerimanya lagi.</value></data>
+<data name="NewVersionLatestOnly" xml:space="preserve"><value>Versi baru ({0}) sudah tersedia.
+Pengeditan bersama hanya dapat digunakan antar plugin versi terbaru.</value></data>
+<data name="NewVersionNextTime" xml:space="preserve"><value>Versi baru ({0}) sudah tersedia.
+Pengeditan bersama hanya dapat digunakan antar plugin versi terbaru, jadi Anda tidak dapat terhubung lain kali sebelum memperbarui.</value></data>
+<data name="OpenUpdatePageQuestion" xml:space="preserve"><value>{0}
+
+Buka halaman pembaruan?</value></data>
+<data name="UpdateRequiredTitle" xml:space="preserve"><value>Plugin perlu diperbarui</value></data>
+<data name="RelayConnectFailed" xml:space="preserve"><value>Tidak dapat terhubung ke server relai untuk ruang besar.
+
+Penyebab: {0}
+
+Ruang kecil memakai server lain, jadi jika hanya yang ini gagal, biasanya penyebabnya jaringan atau perangkat lunak keamanan Anda.
+Sampaikan isi jendela ini kepada host.</value></data>
+<data name="RelayConnectFailedCreate" xml:space="preserve"><value>Tidak dapat terhubung ke server relai untuk ruang besar.
+
+Penyebab: {0}
+
+Tetap buat ruang? (Peserta mungkin juga tidak dapat terhubung)</value></data>
+<data name="RelayUnavailableTitle" xml:space="preserve"><value>Server relai tidak dapat dijangkau</value></data>
+<data name="ConnectionError" xml:space="preserve"><value>Kesalahan koneksi</value></data>
+<data name="HostIsNewer" xml:space="preserve"><value>Koneksi diputus karena versi Anda ({1}) lebih lama dari plugin host ({0}).</value></data>
+<data name="HostIsOlder" xml:space="preserve"><value>Koneksi diputus karena plugin host ({0}) sudah usang.
+Minta host untuk memperbarui plugin.</value></data>
+<data name="ConnectionLostTitle" xml:space="preserve"><value>Koneksi terputus</value></data>
+<data name="ConnectionLostMessage" xml:space="preserve"><value>Koneksi ke server kolaborasi terputus dan tidak dapat dipulihkan.
+Periksa jaringan Anda lalu gabung ke ruang lagi.</value></data>
+<data name="DivergenceWarning" xml:space="preserve"><value>Isi Anda mungkin tidak sama lagi dengan milik {0} (host) selama koneksi terputus.</value></data>
+<data name="OutdatedPlugin" xml:space="preserve"><value>Plugin Anda ({0}) sudah usang dan tidak dapat terhubung ke server kolaborasi.
+Versi terbaru adalah {1}.</value></data>
+<data name="RoomFull" xml:space="preserve"><value>Ruang ini sudah mencapai batas peserta.</value></data>
+<data name="RoomFullAskLarge" xml:space="preserve"><value>Ruang ini sudah mencapai batas peserta.
+Minta host untuk membuat ruang besar.</value></data>
+<data name="RoomFullTitle" xml:space="preserve"><value>Ruang penuh</value></data>
+<data name="RoomExpired" xml:space="preserve"><value>Ruang ini ditutup otomatis karena tidak ada aktivitas selama beberapa waktu.
+Minta host untuk membuat ruang baru.</value></data>
+<data name="RoomHostKeyRejected" xml:space="preserve"><value>Anda tidak dapat terhubung ke ruang ini sebagai host.
+Silakan buat ruang baru.</value></data>
+<data name="RoomNotFound" xml:space="preserve"><value>Ruang tidak ada. Periksa ID ruang.</value></data>
+<data name="KickedMessage" xml:space="preserve"><value>Anda dikeluarkan dari ruang oleh host dan koneksi diputus.</value></data>
+<data name="KickedTitle" xml:space="preserve"><value>Dikeluarkan</value></data>
+<data name="HostNoResponse" xml:space="preserve"><value>Sudah sekitar {1:0} menit sejak koneksi ke {0} terputus dan tidak ada respons.
+YMM4 mungkin tertutup paksa, atau koneksi sedang terputus.
+
+Ruang masih terbuka, jadi Anda dapat menunggu ia kembali.
+Tetap menunggu? (Pilih Tidak untuk memutus koneksi)</value></data>
+<data name="HostNoResponseTitle" xml:space="preserve"><value>Host tidak merespons</value></data>
+<data name="HostDidNotReturn" xml:space="preserve"><value>Koneksi ke host tidak pulih, jadi koneksi akan diputus.</value></data>
+<data name="HostClosedRoom" xml:space="preserve"><value>Host menutup ruang, jadi koneksi diputus.</value></data>
+<data name="KeepTimelineQuestion" xml:space="preserve"><value>{0}
+
+Simpan timeline yang dibuat bersama di proyek ini?
+Ya: simpan dan lanjutkan mengedit.
+Tidak: hapus semua item yang ditambahkan selama pengeditan bersama.</value></data>
+<data name="RoomEndedTitle" xml:space="preserve"><value>Ruang telah berakhir</value></data>
+<data name="SendBlockedAll" xml:space="preserve"><value>Pengaturan host tidak mengizinkan pengiriman file materi di ruang ini.</value></data>
+<data name="SendBlockedVideo" xml:space="preserve"><value>Pengaturan host tidak mengizinkan pengiriman file video di ruang ini.</value></data>
+<data name="SendBlockedImage" xml:space="preserve"><value>Pengaturan host tidak mengizinkan pengiriman file gambar di ruang ini.</value></data>
+<data name="SendBlockedAudio" xml:space="preserve"><value>Pengaturan host tidak mengizinkan pengiriman file audio di ruang ini.</value></data>
+<data name="CannotDeleteItemTitle" xml:space="preserve"><value>Item tidak dapat dihapus</value></data>
+<data name="DeleteOwnOnly" xml:space="preserve"><value>Pengaturan host hanya mengizinkan Anda menghapus item yang Anda tambahkan.
+Item yang dihapus telah dikembalikan.</value></data>
+<data name="DeleteNotAllowed" xml:space="preserve"><value>Pengaturan host tidak mengizinkan penghapusan item di ruang ini.
+Item yang dihapus telah dikembalikan.</value></data>
+<data name="CannotAddItemTitle" xml:space="preserve"><value>Item tidak dapat ditambahkan</value></data>
+<data name="AddNotAllowed" xml:space="preserve"><value>Pengaturan host tidak mengizinkan penambahan item di ruang ini.
+Item yang ditambahkan telah dibatalkan.</value></data>
+<data name="CustomVoiceAsk" xml:space="preserve"><value>Karakter "{0}" menggunakan suara kustom.
+File suara tidak dibagikan, jadi pilih folder suara di PC Anda.
+
+Setelah dipilih sekali, selanjutnya akan diatur otomatis.
+Pilih sekarang? (Anda juga dapat mengubahnya nanti di pengaturan karakter YMM4)</value></data>
+<data name="CustomVoiceTitle" xml:space="preserve"><value>Folder suara kustom</value></data>
+<data name="SelectVoiceFolder" xml:space="preserve"><value>Pilih folder suara untuk "{0}"</value></data>
+<data name="TachieNotReceivedTitle" xml:space="preserve"><value>Materi gambar karakter tidak dapat diterima</value></data>
+<data name="TachieNotReceivedLead" xml:space="preserve"><value>Materi gambar berikut untuk karakter "{0}" tidak sampai tepat waktu.</value></data>
+<data name="TachieNotReceivedNote" xml:space="preserve"><value>Karakter sudah dibuat, tetapi gambarnya tidak akan ditampilkan.
+Periksa jaringan Anda; membuka ulang proyek mungkin akan menampilkannya.</value></data>
+<data name="CharacterSettingsUnreadable" xml:space="preserve"><value>Pengaturan karakter tidak dapat dibaca.</value></data>
+<data name="CharacterListUnavailable" xml:space="preserve"><value>Daftar karakter YMM4 tidak dapat diambil. ({0})</value></data>
+<data name="CharacterAddFailed" xml:space="preserve"><value>Karakter "{0}" tidak dapat ditambahkan.
+{1}
+
+Jika ada karakter dengan nama yang sama, akan ditautkan ke karakter itu.</value></data>
+<data name="CharacterListUnreadable" xml:space="preserve"><value>Daftar karakter tidak dapat dibaca.</value></data>
+<data name="CharacterSettingsTypeMissing" xml:space="preserve"><value>Tipe CharacterSettings tidak ditemukan.</value></data>
+<data name="CharacterSettingsInstanceMissing" xml:space="preserve"><value>Instans CharacterSettings tidak dapat diambil.</value></data>
+<data name="CharacterSettingsListMissing" xml:space="preserve"><value>CharacterSettings.Characters tidak ditemukan.</value></data>
+<data name="MediaNotReceivedAddedLead" xml:space="preserve"><value>File berikut yang digunakan item yang ditambahkan {0} tidak sampai, jadi item tidak dapat ditambahkan.</value></data>
+<data name="ResendFromSenderNote" xml:space="preserve"><value>File akan dikirim lagi saat pengirim menjalankan "Sinkronkan data".</value></data>
+<data name="ItemNeedsPluginNote" xml:space="preserve"><value>Item tidak dapat ditambahkan. Pasang plugin untuk menampilkannya.</value></data>
+<data name="ItemAddFailedTitle" xml:space="preserve"><value>Item gagal ditambahkan</value></data>
+<data name="ItemAddFailedDetail" xml:space="preserve"><value>Jenis: {0}
+{1}</value></data>
+<data name="NoRoomOnLayer" xml:space="preserve"><value>Tidak ada ruang kosong di sekitar layer {0}, jadi item yang ditambahkan kolaborator tidak dapat ditempatkan.</value></data>
+<data name="SendFailedTitle" xml:space="preserve"><value>Materi tidak dapat dikirim</value></data>
+<data name="SendExtensionBlocked" xml:space="preserve"><value>File berikut tidak dapat dikirim karena ekstensinya tidak diizinkan di pengaturan berbagi.</value></data>
+<data name="AllowInSettingsNote" xml:space="preserve"><value>Izinkan di Pengaturan → File → Ekstensi yang dapat dibagikan.</value></data>
+<data name="SendConfirm" xml:space="preserve"><value>Kirim file berikut?</value></data>
+<data name="SendConfirmTitle" xml:space="preserve"><value>Konfirmasi kirim file</value></data>
+<data name="ReceiveFailedTitle" xml:space="preserve"><value>Materi tidak dapat diterima</value></data>
+<data name="ReceiveExtensionBlocked" xml:space="preserve"><value>File berikut tidak dapat diterima karena ekstensinya tidak diizinkan di pengaturan berbagi.</value></data>
+<data name="LargeFileIncoming" xml:space="preserve"><value>{0} sedang mengirim file materi berukuran besar.
+
+Nama file: {1}
+Ukuran: {2}
+
+Terima file ini?
+Jika memilih Tidak, file ini tidak akan diterima.</value></data>
+<data name="LargeFileTitle" xml:space="preserve"><value>Terima file materi besar</value></data>
+<data name="DiskFullTitle" xml:space="preserve"><value>Ruang kosong tidak cukup</value></data>
+<data name="DiskFullLead" xml:space="preserve"><value>File berikut tidak diterima karena ruang kosong tidak cukup.</value></data>
+<data name="CorruptedTitle" xml:space="preserve"><value>File tidak sampai dengan benar</value></data>
+<data name="CorruptedLead" xml:space="preserve"><value>File berikut dibuang karena isinya tidak sama dengan milik pengirim.</value></data>
+<data name="NetHttpStatus" xml:space="preserve"><value>Server mengembalikan HTTP {0}.</value></data>
+<data name="NetTls" xml:space="preserve"><value>Koneksi terenkripsi tidak dapat diverifikasi. Penyebabnya mungkin pemeriksaan lalu lintas oleh perangkat lunak keamanan atau proxy.</value></data>
+<data name="NetWebSocket" xml:space="preserve"><value>Koneksi tidak dapat dibuat ({0}).</value></data>
+<data name="NetTimeout" xml:space="preserve"><value>Server tidak merespons (waktu habis).</value></data>
+<data name="NetDns" xml:space="preserve"><value>Nama server tidak dapat diselesaikan (DNS). Mengganti ke DNS lain (mis. 1.1.1.1) mungkin dapat memperbaikinya.</value></data>
+<data name="NetNoResponse" xml:space="preserve"><value>Tidak dapat terhubung ke server (tidak ada respons). Perangkat lunak keamanan atau router mungkin memblokir port 443.</value></data>
+<data name="NetRefused" xml:space="preserve"><value>Server menolak koneksi.</value></data>
+<data name="NetUnreachable" xml:space="preserve"><value>Tidak ada rute ke server. Koneksi Anda mungkin tidak mendukung IPv4.</value></data>
+<data name="NetBlocked" xml:space="preserve"><value>Koneksi diblokir. Periksa pengaturan perangkat lunak keamanan Anda.</value></data>
+<data name="NetFailed" xml:space="preserve"><value>Komunikasi gagal ({0}).</value></data>
+<data name="MissingHereTitle" xml:space="preserve"><value>Plugin atau font tidak ditemukan</value></data>
+<data name="MissingThereTitle" xml:space="preserve"><value>Ada yang tidak tersedia di pihak lain</value></data>
+<data name="PeerPluginMissingLead" xml:space="preserve"><value>Plugin berikut yang digunakan {0} tidak terpasang di PC ini.</value></data>
+<data name="PluginMissingNote" xml:space="preserve"><value>Item dan efek yang memakainya tidak akan ditampilkan di PC ini.</value></data>
+<data name="PeerFontMissingLead" xml:space="preserve"><value>Font berikut yang digunakan {0} tidak terpasang di PC ini.</value></data>
+<data name="FontMissingNote" xml:space="preserve"><value>Font pengganti digunakan, jadi tampilannya akan berbeda.</value></data>
+<data name="PeerScreenNote" xml:space="preserve"><value>Di layar peserta tersebut, tampilannya berbeda atau item tidak ditampilkan.</value></data>
+<data name="MyPluginMissingLead" xml:space="preserve"><value>Plugin berikut yang Anda gunakan tidak terpasang di PC peserta lain.</value></data>
+<data name="MyFontMissingLead" xml:space="preserve"><value>Font berikut yang Anda gunakan tidak terpasang di PC peserta lain.</value></data>
+<data name="OwnersFew" xml:space="preserve"><value> ({0})</value></data>
+<data name="OwnersMany" xml:space="preserve"><value> ({0} dan {1} lainnya)</value></data>
+<data name="MigratedMessage" xml:space="preserve"><value>Jumlah orang tetap sedikit untuk beberapa waktu, jadi ruang dipindah ke ruang kecil.
+ID ruang telah berubah, jadi ambil tautan undangan baru sebelum mengundang orang lain.</value></data>
+<data name="MigratedTitle" xml:space="preserve"><value>Ruang dipindahkan</value></data>
+<data name="ProjectTooLargeTitle" xml:space="preserve"><value>Proyek terlalu besar</value></data>
+<data name="ProjectTooLargeMessage" xml:space="preserve"><value>Sinkronisasi dihentikan karena proyek peserta lain terlalu besar.</value></data>
+<data name="Checking" xml:space="preserve"><value>Memeriksa...</value></data>
+<data name="NotPublished" xml:space="preserve"><value>Belum dirilis</value></data>
+<data name="FetchFailed" xml:space="preserve"><value>Tidak dapat diambil</value></data>
+<data name="VoiceFailedTitle" xml:space="preserve"><value>Suara tidak dapat dibuat</value></data>
+<data name="VoiceCharacterMissingLead" xml:space="preserve"><value>Suara tidak dapat dibuat karena karakter berikut tidak ada di PC ini.</value></data>
+<data name="VoiceCharacterMissingNote" xml:space="preserve"><value>Siapkan karakter dengan nama yang sama, atau terima karakter yang dibagikan.</value></data>
+<data name="VoiceNotSetLead" xml:space="preserve"><value>Suara tidak dapat dibuat karena karakter berikut belum diatur suaranya.</value></data>
+<data name="VoiceNotSetNote" xml:space="preserve"><value>Pilih suara di pengaturan karakter.</value></data>
+<data name="VoiceEngineMismatchLead" xml:space="preserve"><value>Suara tidak dapat dibuat karena karakter berikut memakai jenis suara (mesin suara) yang berbeda dari pengirim.</value></data>
+<data name="VoiceEngineMismatchNote" xml:space="preserve"><value>Atur suara karakter ke mesin suara yang sama dengan pengirim.</value></data>
+<data name="VoiceEngineErrorLead" xml:space="preserve"><value>Mesin suara di PC ini tidak dapat membuat suara untuk karakter berikut.</value></data>
+<data name="VoiceEngineErrorNote" xml:space="preserve"><value>Pastikan mesin suara sedang berjalan dan Anda telah menyetujui ketentuan penggunaannya.</value></data>
+<data name="VoiceEngineSlowLead" xml:space="preserve"><value>Mesin suara untuk karakter berikut tidak merespons, jadi suara lain akan dibuat lebih dulu.</value></data>
+<data name="VoiceEngineSlowNote" xml:space="preserve"><value>Pastikan mesin suara sedang berjalan dan tidak ada jendela konfirmasi yang masih terbuka.</value></data>
+<data name="PeerDataUnreadableTitle" xml:space="preserve"><value>Data peserta lain tidak dapat dibaca</value></data>
+<data name="PeerDataUnreadableMessage" xml:space="preserve"><value>Isi yang diterima dari peserta lain tidak dapat dipahami.
+Pastikan Anda berdua memakai versi MultiUserEdit yang sama.</value></data>
+</root>

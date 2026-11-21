@@ -10,15 +10,15 @@
         public bool WasTransferred { get; set; } = true;
         public string OwnerName { get; set; } = string.Empty;
 
-        public string DirectionText => IsSent ? "送信" : "受信";
+        public string DirectionText => IsSent ? Texts.Send : Texts.Receive;
 
         public string OwnerText => IsSent
-            ? "自分"
-            : string.IsNullOrEmpty(OwnerName) ? "不明" : OwnerName;
+            ? Texts.Me
+            : string.IsNullOrEmpty(OwnerName) ? Texts.Unknown : OwnerName;
 
         public string StatusText => !IsSent
-            ? "受信済み"
-            : WasTransferred ? "送信済み" : "相手が保有済みのため送信を省略";
+            ? Texts.ReceivedDone
+            : WasTransferred ? Texts.SentDone : Texts.SendSkipped;
 
         public bool CanDelete => !IsSent;
 

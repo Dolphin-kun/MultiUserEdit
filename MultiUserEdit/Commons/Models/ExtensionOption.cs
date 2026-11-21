@@ -5,9 +5,11 @@ namespace MultiUserEdit.Commons.Models
     internal class ExtensionOption(string extension, bool isEnabled) : Bindable
     {
         public string Extension { get; } = extension;
-        public string GroupName { get; } = FileExtensionCatalog.GetGroupName(extension);
+        public FileGroupKind GroupKind { get; } = FileExtensionCatalog.GetKind(extension);
 
-        public bool IsCustom => GroupName == FileExtensionCatalog.CustomGroupName;
+        public string GroupName => FileExtensionCatalog.NameOf(GroupKind);
+
+        public bool IsCustom => GroupKind == FileGroupKind.Custom;
 
         public event Action? Changed;
 
