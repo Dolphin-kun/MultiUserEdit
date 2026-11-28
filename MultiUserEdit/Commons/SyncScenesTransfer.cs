@@ -1,7 +1,6 @@
 ﻿using MultiUserEdit.Commons.Events;
 using MultiUserEdit.Commons.Models;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Text.Json;
 
 namespace MultiUserEdit.Commons
@@ -25,6 +24,8 @@ namespace MultiUserEdit.Commons
         private readonly ConcurrentDictionary<Guid, Pending> pending = new();
 
         private readonly List<EditEvent> held = [];
+        private readonly Dictionary<Guid, (OnlineScenes Scenes, Guid ExecutorId, bool IsManual)> completedBeforeBegin = [];
+        private const int MaxCompletedBeforeBegin = 4;
         private Guid holdingSyncId;
         private DateTime holdingSince;
 
@@ -73,9 +74,36 @@ namespace MultiUserEdit.Commons
             }
         }
 
+        public bool IsHoldingFor(Guid syncId)
+        {
+            lock (held) return holdingSyncId == syncId;
+        }
+
+        public void KeepUntilBegin(Guid syncId, OnlineScenes scenes, Guid executorId, bool isManual)
+        {
+            lock (held)
+            {
+                if (completedBeforeBegin.Count >= MaxCompletedBeforeBegin) completedBeforeBegin.Clear();
+                completedBeforeBegin[syncId] = (scenes, executorId, isManual);
+            }
+        }
+
+        public bool TryTakeCompleted(Guid syncId, out (OnlineScenes Scenes, Guid ExecutorId, bool IsManual) completed)
+        {
+            lock (held) return completedBeforeBegin.Remove(syncId, out completed);
+        }
+
+        public bool IsHolding
+        {
+            get
+            {
+                lock (held) return holdingSyncId != Guid.Empty;
+            }
+        }
+
         public bool Hold(EditEvent editEvent)
         {
-            if (!IsProjectEdit(editEvent)) return false;
+            if (!IsProjectEdit(editEvent) && editEvent is not SequenceMarkerEvent) return false;
 
             lock (held)
             {
@@ -118,9 +146,8 @@ namespace MultiUserEdit.Commons
             {
                 bytes = Convert.FromBase64String(evt.Data);
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] sync chunk decode failed: {ex.Message}");
                 pending.TryRemove(evt.SyncId, out _);
                 return null;
             }
@@ -163,7 +190,7 @@ namespace MultiUserEdit.Commons
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MultiUserEdit] sync assemble failed: {ex.Message}");
+                PluginLog.Error("could not assemble the project received while syncing", ex);
                 return null;
             }
         }
@@ -176,6 +203,7 @@ namespace MultiUserEdit.Commons
             {
                 held.Clear();
                 holdingSyncId = Guid.Empty;
+                completedBeforeBegin.Clear();
             }
         }
 

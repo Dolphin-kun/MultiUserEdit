@@ -465,9 +465,8 @@ namespace MultiUserEdit.Commons
                         .Where(path => fileExtensions.GetFileType(path).HasFlag(YukkuriMovieMaker.Settings.FileType.画像))]
                     : [];
             }
-            catch (Exception ex)
+            catch
             {
-                System.Diagnostics.Debug.WriteLine($"[MultiUserEdit] Sibling image lookup failed: {ex.Message}");
                 images = [];
             }
 

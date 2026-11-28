@@ -13,6 +13,7 @@ namespace MultiUserEdit.Views
         private HomeView? homeView;
         private RulesView? rulesView;
         private FilesView? filesView;
+        private ScriptsView? scriptsView;
         private FilesViewModel? filesViewModel;
 
         private SettingsPages.ProfileSettingsView? profileSettingsView;
@@ -42,6 +43,7 @@ namespace MultiUserEdit.Views
         {
             homeView = new HomeView { DataContext = DataContext };
             rulesView = new RulesView { DataContext = DataContext };
+            scriptsView = new ScriptsView { DataContext = DataContext };
 
             profileSettingsView = new SettingsPages.ProfileSettingsView { DataContext = DataContext };
             fileSettingsView = new SettingsPages.FileSettingsView { DataContext = DataContext };
@@ -73,8 +75,8 @@ namespace MultiUserEdit.Views
         {
             if (DataContext is not MultiUserEditViewModel viewModel) return;
 
-            var parentWindow = Window.GetWindow(this);
-            viewModel.AdornerManager?.AttachAdorner(viewModel, parentWindow);
+            var parentWindow = viewModel.CurrentSession?.MainView ?? Window.GetWindow(this);
+            viewModel.AdornerManager?.AttachAdorner(viewModel);
 
             var previewVm = (VisualTreeHelperExtensions.FindVisualChild<PreviewView>(parentWindow) as FrameworkElement)?.DataContext;
             var isPlayingProp = previewVm?.GetType().GetProperty("IsPlaying");
@@ -154,10 +156,16 @@ namespace MultiUserEdit.Views
             }
         }
 
+        private void OnNavScriptsClick(object sender, RoutedEventArgs e)
+        {
+            if (scriptsView != null)
+                MainContentControl.Content = scriptsView;
+        }
+
         private void OnNavSettingsClick(object sender, RoutedEventArgs e)
         {
             lastMainContent = MainContentControl.Content;
-            lastMainNavButton = new[] { HomeNavButton, RulesNavButton, FilesNavButton }
+            lastMainNavButton = new[] { HomeNavButton, RulesNavButton, FilesNavButton, ScriptsNavButton }
                 .FirstOrDefault(button => button.IsChecked == true);
 
             MainNavPanel.Visibility = Visibility.Collapsed;

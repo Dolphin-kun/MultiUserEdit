@@ -1,7 +1,8 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
+
+using YukkuriMovieMaker.Resources.Icons;
 
 namespace MultiUserEdit.Views.Controls
 {
@@ -9,6 +10,7 @@ namespace MultiUserEdit.Views.Controls
     {
         private bool isExpanded = true;
         private MouseButtonEventHandler? externalClickHandler;
+        private Window? hookedWindow;
 
         public FileTransferBanner()
         {
@@ -35,18 +37,14 @@ namespace MultiUserEdit.Views.Controls
                 }
             };
 
-            if (Application.Current?.MainWindow != null)
-            {
-                Application.Current.MainWindow.PreviewMouseDown += externalClickHandler;
-            }
+            hookedWindow = Window.GetWindow(this);
+            hookedWindow?.PreviewMouseDown += externalClickHandler;
         }
 
         private void FileTransferBanner_Unloaded(object sender, RoutedEventArgs e)
         {
-            if (externalClickHandler != null && Application.Current?.MainWindow != null)
-            {
-                Application.Current.MainWindow.PreviewMouseDown -= externalClickHandler;
-            }
+            if (externalClickHandler != null) hookedWindow?.PreviewMouseDown -= externalClickHandler;
+            hookedWindow = null;
         }
 
         private void OnToggleClick(object sender, RoutedEventArgs e)
@@ -58,9 +56,7 @@ namespace MultiUserEdit.Views.Controls
         {
             isExpanded = expanded;
             DetailsPanel.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
-            ArrowPath.Data = Geometry.Parse(expanded
-                ? "M7.41,15.41L12,10.83L16.59,15.41L18,14L12,8L6,14L7.41,15.41Z"
-                : "M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z");
+            ArrowPath.SetResourceReference(System.Windows.Shapes.Path.DataProperty, expanded ? GeometryKeys.ChevronUp : GeometryKeys.ChevronDown);
         }
     }
 }

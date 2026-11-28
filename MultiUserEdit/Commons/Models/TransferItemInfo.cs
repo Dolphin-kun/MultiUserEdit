@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using System.Linq;
 
 namespace MultiUserEdit.Commons.Models
 {
@@ -24,7 +23,6 @@ namespace MultiUserEdit.Commons.Models
             ? Math.Clamp((double)TransferredBytes / TotalBytes * 100.0, 0.0, 100.0)
             : 0.0;
 
-        public string ProgressText => $"{Progress:F0}%";
 
         public string SizeText => $"{FormatBytes(TransferredBytes)} / {FormatBytes(TotalBytes)}";
 

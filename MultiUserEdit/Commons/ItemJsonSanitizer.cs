@@ -1,6 +1,5 @@
 using Newtonsoft.Json.Linq;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Reflection;
 
 namespace MultiUserEdit.Commons
@@ -28,15 +27,13 @@ namespace MultiUserEdit.Commons
 
                 foreach (var property in removed)
                 {
-                    Debug.WriteLine($"[MultiUserEdit] dropped a value this environment does not know: {property.Name}={property.Value}");
                     property.Remove();
                 }
 
                 return root.ToString(Newtonsoft.Json.Formatting.None);
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] sanitize failed: {ex.Message}");
                 return itemJson;
             }
         }
@@ -90,6 +87,11 @@ namespace MultiUserEdit.Commons
 
         public static string? GetMissingPluginName(Exception exception)
         {
+            for (var inner = exception; inner != null; inner = inner.InnerException)
+            {
+                if (inner is ItemSerializerOptions.DisallowedTypeException) return null;
+            }
+
             var message = exception.ToString();
             const string marker = "Error resolving type specified in JSON '";
 

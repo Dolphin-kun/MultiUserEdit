@@ -2,7 +2,6 @@
 using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -35,33 +34,19 @@ namespace MultiUserEdit.Networking
         public event Action<string?>? UpdateAvailable;
         public event Action<Guid, bool>? PeerDisconnected;
         public event Action<string?>? RoomInfoReceived;
+        public event Action<bool, bool>? KeptRoomInfoReceived;
+        public event Action? SnapshotRequested;
+        public event Action? ResyncRequired;
+
+        private int unackedEdits;
+
+        public bool HasUnacknowledgedEdits => Volatile.Read(ref unackedEdits) > 0;
 
         private const long MaxIncomingMessageBytes = 64L * 1024 * 1024;
 
         private static readonly HttpMessageInvoker NoDelayInvoker = CreateNoDelayInvoker();
 
-        private static HttpMessageInvoker CreateNoDelayInvoker()
-        {
-            var handler = new SocketsHttpHandler
-            {
-                ConnectCallback = async (context, token) =>
-                {
-                    var socket = new Socket(SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
-                    try
-                    {
-                        await socket.ConnectAsync(context.DnsEndPoint, token);
-                        return new NetworkStream(socket, ownsSocket: true);
-                    }
-                    catch
-                    {
-                        socket.Dispose();
-                        throw;
-                    }
-                }
-            };
-
-            return new HttpMessageInvoker(handler);
-        }
+        private static HttpMessageInvoker CreateNoDelayInvoker() => new(HappyEyeballs.CreateHandler());
 
         private static readonly TimeSpan BatchWindow = TimeSpan.FromMilliseconds(50);
         private const int MaxBatchItems = 256;
@@ -103,6 +88,7 @@ namespace MultiUserEdit.Networking
                 await DisconnectCoreAsync();
 
                 var myGeneration = Interlocked.Increment(ref generation);
+                Volatile.Write(ref unackedEdits, 0);
 
                 var socket = new ClientWebSocket();
                 socket.Options.KeepAliveInterval = KeepAliveInterval;
@@ -246,9 +232,8 @@ namespace MultiUserEdit.Networking
                 }
                 catch (WebSocketException) { }
                 catch (ObjectDisposedException) { }
-                catch (Exception ex)
+                catch
                 {
-                    System.Diagnostics.Debug.WriteLine($"[WebsocketProvider] send failed: {ex.Message}");
                 }
                 finally
                 {
@@ -282,6 +267,11 @@ namespace MultiUserEdit.Networking
                 }
 
                 var message = end - start == 1 ? payloads[start] : BuildBatch(first, payloads, start, end);
+                var projectEdits = first.TargetId == null && first.TargetIds == null
+                    ? edits.Skip(start).Take(end - start).Count(item => item.Data is EditEvent edit && Commons.SyncScenesTransfer.IsProjectEdit(edit))
+                    : 0;
+                if (projectEdits > 0) Interlocked.Add(ref unackedEdits, projectEdits);
+
                 await socket.SendAsync(message, WebSocketMessageType.Text, true, CancellationToken.None);
                 start = end;
             }
@@ -434,7 +424,6 @@ namespace MultiUserEdit.Networking
 
                     if (oversized)
                     {
-                        System.Diagnostics.Debug.WriteLine("[WebsocketProvider] Dropped an oversized message");
                         continue;
                     }
 
@@ -447,9 +436,8 @@ namespace MultiUserEdit.Networking
 
                         if (HandleEnvelope(root, 0, ref roomNotFound, ref roomNotFoundReason, ref roomNotFoundLatestVersion)) return;
                     }
-                    catch (JsonException ex)
+                    catch (JsonException)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[WebsocketProvider] JsonException: {ex.Message}");
                     }
                 }
             }
@@ -493,7 +481,11 @@ namespace MultiUserEdit.Networking
         private bool HandleEnvelope(JsonElement root, int depth, ref bool roomNotFound, ref string? roomNotFoundReason, ref string? roomNotFoundLatestVersion)
         {
             if (!IsBatch(root, out var sender, out var items))
-                return HandlePayload(root, ref roomNotFound, ref roomNotFoundReason, ref roomNotFoundLatestVersion);
+            {
+                var stop = HandlePayload(root, ref roomNotFound, ref roomNotFoundReason, ref roomNotFoundLatestVersion);
+                if (depth == 0) NoteSequence(root);
+                return stop;
+            }
 
             if (depth >= MaxEnvelopeDepth) return false;
 
@@ -508,8 +500,23 @@ namespace MultiUserEdit.Networking
                 if (HandleEnvelope(item, depth + 1, ref roomNotFound, ref roomNotFoundReason, ref roomNotFoundLatestVersion)) return true;
             }
 
+            if (depth == 0) NoteSequence(root);
             return false;
         }
+
+        private void NoteSequence(JsonElement root)
+        {
+            if (root.ValueKind == JsonValueKind.Object
+                && root.TryGetProperty("seq", out var seqProp)
+                && seqProp.TryGetInt64(out var seq)
+                && seq > 0)
+            {
+                EventReceived?.Invoke(this, new SequenceMarkerEvent(seq));
+            }
+        }
+
+        private static bool IsReplay(JsonElement root) =>
+            root.TryGetProperty("replay", out var replay) && replay.ValueKind == JsonValueKind.True;
 
         private bool HandlePayload(JsonElement root, ref bool roomNotFound, ref string? roomNotFoundReason, ref string? roomNotFoundLatestVersion)
         {
@@ -518,7 +525,8 @@ namespace MultiUserEdit.Networking
 
             var senderId = senderIdProp.GetString() ?? "unknown";
 
-            if (senderId == userId) return false;
+            var isReplay = IsReplay(root);
+            if (senderId == userId && !isReplay) return false;
 
             var dataJson = dataProp.GetRawText();
 
@@ -549,6 +557,42 @@ namespace MultiUserEdit.Networking
                     RoomInfoReceived?.Invoke(dataProp.TryGetProperty("hostUserId", out var hostProp)
                         ? hostProp.GetString()
                         : null);
+
+                    if (dataProp.TryGetProperty("persistent", out var persistentProp) && persistentProp.ValueKind == JsonValueKind.True)
+                    {
+                        var hasSnapshot = dataProp.TryGetProperty("hasSnapshot", out var snapshotProp) && snapshotProp.ValueKind == JsonValueKind.True;
+                        KeptRoomInfoReceived?.Invoke(true, hasSnapshot);
+                    }
+                    return false;
+                }
+                if (senderId == "server" && typeStr == "system:host_changed")
+                {
+                    RoomInfoReceived?.Invoke(dataProp.TryGetProperty("hostUserId", out var changedProp)
+                        ? changedProp.GetString()
+                        : null);
+                    return false;
+                }
+                if (senderId == "server" && typeStr == "system:seq")
+                {
+                    var acknowledged = dataProp.TryGetProperty("count", out var countProp) && countProp.TryGetInt32(out var count) ? count : 0;
+                    if (acknowledged > 0)
+                    {
+                        var remaining = Interlocked.Add(ref unackedEdits, -acknowledged);
+                        if (remaining < 0) Interlocked.CompareExchange(ref unackedEdits, 0, remaining);
+                    }
+
+                    if (dataProp.TryGetProperty("seq", out var ackSeqProp) && ackSeqProp.TryGetInt64(out var ackSeq) && ackSeq > 0)
+                        EventReceived?.Invoke(this, new SequenceMarkerEvent(ackSeq));
+                    return false;
+                }
+                if (senderId == "server" && typeStr == "system:snapshot_request")
+                {
+                    SnapshotRequested?.Invoke();
+                    return false;
+                }
+                if (senderId == "server" && typeStr == "system:resync_required")
+                {
+                    ResyncRequired?.Invoke();
                     return false;
                 }
                 if (senderId == "server" && typeStr == "peer_disconnected")
@@ -570,17 +614,22 @@ namespace MultiUserEdit.Networking
                     var editEvent = JsonSerializer.Deserialize<EditEvent>(dataJson);
                     if (editEvent != null)
                     {
-                        if (Guid.TryParse(senderId, out var executorGuid))
+                        if (senderId == "server")
+                        {
+                            editEvent = editEvent with { ExecutorId = SessionClient.ServerUserId };
+                        }
+                        else if (Guid.TryParse(senderId, out var executorGuid))
                         {
                             editEvent = editEvent with { ExecutorId = executorGuid };
                         }
 
-                        EventReceived?.Invoke(this, editEvent);
+                        EventReceived?.Invoke(this, isReplay ? new ReplayedEvent(editEvent) : editEvent);
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[WebsocketProvider] Event Deserialize Exception: {ex.Message}");
+
+                    if (ex.Message.Contains("discriminator", StringComparison.OrdinalIgnoreCase)) return false;
 
                     Commons.ErrorNotifier.NotifyOnce(
                         Texts.PeerDataUnreadableTitle,

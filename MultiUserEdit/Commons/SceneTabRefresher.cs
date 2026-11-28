@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
 using YukkuriMovieMaker.UndoRedo;
@@ -29,9 +28,8 @@ namespace MultiUserEdit.Commons
                 undoRedoManager.AddCommand(new Marker());
                 undoRedoManager.Record();
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] scene tab refresh failed: {ex.Message}");
             }
         }
     }

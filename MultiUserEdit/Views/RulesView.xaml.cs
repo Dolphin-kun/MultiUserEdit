@@ -65,18 +65,18 @@ namespace MultiUserEdit.Views
 
         private void ApplyChecks(UserPermission perm)
         {
-            GlobalAddItemsCheck.IsChecked = perm.CanAddItems;
-            GlobalMoveItemsCheck.IsChecked = perm.CanMoveItems;
-            GlobalDeleteItemsCheck.IsChecked = perm.CanDeleteItems;
-            GlobalDeleteOthersCheck.IsChecked = perm.CanDeleteOthersItems;
-            GlobalEditPropsCheck.IsChecked = perm.CanEditProperties;
-            GlobalAddScenesCheck.IsChecked = perm.CanAddScenes;
-            GlobalDeleteScenesCheck.IsChecked = perm.CanDeleteScenes;
-            GlobalShareFilesCheck.IsChecked = perm.CanShareFiles;
-            GlobalShareVideosCheck.IsChecked = perm.CanShareVideos;
-            GlobalShareImagesCheck.IsChecked = perm.CanShareImages;
-            GlobalShareAudioCheck.IsChecked = perm.CanShareAudio;
-            GlobalSyncSeekCheck.IsChecked = perm.CanSyncSeekPosition;
+            GlobalAddItemsCheck.Value = perm.CanAddItems;
+            GlobalMoveItemsCheck.Value = perm.CanMoveItems;
+            GlobalDeleteItemsCheck.Value = perm.CanDeleteItems;
+            GlobalDeleteOthersCheck.Value = perm.CanDeleteOthersItems;
+            GlobalEditPropsCheck.Value = perm.CanEditProperties;
+            GlobalAddScenesCheck.Value = perm.CanAddScenes;
+            GlobalDeleteScenesCheck.Value = perm.CanDeleteScenes;
+            GlobalShareFilesCheck.Value = perm.CanShareFiles;
+            GlobalShareVideosCheck.Value = perm.CanShareVideos;
+            GlobalShareImagesCheck.Value = perm.CanShareImages;
+            GlobalShareAudioCheck.Value = perm.CanShareAudio;
+            GlobalSyncSeekCheck.Value = perm.CanSyncSeekPosition;
         }
 
         private static string StateText(bool allowed) => allowed ? Texts.Allowed : Texts.Restricted;
@@ -128,18 +128,18 @@ namespace MultiUserEdit.Views
             var newPerm = new UserPermission
             {
                 Level = SelectedLevel(),
-                CanAddItems = GlobalAddItemsCheck.IsChecked == true,
-                CanMoveItems = GlobalMoveItemsCheck.IsChecked == true,
-                CanDeleteItems = GlobalDeleteItemsCheck.IsChecked == true,
-                CanDeleteOthersItems = GlobalDeleteOthersCheck.IsChecked == true,
-                CanEditProperties = GlobalEditPropsCheck.IsChecked == true,
-                CanAddScenes = GlobalAddScenesCheck.IsChecked == true,
-                CanDeleteScenes = GlobalDeleteScenesCheck.IsChecked == true,
-                CanShareFiles = GlobalShareFilesCheck.IsChecked == true,
-                CanShareVideos = GlobalShareVideosCheck.IsChecked == true,
-                CanShareImages = GlobalShareImagesCheck.IsChecked == true,
-                CanShareAudio = GlobalShareAudioCheck.IsChecked == true,
-                CanSyncSeekPosition = GlobalSyncSeekCheck.IsChecked == true
+                CanAddItems = GlobalAddItemsCheck.Value,
+                CanMoveItems = GlobalMoveItemsCheck.Value,
+                CanDeleteItems = GlobalDeleteItemsCheck.Value,
+                CanDeleteOthersItems = GlobalDeleteOthersCheck.Value,
+                CanEditProperties = GlobalEditPropsCheck.Value,
+                CanAddScenes = GlobalAddScenesCheck.Value,
+                CanDeleteScenes = GlobalDeleteScenesCheck.Value,
+                CanShareFiles = GlobalShareFilesCheck.Value,
+                CanShareVideos = GlobalShareVideosCheck.Value,
+                CanShareImages = GlobalShareImagesCheck.Value,
+                CanShareAudio = GlobalShareAudioCheck.Value,
+                CanSyncSeekPosition = GlobalSyncSeekCheck.Value
             };
 
             viewModel.UpdateGlobalPermission(newPerm);

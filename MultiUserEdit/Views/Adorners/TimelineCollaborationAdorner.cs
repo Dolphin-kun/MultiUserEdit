@@ -150,9 +150,8 @@ namespace MultiUserEdit.Views.Adorners
                 zoomSubscription = timelineViewModel.TimelineZoom.Subscribe(new ChangeObserver<double>(InvalidateVisual));
                 viewportSubscription = timelineViewModel.Viewport.Subscribe(new ChangeObserver<Rect>(InvalidateVisual));
             }
-            catch (Exception ex)
+            catch
             {
-                System.Diagnostics.Debug.WriteLine($"[MultiUserEdit] Viewport subscribe failed: {ex.Message}");
             }
         }
 

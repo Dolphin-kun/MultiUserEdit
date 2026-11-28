@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Reflection;
 using YukkuriMovieMaker.Project;
 
@@ -31,7 +30,6 @@ namespace MultiUserEdit.Commons
             catch (Exception ex)
             {
                 UnavailableReason = ex.Message;
-                Debug.WriteLine($"[MultiUserEdit] Failed to read characters: {ex}");
                 return null;
             }
         }
@@ -46,7 +44,7 @@ namespace MultiUserEdit.Commons
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MultiUserEdit] Failed to save character settings: {ex.Message}");
+                PluginLog.Error("could not save the character settings", ex);
             }
         }
 
@@ -83,7 +81,6 @@ namespace MultiUserEdit.Commons
             catch (Exception ex)
             {
                 UnavailableReason = ex.Message;
-                Debug.WriteLine($"[MultiUserEdit] CharacterSettings not available: {ex}");
             }
         }
 

@@ -7,6 +7,7 @@ namespace MultiUserEdit.Commons.EventHandlers
     {
         public void Handle(ItemRemovedEvent editEvent, MultiUserEditViewModel viewModel)
         {
+            RenderReadiness.MarkPresent(editEvent.ItemId);
             var timeline = viewModel.Scenes?.Timelines.ElementAtOrDefault(editEvent.TimelineIndex);
             if (timeline == null) return;
 

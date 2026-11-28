@@ -17,6 +17,7 @@ namespace MultiUserEdit.ViewModels
 
         private static readonly ObservableCollection<TransferItemInfo> NoTransfers = [];
         private ObservableCollection<TransferItemInfo>? subscribedTransfers;
+        private readonly DisposeCollector disposer = new();
 
         public ObservableCollection<TransferItemInfo> ActiveTransfers => subscribedTransfers ?? NoTransfers;
 
@@ -50,6 +51,14 @@ namespace MultiUserEdit.ViewModels
             ResubscribeTransfers();
             owner?.SentFilesChanged += OnFilesChanged;
             owner?.FileTransferCompleted += OnFileReceived;
+            disposer.CollectAction(nameof(owner), () =>
+            {
+                owner?.PropertyChanged -= OnOwnerPropertyChanged;
+                owner?.SentFilesChanged -= OnFilesChanged;
+                owner?.FileTransferCompleted -= OnFileReceived;
+                subscribedTransfers?.CollectionChanged -= OnActiveTransfersChanged;
+                subscribedTransfers = null;
+            });
 
             RefreshCommand = new ActionCommand((_) => true, ExecuteRefresh);
             DeleteFileCommand = new ActionCommand((_) => true, ExecuteDeleteFile);
@@ -62,16 +71,7 @@ namespace MultiUserEdit.ViewModels
 
         public void Dispose()
         {
-            if (owner != null)
-            {
-                owner.PropertyChanged -= OnOwnerPropertyChanged;
-                owner.SentFilesChanged -= OnFilesChanged;
-                owner.FileTransferCompleted -= OnFileReceived;
-            }
-
-            subscribedTransfers?.CollectionChanged -= OnActiveTransfersChanged;
-            subscribedTransfers = null;
-
+            disposer.Dispose();
             GC.SuppressFinalize(this);
         }
 
@@ -87,12 +87,8 @@ namespace MultiUserEdit.ViewModels
             if (ReferenceEquals(current, subscribedTransfers)) return;
 
             subscribedTransfers?.CollectionChanged -= OnActiveTransfersChanged;
-            subscribedTransfers = current;
-            subscribedTransfers?.CollectionChanged += OnActiveTransfersChanged;
-
-            OnPropertyChanged(nameof(ActiveTransfers));
-            OnPropertyChanged(nameof(HasActiveTransfers));
-            OnPropertyChanged(nameof(TransferHeaderText));
+            current?.CollectionChanged += OnActiveTransfersChanged;
+            Set(ref subscribedTransfers, current, nameof(ActiveTransfers), nameof(HasActiveTransfers), nameof(TransferHeaderText));
         }
 
         private void OnFileReceived(string transferId, string path) => OnFilesChanged();
@@ -145,9 +141,8 @@ namespace MultiUserEdit.ViewModels
                     });
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] FilesViewModel Refresh failed: {ex.Message}");
             }
         }
 
@@ -176,9 +171,8 @@ namespace MultiUserEdit.ViewModels
                     Files.Remove(item);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] DeleteFile failed: {ex.Message}");
             }
         }
 

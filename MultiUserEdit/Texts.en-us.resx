@@ -61,6 +61,7 @@
 <data name="CurrentCulture" xml:space="preserve"><value>en-us</value></data>
 <data name="PluginName" xml:space="preserve"><value>Collaborative Editing</value></data>
 <data name="Host" xml:space="preserve"><value>Host</value></data>
+<data name="WebGuest" xml:space="preserve"><value>Guest (Web)</value></data>
 <data name="Guest" xml:space="preserve"><value>Guest</value></data>
 <data name="Unknown" xml:space="preserve"><value>Unknown</value></data>
 <data name="DefaultUserName" xml:space="preserve"><value>User</value></data>
@@ -108,10 +109,13 @@
 <data name="LatestOnlyPleaseUpdate" xml:space="preserve"><value>Collaborative editing works only between the latest plugin versions. Please update.</value></data>
 <data name="OpenUpdatePage" xml:space="preserve"><value>Open update page</value></data>
 <data name="Room" xml:space="preserve"><value>Room</value></data>
-<data name="SmallRoomLabel" xml:space="preserve"><value>Small room (up to {0})</value></data>
-<data name="LargeRoomLabel" xml:space="preserve"><value>Large room (up to {0})</value></data>
-<data name="SmallRoomTip" xml:space="preserve"><value>For a few people. Connects right away.</value></data>
-<data name="LargeRoomTip" xml:space="preserve"><value>For many people. Uses a dedicated relay server. If only a few people stay for a while, the room moves to a small room automatically.</value></data>
+<data name="NormalRoomLabel" xml:space="preserve"><value>Regular room</value></data>
+<data name="NormalRoomTip" xml:space="preserve"><value>A room you can use until the host closes it. Up to 100 people can join.</value></data>
+<data name="KeptRoomLabel" xml:space="preserve"><value>Persistent room</value></data>
+<data name="KeptRoomTip" xml:space="preserve"><value>A room that keeps going even when the host is away. Its contents are saved on the server and deleted 30 days after it was last used. If everyone leaves while it has no items, it is deleted right away. Each person can have up to 3.</value></data>
+<data name="DeleteKeptRoom" xml:space="preserve"><value>Delete persistent room</value></data>
+<data name="DeleteKeptRoomConfirm" xml:space="preserve"><value>This persistent room will be deleted. Its contents saved on the server will be removed and everyone in it will leave. Continue?</value></data>
+<data name="RoomKeptLimit" xml:space="preserve"><value>You can have up to 3 persistent rooms. Join one you no longer use and press "Delete persistent room" before creating a new one. Persistent rooms are deleted automatically 30 days after they were last used.</value></data>
 <data name="CreateRoom" xml:space="preserve"><value>Create room</value></data>
 <data name="JoinExistingRoom" xml:space="preserve"><value>Join an existing room</value></data>
 <data name="JoinFromClipboard" xml:space="preserve"><value>Join from the link in the clipboard</value></data>
@@ -208,7 +212,7 @@
 <data name="FileSharingCache" xml:space="preserve"><value>File sharing and cache</value></data>
 <data name="ReceivedFileStorage" xml:space="preserve"><value>How received files are kept</value></data>
 <data name="TemporaryStorage" xml:space="preserve"><value>Keep only during the session (deleted on exit)</value></data>
-<data name="TemporaryStorageTip" xml:space="preserve"><value>Deletes all cached assets when YMM4 exits</value></data>
+<data name="TemporaryStorageTip" xml:space="preserve"><value>Deletes all cached assets when YMM4 exits. Assets received in a persistent room are kept so you can continue later</value></data>
 <data name="KeepStorage" xml:space="preserve"><value>Keep on disk (reuse the cache next time)</value></data>
 <data name="KeepStorageTip" xml:space="preserve"><value>Saves to a temporary folder and loads from there next time</value></data>
 <data name="ConfirmLargeReceive" xml:space="preserve"><value>Ask before receiving large asset files</value></data>
@@ -218,6 +222,22 @@
 <data name="SendLimits" xml:space="preserve"><value>Sending</value></data>
 <data name="ConfirmBeforeSend" xml:space="preserve"><value>Ask before sending asset files</value></data>
 <data name="ConfirmBeforeSendTip" xml:space="preserve"><value>Shows a confirmation before videos, images, audio and other files are sent to other users automatically</value></data>
+<data name="UseDirectTransfer" xml:space="preserve"><value>Send large files directly between participants (WebRTC)</value></data>
+<data name="UseDirectTransferTip" xml:space="preserve"><value>Sends files of 4 MB or more directly instead of through the relay server. If a direct connection is not possible, the relay server is used instead, but files of 1 GB or more cannot be sent through the relay server. Direct sending shares your IP address with the other participant. Turning this off takes effect immediately; turning it on takes effect the next time you join a room.</value></data>
+<data name="DirectTransferAskTitle" xml:space="preserve"><value>How to send files</value></data>
+<data name="DirectTransferAskMessage" xml:space="preserve"><value>Send large files (4 MB or more) directly between participants?
+
+Yes (recommended): Direct sending (WebRTC)
+Files arrive faster and the relay server is less loaded. Because files are sent directly, the other participant can see your IP address.
+If a direct connection is not possible, the relay server is used automatically (except for files of 1 GB or more).
+
+No: Always use the relay server
+Your IP address is not shared, but large files take longer. Files of 1 GB or more can no longer be sent or received.
+
+You can change this later in Settings &gt; Files.</value></data>
+<data name="LargeFileNoDirectPeer" xml:space="preserve"><value>Files of 1 GB or more are sent only by direct sending. The following asset could not be sent to participants who cannot use direct sending (they may have turned it off or be using an older version).</value></data>
+<data name="LargeFileDirectDisabled" xml:space="preserve"><value>Files of 1 GB or more can only be sent by direct sending. To send the following asset, turn on direct sending in Settings &gt; Files and join the room again.</value></data>
+<data name="LargeFileDirectFailed" xml:space="preserve"><value>Direct sending was tried because the file is 1 GB or more, but it could not be sent because the connection could not be made or was lost.</value></data>
 <data name="ShareableExtensions" xml:space="preserve"><value>Shareable extensions</value></data>
 <data name="SelectAll" xml:space="preserve"><value>Select all</value></data>
 <data name="DeselectAll" xml:space="preserve"><value>Deselect all</value></data>
@@ -293,17 +313,11 @@ Collaborative editing works only between the latest plugin versions, so you will
 
 Open the update page?</value></data>
 <data name="UpdateRequiredTitle" xml:space="preserve"><value>Plugin update required</value></data>
-<data name="RelayConnectFailed" xml:space="preserve"><value>Could not connect to the relay server for large rooms.
+<data name="RelayConnectFailed" xml:space="preserve"><value>Could not connect to the relay server.
 
 Cause: {0}
 
-Small rooms use a different server, so if only this one fails, your network or security software is usually the cause.
-Please tell the host what this window says.</value></data>
-<data name="RelayConnectFailedCreate" xml:space="preserve"><value>Could not connect to the relay server for large rooms.
-
-Cause: {0}
-
-Create the room anyway? (Participants may not be able to connect either)</value></data>
+Your network or security software is usually the cause. Please tell the host what this window says.</value></data>
 <data name="RelayUnavailableTitle" xml:space="preserve"><value>Cannot reach the relay server</value></data>
 <data name="ConnectionError" xml:space="preserve"><value>Connection error</value></data>
 <data name="HostIsNewer" xml:space="preserve"><value>Disconnected because your version ({1}) is older than the host's plugin ({0}).</value></data>
@@ -316,8 +330,6 @@ Check your network and join the room again.</value></data>
 <data name="OutdatedPlugin" xml:space="preserve"><value>Your plugin ({0}) is out of date and cannot connect to the collaboration server.
 The latest version is {1}.</value></data>
 <data name="RoomFull" xml:space="preserve"><value>This room has reached its participant limit.</value></data>
-<data name="RoomFullAskLarge" xml:space="preserve"><value>This room has reached its participant limit.
-Ask the host to create a large room.</value></data>
 <data name="RoomFullTitle" xml:space="preserve"><value>Room is full</value></data>
 <data name="RoomExpired" xml:space="preserve"><value>This room was closed automatically because there was no activity for a while.
 Ask the host to create a new room.</value></data>
@@ -420,9 +432,6 @@ If you choose No, this file will not be received.</value></data>
 <data name="MyFontMissingLead" xml:space="preserve"><value>The following font you use is not installed on the other participant's PC.</value></data>
 <data name="OwnersFew" xml:space="preserve"><value> ({0})</value></data>
 <data name="OwnersMany" xml:space="preserve"><value> ({0} and {1} more)</value></data>
-<data name="MigratedMessage" xml:space="preserve"><value>Only a few people stayed for a while, so the room moved to a small room.
-The room ID has changed, so get a new invite link before inviting anyone else.</value></data>
-<data name="MigratedTitle" xml:space="preserve"><value>Moved to another room</value></data>
 <data name="ProjectTooLargeTitle" xml:space="preserve"><value>The project is too large</value></data>
 <data name="ProjectTooLargeMessage" xml:space="preserve"><value>Syncing was stopped because the other participant's project is too large.</value></data>
 <data name="Checking" xml:space="preserve"><value>Checking...</value></data>
@@ -442,4 +451,12 @@ The room ID has changed, so get a new invite link before inviting anyone else.</
 <data name="PeerDataUnreadableTitle" xml:space="preserve"><value>Could not read the other participant's data</value></data>
 <data name="PeerDataUnreadableMessage" xml:space="preserve"><value>Could not interpret what was received from the other participant.
 Check that you are both using the same version of MultiUserEdit.</value></data>
+<data name="Scripts" xml:space="preserve"><value>Scripts</value></data>
+<data name="ScriptAddToTimeline" xml:space="preserve"><value>Add to timeline</value></data>
+<data name="ScriptDelete" xml:space="preserve"><value>Delete</value></data>
+<data name="ScriptCharacterMissing" xml:space="preserve"><value>The character "{0}" is not set up in YMM4 on this PC. Check the character settings.</value></data>
+<data name="ScriptGenerateFailed" xml:space="preserve"><value>Could not add the voice item. YMM4 may be busy with another task. Please wait a moment and try again.</value></data>
+<data name="RoomIdentityRejected" xml:space="preserve"><value>Could not join because another connection with the same user is already in the room. Please wait a moment and try again.</value></data>
+<data name="RoomRateLimited" xml:space="preserve"><value>Too many rooms were created in a short time. Please wait a while and try again.</value></data>
+<data name="RoomJoinRateLimited" xml:space="preserve"><value>Too many join attempts in a short time. Please wait a while and try again.</value></data>
 </root>

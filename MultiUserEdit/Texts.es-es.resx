@@ -61,6 +61,7 @@
 <data name="CurrentCulture" xml:space="preserve"><value>es-es</value></data>
 <data name="PluginName" xml:space="preserve"><value>Edición colaborativa</value></data>
 <data name="Host" xml:space="preserve"><value>Anfitrión</value></data>
+<data name="WebGuest" xml:space="preserve"><value>Invitado (Web)</value></data>
 <data name="Guest" xml:space="preserve"><value>Invitado</value></data>
 <data name="Unknown" xml:space="preserve"><value>Desconocido</value></data>
 <data name="DefaultUserName" xml:space="preserve"><value>Usuario</value></data>
@@ -108,10 +109,13 @@
 <data name="LatestOnlyPleaseUpdate" xml:space="preserve"><value>La edición colaborativa solo funciona entre las versiones más recientes del complemento. Actualízalo.</value></data>
 <data name="OpenUpdatePage" xml:space="preserve"><value>Abrir página de actualización</value></data>
 <data name="Room" xml:space="preserve"><value>Sala</value></data>
-<data name="SmallRoomLabel" xml:space="preserve"><value>Sala pequeña (hasta {0})</value></data>
-<data name="LargeRoomLabel" xml:space="preserve"><value>Sala grande (hasta {0})</value></data>
-<data name="SmallRoomTip" xml:space="preserve"><value>Para pocas personas. Se conecta al instante.</value></data>
-<data name="LargeRoomTip" xml:space="preserve"><value>Para muchas personas. Usa un servidor de retransmisión dedicado. Si hay pocas personas durante un tiempo, pasa automáticamente a una sala pequeña.</value></data>
+<data name="NormalRoomLabel" xml:space="preserve"><value>Sala normal</value></data>
+<data name="NormalRoomTip" xml:space="preserve"><value>Una sala que puedes usar hasta que el anfitrión la cierre. Pueden unirse hasta 100 personas.</value></data>
+<data name="KeptRoomLabel" xml:space="preserve"><value>Sala permanente</value></data>
+<data name="KeptRoomTip" xml:space="preserve"><value>Una sala que sigue funcionando aunque el anfitrión no esté. Su contenido se guarda en el servidor y se elimina 30 días después del último uso. Si todos salen sin que haya ningún elemento, se elimina de inmediato. Cada persona puede tener hasta 3.</value></data>
+<data name="DeleteKeptRoom" xml:space="preserve"><value>Eliminar sala permanente</value></data>
+<data name="DeleteKeptRoomConfirm" xml:space="preserve"><value>Se eliminará esta sala permanente. Se borrará su contenido guardado en el servidor y todos los que estén dentro saldrán. ¿Continuar?</value></data>
+<data name="RoomKeptLimit" xml:space="preserve"><value>Puedes tener hasta 3 salas permanentes. Entra en una que ya no uses y pulsa "Eliminar sala permanente" antes de crear otra. Las salas permanentes se eliminan automáticamente 30 días después del último uso.</value></data>
 <data name="CreateRoom" xml:space="preserve"><value>Crear sala</value></data>
 <data name="JoinExistingRoom" xml:space="preserve"><value>Unirse a una sala existente</value></data>
 <data name="JoinFromClipboard" xml:space="preserve"><value>Unirse con el enlace del portapapeles</value></data>
@@ -208,7 +212,7 @@
 <data name="FileSharingCache" xml:space="preserve"><value>Uso compartido de archivos y caché</value></data>
 <data name="ReceivedFileStorage" xml:space="preserve"><value>Cómo se guardan los archivos recibidos</value></data>
 <data name="TemporaryStorage" xml:space="preserve"><value>Guardar solo durante la sesión (se borra al salir)</value></data>
-<data name="TemporaryStorageTip" xml:space="preserve"><value>Borra todos los recursos en caché al cerrar YMM4</value></data>
+<data name="TemporaryStorageTip" xml:space="preserve"><value>Borra todos los recursos en caché al cerrar YMM4. Los recibidos en una sala permanente se conservan para que puedas continuar más tarde</value></data>
 <data name="KeepStorage" xml:space="preserve"><value>Conservar en disco (reutilizar la caché la próxima vez)</value></data>
 <data name="KeepStorageTip" xml:space="preserve"><value>Guarda en una carpeta temporal y carga desde allí la próxima vez</value></data>
 <data name="ConfirmLargeReceive" xml:space="preserve"><value>Preguntar antes de recibir archivos de recursos grandes</value></data>
@@ -218,6 +222,22 @@
 <data name="SendLimits" xml:space="preserve"><value>Envío</value></data>
 <data name="ConfirmBeforeSend" xml:space="preserve"><value>Preguntar antes de enviar archivos de recursos</value></data>
 <data name="ConfirmBeforeSendTip" xml:space="preserve"><value>Muestra una confirmación antes de que se envíen automáticamente vídeos, imágenes, audio y otros archivos a otros usuarios</value></data>
+<data name="UseDirectTransfer" xml:space="preserve"><value>Enviar archivos grandes directamente entre participantes (WebRTC)</value></data>
+<data name="UseDirectTransferTip" xml:space="preserve"><value>Envía directamente los archivos de 4 MB o más sin pasar por el servidor de retransmisión. Si no es posible conectar directamente, se usa el servidor de retransmisión, pero los archivos de 1 GB o más no se pueden enviar por él. El envío directo comparte tu dirección IP con el otro participante. Desactivarlo tiene efecto de inmediato; activarlo tiene efecto la próxima vez que entres en una sala.</value></data>
+<data name="DirectTransferAskTitle" xml:space="preserve"><value>Cómo enviar archivos</value></data>
+<data name="DirectTransferAskMessage" xml:space="preserve"><value>¿Enviar los archivos grandes (4 MB o más) directamente entre participantes?
+
+Sí (recomendado): Envío directo (WebRTC)
+Los archivos llegan más rápido y se reduce la carga del servidor de retransmisión. Como se envían directamente, el otro participante puede ver tu dirección IP.
+Si no es posible conectar directamente, se usa el servidor de retransmisión automáticamente (excepto para archivos de 1 GB o más).
+
+No: Usar siempre el servidor de retransmisión
+Tu dirección IP no se comparte, pero los archivos grandes tardan más. Ya no podrás enviar ni recibir archivos de 1 GB o más.
+
+Puedes cambiarlo más tarde en Ajustes &gt; Archivos.</value></data>
+<data name="LargeFileNoDirectPeer" xml:space="preserve"><value>Los archivos de 1 GB o más solo se envían mediante envío directo. El siguiente recurso no se pudo enviar a los participantes que no pueden usar el envío directo (puede que lo tengan desactivado o usen una versión anterior).</value></data>
+<data name="LargeFileDirectDisabled" xml:space="preserve"><value>Los archivos de 1 GB o más solo se pueden enviar mediante envío directo. Para enviar el siguiente recurso, activa el envío directo en Ajustes &gt; Archivos y vuelve a entrar en la sala.</value></data>
+<data name="LargeFileDirectFailed" xml:space="preserve"><value>Se intentó el envío directo porque el archivo es de 1 GB o más, pero no se pudo enviar porque no se logró la conexión o se perdió.</value></data>
 <data name="ShareableExtensions" xml:space="preserve"><value>Extensiones compartibles</value></data>
 <data name="SelectAll" xml:space="preserve"><value>Seleccionar todo</value></data>
 <data name="DeselectAll" xml:space="preserve"><value>Deseleccionar todo</value></data>
@@ -293,17 +313,11 @@ La edición colaborativa solo funciona entre las versiones más recientes, así 
 
 ¿Abrir la página de actualización?</value></data>
 <data name="UpdateRequiredTitle" xml:space="preserve"><value>Hay que actualizar el complemento</value></data>
-<data name="RelayConnectFailed" xml:space="preserve"><value>No se pudo conectar al servidor de retransmisión de salas grandes.
+<data name="RelayConnectFailed" xml:space="preserve"><value>No se pudo conectar al servidor de retransmisión.
 
 Causa: {0}
 
-Las salas pequeñas usan otro servidor, así que si solo falla este, la causa suele ser tu red o tu software de seguridad.
-Comunica al anfitrión lo que dice esta ventana.</value></data>
-<data name="RelayConnectFailedCreate" xml:space="preserve"><value>No se pudo conectar al servidor de retransmisión de salas grandes.
-
-Causa: {0}
-
-¿Crear la sala de todos modos? (Puede que los participantes tampoco puedan conectarse)</value></data>
+La causa suele ser tu red o tu software de seguridad. Comunica al anfitrión lo que dice esta ventana.</value></data>
 <data name="RelayUnavailableTitle" xml:space="preserve"><value>No se puede acceder al servidor de retransmisión</value></data>
 <data name="ConnectionError" xml:space="preserve"><value>Error de conexión</value></data>
 <data name="HostIsNewer" xml:space="preserve"><value>Se desconectó porque tu versión ({1}) es anterior al complemento del anfitrión ({0}).</value></data>
@@ -316,8 +330,6 @@ Revisa tu red y vuelve a unirte a la sala.</value></data>
 <data name="OutdatedPlugin" xml:space="preserve"><value>Tu complemento ({0}) está desactualizado y no puede conectarse al servidor de colaboración.
 La versión más reciente es {1}.</value></data>
 <data name="RoomFull" xml:space="preserve"><value>Esta sala alcanzó el límite de participantes.</value></data>
-<data name="RoomFullAskLarge" xml:space="preserve"><value>Esta sala alcanzó el límite de participantes.
-Pide al anfitrión que cree una sala grande.</value></data>
 <data name="RoomFullTitle" xml:space="preserve"><value>Sala llena</value></data>
 <data name="RoomExpired" xml:space="preserve"><value>Esta sala se cerró automáticamente por falta de actividad.
 Pide al anfitrión que cree una sala nueva.</value></data>
@@ -420,9 +432,6 @@ Si eliges No, este archivo no se recibirá.</value></data>
 <data name="MyFontMissingLead" xml:space="preserve"><value>La siguiente fuente que usas no está instalada en el equipo del otro participante.</value></data>
 <data name="OwnersFew" xml:space="preserve"><value> ({0})</value></data>
 <data name="OwnersMany" xml:space="preserve"><value> ({0} y {1} más)</value></data>
-<data name="MigratedMessage" xml:space="preserve"><value>Hubo pocas personas durante un tiempo, así que la sala pasó a una sala pequeña.
-El ID de la sala cambió; obtén un enlace de invitación nuevo antes de invitar a alguien más.</value></data>
-<data name="MigratedTitle" xml:space="preserve"><value>Se cambió de sala</value></data>
 <data name="ProjectTooLargeTitle" xml:space="preserve"><value>El proyecto es demasiado grande</value></data>
 <data name="ProjectTooLargeMessage" xml:space="preserve"><value>Se detuvo la sincronización porque el proyecto del otro participante es demasiado grande.</value></data>
 <data name="Checking" xml:space="preserve"><value>Comprobando...</value></data>
@@ -442,4 +451,12 @@ El ID de la sala cambió; obtén un enlace de invitación nuevo antes de invitar
 <data name="PeerDataUnreadableTitle" xml:space="preserve"><value>No se pudieron leer los datos del otro participante</value></data>
 <data name="PeerDataUnreadableMessage" xml:space="preserve"><value>No se pudo interpretar lo recibido del otro participante.
 Comprueba que ambos usáis la misma versión de MultiUserEdit.</value></data>
+<data name="Scripts" xml:space="preserve"><value>Guiones</value></data>
+<data name="ScriptAddToTimeline" xml:space="preserve"><value>Añadir a la línea de tiempo</value></data>
+<data name="ScriptDelete" xml:space="preserve"><value>Eliminar</value></data>
+<data name="ScriptCharacterMissing" xml:space="preserve"><value>El personaje "{0}" no está configurado en YMM4 en este PC. Revisa la configuración de personajes.</value></data>
+<data name="ScriptGenerateFailed" xml:space="preserve"><value>No se pudo añadir el elemento de voz. Es posible que YMM4 esté ocupado con otra tarea. Espera un momento e inténtalo de nuevo.</value></data>
+<data name="RoomIdentityRejected" xml:space="preserve"><value>No se pudo unir porque otra conexión del mismo usuario ya está en la sala. Espera un momento e inténtalo de nuevo.</value></data>
+<data name="RoomRateLimited" xml:space="preserve"><value>Se crearon demasiadas salas en poco tiempo. Espera un rato e inténtalo de nuevo.</value></data>
+<data name="RoomJoinRateLimited" xml:space="preserve"><value>Demasiados intentos de unirse en poco tiempo. Espera un rato e inténtalo de nuevo.</value></data>
 </root>

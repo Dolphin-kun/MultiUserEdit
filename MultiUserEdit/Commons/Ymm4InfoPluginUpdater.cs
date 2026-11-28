@@ -1,6 +1,4 @@
-using System.Net.Http;
-using System.Text.Json;
-using YukkuriMovieMaker.Commons;
+﻿using YukkuriMovieMaker.Commons;
 using YukkuriMovieMaker.Plugin;
 using YukkuriMovieMaker.Plugin.Update;
 
@@ -14,23 +12,9 @@ namespace MultiUserEdit.Commons
 
         public async Task<IPluginUpdateInfo[]> GetUpdatesAsync()
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, $"https://ymm4-info.net/api/plugin/{postId}/version");
-            request.Headers.Add("x-ymm4-plugin-check", "true");
-
-            using var response = await HttpClientFactory.Client.SendAsync(request);
-            if (!response.IsSuccessStatusCode)
+            var published = await UpdateChecker.Instance.GetPublishedVersionAsync();
+            if (published == null || !PluginVersion.TryParse(published, out var version))
                 return [];
-
-            using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-            var root = document.RootElement;
-
-            if (!root.TryGetProperty("success", out var success)
-                || success.ValueKind != JsonValueKind.True
-                || !root.TryGetProperty("version", out var versionText)
-                || !PluginVersion.TryParse(versionText.GetString()?.Trim().TrimStart('v', 'V') ?? string.Empty, out var version))
-            {
-                return [];
-            }
 
             return [new Ymm4InfoPluginUpdateInfo(version)];
         }

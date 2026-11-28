@@ -23,11 +23,6 @@ namespace MultiUserEdit.Commons.Models
             }
         }
 
-        public void SetEnabledSilently(bool value)
-        {
-            if (isEnabled == value) return;
-            isEnabled = value;
-            OnPropertyChanged(nameof(IsEnabled));
-        }
+        public void SetEnabledSilently(bool value) => Set(ref isEnabled, value, nameof(IsEnabled));
     }
 }

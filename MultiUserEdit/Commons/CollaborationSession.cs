@@ -1,37 +1,26 @@
-﻿using MultiUserEdit.Commons.EventHandlers;
 using MultiUserEdit.Commons.Events;
 using MultiUserEdit.Commons.Models;
 using MultiUserEdit.Networking;
 using MultiUserEdit.ViewModels;
-using Newtonsoft.Json;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.IO;
 using System.Security.Cryptography;
-using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using YukkuriMovieMaker.Commons;
 using YukkuriMovieMaker.Plugin;
 using YukkuriMovieMaker.Project;
-using YukkuriMovieMaker.Project.Items;
-using YukkuriMovieMaker.Settings;
 using YukkuriMovieMaker.UndoRedo;
 
 namespace MultiUserEdit.Commons
 {
-    public class CollaborationSession : Bindable, IDisposable
+    public partial class CollaborationSession : Bindable, IDisposable
     {
         private readonly SessionClient sessionClient;
-        private readonly RoomMigration roomMigration;
-        private bool isSwitchingRoom;
-        private string? pendingMigrationRoomId;
         internal SessionClient SessionClient => sessionClient;
 
         private readonly ClientEventDispatcher eventDispatcher;
-        internal ClientEventDispatcher EventDispatcher => eventDispatcher;
 
         private readonly AdornerManager adornerManager;
         public AdornerManager AdornerManager => adornerManager;
@@ -51,6 +40,7 @@ namespace MultiUserEdit.Commons
 
         private bool isConnected;
         private bool disposed;
+        private readonly DisposeCollector disposer = new();
         private bool isApplyingRemoteEvent;
 
         private UndoRedoManager? undoRedoManager;
@@ -99,6 +89,20 @@ namespace MultiUserEdit.Commons
 
         private readonly ConcurrentDictionary<Guid, UserPermission> permissionOverrides = new();
 
+        private readonly ConcurrentDictionary<Guid, byte> webParticipants = new();
+        private readonly ConcurrentDictionary<Guid, byte> directPeers = new();
+        private readonly PeerTransport? peerTransport;
+
+        private readonly PreviewService previewService;
+        private readonly PreviewStreams previewStreams;
+        private readonly Timer renderStatusTimer;
+        private string lastRenderStatus = string.Empty;
+        private long lastRenderStatusAt;
+        private static readonly TimeSpan RenderStatusInterval = TimeSpan.FromSeconds(3);
+        private const long RenderStatusHeartbeatMs = 20000;
+
+        private readonly WebAssistService webAssist;
+
         private static readonly UserPermission FullPermission = UserPermission.CreateFromLevel(PermissionLevel.Full);
 
         private readonly HashSet<Guid> rejectedLocalChanges = [];
@@ -112,137 +116,6 @@ namespace MultiUserEdit.Commons
             set { lock (hostIdLock) verifiedHostIdValue = value; }
         }
 
-        private bool IsFromHost(Guid userId)
-        {
-            if (userId == Guid.Empty) return false;
-
-            var hostId = VerifiedHostId;
-            if (hostId != Guid.Empty) return userId == hostId;
-
-            return Participants.Any(p => p.UserId == userId && p.Role == UserRole.Host);
-        }
-
-        private Guid CurrentHostId
-        {
-            get
-            {
-                var hostId = VerifiedHostId;
-                if (hostId != Guid.Empty) return hostId;
-
-                return Participants.FirstOrDefault(p => p.Role == UserRole.Host)?.UserId ?? Guid.Empty;
-            }
-        }
-
-        private UserRole NormalizeRole(Guid userId, UserRole claimed)
-        {
-            var hostId = VerifiedHostId;
-            if (hostId == Guid.Empty) return claimed;
-
-            return userId == hostId ? UserRole.Host : UserRole.Guest;
-        }
-
-        private UserPermission PermissionOf(Guid userId)
-        {
-            if (IsFromHost(userId)) return FullPermission;
-
-            return permissionOverrides.TryGetValue(userId, out var permission) ? permission : GlobalDefaultPermission;
-        }
-
-        private bool IsAllowedFrom(EditEvent editEvent)
-        {
-            if (!SyncScenesTransfer.IsProjectEdit(editEvent)) return true;
-
-            var permission = PermissionOf(editEvent.ExecutorId);
-
-            return editEvent switch
-            {
-                ItemAddedEvent => permission.CanAddItems,
-                ItemRemovedEvent => permission.CanDeleteItems,
-                ItemMovedEvent => permission.CanMoveItems,
-                ItemUpdatedEvent => permission.CanEditProperties,
-                SceneAddedEvent => permission.CanAddScenes,
-                SceneRemovedEvent => permission.CanDeleteScenes,
-                _ => true
-            };
-        }
-
-        private string? DescribeReceiveBlock(Guid senderId, string fileName)
-        {
-            var hostId = VerifiedHostId;
-            if (hostId == Guid.Empty || senderId == hostId) return null;
-
-            var permission = permissionOverrides.TryGetValue(senderId, out var granted) ? granted : GlobalDefaultPermission;
-            if (!permission.CanShareFiles) return "file sharing is not allowed for this sender";
-
-            var allowed = FileExtensionCatalog.GetKindForFile(fileName) switch
-            {
-                FileGroupKind.Video => permission.CanShareVideos,
-                FileGroupKind.Image => permission.CanShareImages,
-                FileGroupKind.Audio => permission.CanShareAudio,
-                _ => true
-            };
-
-            return allowed ? null : "this file type is not allowed for this sender";
-        }
-
-        private bool IsLocalChangeAllowed(bool isMove) =>
-            !IsConnected || IsHost || (isMove ? CurrentUserPermission.CanMoveItems : CurrentUserPermission.CanEditProperties);
-
-        private void RejectLocalChange(Guid itemId)
-        {
-            lock (rejectedLocalChanges) rejectedLocalChanges.Add(itemId);
-        }
-
-        private void UndoRedoManager_Recorded(object? sender, EventArgs e) => RestoreRejectedChanges();
-
-        private void RestoreRejectedChanges()
-        {
-            Guid[] itemIds;
-            lock (rejectedLocalChanges)
-            {
-                if (rejectedLocalChanges.Count == 0) return;
-
-                itemIds = [.. rejectedLocalChanges];
-                rejectedLocalChanges.Clear();
-            }
-
-            var hostId = CurrentHostId;
-            if (hostId == Guid.Empty || hostId == LocalUserId) return;
-
-            foreach (var itemId in itemIds) RequestItemState(itemId, hostId);
-
-            ErrorNotifier.NotifyOnce(
-                Texts.CannotChangeItemTitle,
-                Texts.CannotChangeItemMessage);
-        }
-
-        private void TrackRemoteSceneChanges()
-        {
-            if (Scenes == null) return;
-
-            var current = Scenes.Timelines.ToList();
-
-            if (activeViewModel != null)
-            {
-                foreach (var timeline in current)
-                {
-                    if (!scenesSnapshot.Contains(timeline)) timelineSyncManager.RegisterTimeline(timeline, activeViewModel);
-                }
-            }
-
-            foreach (var timeline in scenesSnapshot)
-            {
-                if (!current.Contains(timeline)) timelineSyncManager.UnregisterTimeline(timeline);
-            }
-
-            scenesSnapshot = current;
-        }
-
-        private readonly Dictionary<Guid, DateTime> lockedItemsReceivedAt = [];
-
-        public event Action<string, string>? FileTransferCompleted;
-        public event Action? SentFilesChanged;
-
         internal IReadOnlyList<SentFileRecord> GetSentFiles() => fileTransferManager.GetSentFiles();
 
         private Func<int, bool, Task>? previewSeekAction;
@@ -255,6 +128,16 @@ namespace MultiUserEdit.Commons
 
         public ObservableCollection<string> ReceivedMessages { get; } = [];
         public ObservableCollection<Participant> Participants { get; } = [];
+
+        public ObservableCollection<ScriptEntry> Scripts { get; } = [];
+
+        public ICommand AddScriptsToTimelineCommand { get; private set; } = null!;
+
+        public ICommand DeleteScriptCommand { get; private set; } = null!;
+
+        private const int MaxScripts = 500;
+        private const int MaxSerifLength = 2000;
+        private const int MaxNameLength = 100;
 
         private ProjectParticipationState participationState = new();
 
@@ -326,6 +209,7 @@ namespace MultiUserEdit.Commons
         public ICommand RegisterProtocolCommand { get; }
         public ICommand UnregisterProtocolCommand { get; }
         public ICommand DisconnectCommand { get; }
+        public ICommand DeleteKeptRoomCommand { get; }
         public ICommand SyncNowCommand { get; }
         public ICommand KickUserCommand { get; }
 
@@ -369,6 +253,12 @@ namespace MultiUserEdit.Commons
         private void SyncNow()
         {
             if (!IsConnected) return;
+
+            if (IsKeptRoom)
+            {
+                RequestServerSync();
+                return;
+            }
 
             if (!IsHost)
             {
@@ -415,8 +305,7 @@ namespace MultiUserEdit.Commons
             get => inputRoomId;
             set
             {
-                var cleanId = MultiUserEditViewModel.ExtractRoomId(value);
-                Set(ref inputRoomId, cleanId);
+                Set(ref inputRoomId, RoomIdParser.Parse(value) ?? value?.Trim() ?? string.Empty);
                 (JoinRoomCommand as ActionCommand)?.RaiseCanExecuteChanged();
             }
         }
@@ -461,6 +350,16 @@ namespace MultiUserEdit.Commons
         public static Guid LocalProfileId =>
             Guid.TryParse(Settings.MultiUserEditSettings.Default.ProfileId, out var id) ? id : Guid.Empty;
 
+        private bool CanDirectNow => peerTransport != null && DirectTransferChoice.Current != false;
+
+        private void OnDirectTransferDecided(bool useDirect)
+        {
+            var transport = peerTransport;
+            if (transport == null) return;
+            _ = Task.Run(() => transport.ResolveDeferred(useDirect));
+            if (!useDirect) BroadcastLocalPresence();
+        }
+
         private void BroadcastLocalPresence()
         {
             if (!IsConnected) return;
@@ -468,7 +367,9 @@ namespace MultiUserEdit.Commons
             var presenceEvt = new PresenceEvent(LocalUserId, UserName, localUserRole, true, LocalProfileId, UserDescription, UpdateChecker.Instance.CurrentVersion, sessionClient.HasFileChannel)
             {
                 DateTime = DateTime.UtcNow,
-                ExecutorId = LocalUserId
+                ExecutorId = LocalUserId,
+                CanDirect = CanDirectNow,
+                CanCatchUp = true
             };
             _ = sessionClient.SendAsync(null, presenceEvt);
         }
@@ -537,12 +438,11 @@ namespace MultiUserEdit.Commons
         {
             Scenes = scenes;
             sessionClient = new SessionClient(new WebsocketProvider(coalesce: true), userId => new WebsocketProvider(userId));
-            roomMigration = new RoomMigration(() => sessionClient, () => LocalUserId);
             eventDispatcher = new ClientEventDispatcher();
-            adornerManager = new AdornerManager();
+            adornerManager = new AdornerManager(() => MainView);
             fileTransferManager = new FileTransferManager
             {
-                GetPeerCount = () => Participants.Count(p => p.UserId != LocalUserId),
+                GetPeerCount = () => Participants.Count(p => p.UserId != LocalUserId && !p.IsWeb),
                 GetUserName = GetParticipantName,
                 FileSendBlockedReason = DescribeFileSendBlock
             };
@@ -565,11 +465,33 @@ namespace MultiUserEdit.Commons
                 () => LocalUserId,
                 userId => Participants.FirstOrDefault(p => p.UserId == userId)?.UserName ?? string.Empty,
                 () => activeViewModel,
-                ExecuteRemoteAction);
+                ExecuteRemoteAction,
+                () => MainView);
 
-            fileTransferManager.GetPeerIds = () => [.. peerFileChannels.Keys];
+            fileTransferManager.GetPeerIds = () => [.. peerFileChannels.Keys.Where(id => !webParticipants.ContainsKey(id))];
             fileTransferManager.PeerHasFileChannel = userId =>
                 peerFileChannels.TryGetValue(userId, out var hasChannel) && hasChannel;
+            fileTransferManager.IsPeerPresent = userId => peerFileChannels.ContainsKey(userId);
+            if (Settings.MultiUserEditSettings.Default.UseDirectTransfer && PeerTransport.IsAvailable)
+            {
+                peerTransport = new PeerTransport((target, signal) => sessionClient.SendAsync(target.ToString(), signal with { ExecutorId = LocalUserId }))
+                {
+                    AcceptTransfer = fileTransferManager.AcceptDirectTransfer,
+                    ReceiveChunk = fileTransferManager.HandleChunkBytes,
+                    ReceiveAck = (from, transferId, index) => fileTransferManager.HandleChunkAck(new FileChunkAckEvent(transferId, index) { ExecutorId = from }),
+                    IsCancelled = fileTransferManager.IsCancelledBy,
+                    AllowIncoming = remote =>
+                    {
+                        var choice = DirectTransferChoice.Current;
+                        if (choice == null) _ = DirectTransferChoice.AskAsync();
+                        return choice;
+                    },
+                };
+                fileTransferManager.Peers = peerTransport;
+                fileTransferManager.CanUseDirect = userId => directPeers.ContainsKey(userId);
+                fileTransferManager.ConfirmDirect = DirectTransferChoice.AskAsync;
+                DirectTransferChoice.Decided += OnDirectTransferDecided;
+            }
             fileTransferManager.SendChunkAck = (senderId, transferId, chunkIndex) =>
             {
                 if (senderId == Guid.Empty) return;
@@ -600,7 +522,19 @@ namespace MultiUserEdit.Commons
 
             sessionClient.FileChannelChanged += () => Application.Current?.Dispatcher.InvokeAsync(BroadcastLocalPresence);
             sessionClient.HostIdentified += hostId => VerifiedHostId = hostId;
+            sessionClient.KeptRoomJoined += hasSnapshot =>
+            {
+                isKeptRoom = true;
+                Application.Current?.Dispatcher.InvokeAsync(() =>
+                {
+                    RefreshCommandStates();
+                    HandleKeptRoomJoined(hasSnapshot);
+                });
+            };
+            sessionClient.SnapshotRequested += () => Application.Current?.Dispatcher.InvokeAsync(RequestSnapshotUpload);
+            sessionClient.ResyncRequired += () => Application.Current?.Dispatcher.InvokeAsync(RequestServerSync);
             fileTransferManager.ReceiveBlockedReason = DescribeReceiveBlock;
+            fileTransferManager.KeepsReceivedFiles = () => isKeptRoom;
 
             fileTransferManager.TransferCompleted += (transferId, path) => FileTransferCompleted?.Invoke(transferId, path);
             fileTransferManager.SentFilesChanged += () => SentFilesChanged?.Invoke();
@@ -608,7 +542,26 @@ namespace MultiUserEdit.Commons
 
             LocalUserId = sessionClient.LocalUserId;
 
-            ResourceAvailabilityChecker.MissingReported = SendMissingResource;
+            previewService = new PreviewService(
+                () => Scenes,
+                userId => Participants.Any(p => p.UserId == userId),
+                SendPreviewFrameAsync);
+            previewStreams = new PreviewStreams(previewService, PeerTransport.IceServers,
+                (target, signal) => sessionClient.SendAsync(target.ToString(), signal with { ExecutorId = LocalUserId }));
+            RenderReadiness.Clear();
+            renderStatusTimer = new Timer(_ => PublishRenderStatus(), null, RenderStatusInterval, RenderStatusInterval);
+
+            webAssist = new WebAssistService(
+                () => Scenes,
+                userId => Participants.Any(p => p.UserId == userId) && PermissionOf(userId).CanAddItems,
+                (target, reply) => sessionClient.SendAsync(target.ToString(), reply with { ExecutorId = LocalUserId }),
+                ResolveMediaForWeb,
+                ConfirmMediaForWebAsync,
+                SendMediaToWeb,
+                name => fileTransferManager.IsReceivingFile(name));
+
+            missingReported = SendMissingResource;
+            ResourceAvailabilityChecker.MissingReported = missingReported;
 
             sessionClient.EventReceived += HandleEventReceived;
             sessionClient.Disconnected += HandleDisconnected;
@@ -617,17 +570,19 @@ namespace MultiUserEdit.Commons
             sessionClient.PeerDisconnected += HandlePeerDisconnected;
             sessionClient.ConnectionStateChanged += HandleConnectionStateChanged;
 
-            CreateRoomCommand = new ActionCommand(_ => !IsConnected && !isJoining, async _ => await CreateRoomAsync(IsLargeRoomSelected));
-            JoinRoomCommand = new ActionCommand(_ => !IsConnected && !isJoining && !string.IsNullOrWhiteSpace(InputRoomId), async _ => await JoinRoomAsync());
+            CreateRoomCommand = new ActionCommand(_ => !IsConnected && !isJoining, async _ => await CreateRoomAsync(selectedRoomKind));
+            JoinRoomCommand = new ActionCommand(_ => !IsConnected && !isJoining && RoomIdParser.Parse(InputRoomId) != null, async _ => await JoinRoomAsync());
             CopyRoomIdCommand = new ActionCommand(_ => IsConnected && !string.IsNullOrEmpty(RoomId), _ => Clipboard.SetText(RoomId));
+            AddScriptsToTimelineCommand = new ActionCommand(_ => !addingScripts, async _ => await AddScriptsToTimelineAsync());
+            DeleteScriptCommand = new ActionCommand(p => p is ScriptEntry, p => { if (p is ScriptEntry entry) DeleteScript(entry); });
+            Scripts.CollectionChanged += OnScriptsChanged;
+            EnsureTrailingScriptRow();
             CopyInviteLinkCommand = new ActionCommand(_ => IsConnected && !string.IsNullOrEmpty(RoomId), _ => Clipboard.SetText($"https://multi-user-edit.dolphin-discord-js.workers.dev/?roomId={RoomId}"));
             JoinFromClipboardCommand = new ActionCommand(_ => !IsConnected && !isJoining, async _ =>
             {
                 if (Clipboard.ContainsText())
                 {
-                    var text = Clipboard.GetText();
-                    var extracted = MultiUserEditViewModel.ExtractRoomId(text);
-                    if (!string.IsNullOrWhiteSpace(extracted))
+                    if (RoomIdParser.Parse(Clipboard.GetText()) is { } extracted)
                     {
                         InputRoomId = extracted;
                         await JoinRoomAsync();
@@ -651,6 +606,7 @@ namespace MultiUserEdit.Commons
                 }
             });
             DisconnectCommand = new ActionCommand(_ => IsConnected || isJoining, async _ => await StopNetworkAsync());
+            DeleteKeptRoomCommand = new ActionCommand(_ => IsKeptRoomOwner, async _ => await DeleteKeptRoomAsync());
             SyncNowCommand = new ActionCommand(_ => IsConnected && !isJoining, _ => SyncNow());
             KickUserCommand = new ActionCommand(
                 param => IsHost && param is Guid targetId && targetId != LocalUserId,
@@ -673,7 +629,9 @@ namespace MultiUserEdit.Commons
 
             ProtocolRegister.RegisterCustomProtocol();
             IsProtocolRegistered = ProtocolRegister.IsRegistered();
-            CheckCommandLineArgsForDeepLink();
+            DeepLinkListener.Start();
+            DeepLinkListener.TakePending(JoinFromDeepLink);
+            Application.Current?.Dispatcher.InvokeAsync(WatchMainView, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
 
             presenceTimer = new System.Windows.Threading.DispatcherTimer
             {
@@ -681,7 +639,59 @@ namespace MultiUserEdit.Commons
             };
             presenceTimer.Tick += PresenceTimer_Tick;
             presenceTimer.Start();
+
+            disposer.CollectAction(sessionClient, () => _ = sessionClient.StopAsync());
+            disposer.CollectAction(adornerManager, adornerManager.DetachAdorner);
+            disposer.CollectAction(fileTransferManager, fileTransferManager.CancelAll);
+            disposer.CollectAction(locallyLockedItems, () =>
+            {
+                locallyLockedItems.Clear();
+                lockedItemsReceivedAt.Clear();
+            });
+            disposer.CollectAction(timelineSyncManager, () =>
+            {
+                if (Scenes is null) return;
+                UnsubscribeScenesEvents();
+                foreach (var timeline in Scenes.Timelines) timelineSyncManager.UnregisterTimeline(timeline);
+            });
+            disposer.CollectAction(nameof(undoRedoManager), () =>
+            {
+                undoRedoManager?.UndoRedoCommandCreated -= OnUndoRedoCommandCreated;
+                undoRedoManager?.Recorded -= UndoRedoManager_Recorded;
+            });
+            disposer.CollectAction(nameof(HandleEventReceived), () =>
+            {
+                sessionClient.EventReceived -= HandleEventReceived;
+                sessionClient.Disconnected -= HandleDisconnected;
+                sessionClient.RoomNotFound -= HandleRoomNotFound;
+                sessionClient.UpdateAvailable -= HandleUpdateAvailable;
+                sessionClient.PeerDisconnected -= HandlePeerDisconnected;
+                sessionClient.ConnectionStateChanged -= HandleConnectionStateChanged;
+            });
+            disposer.CollectAction(nameof(FirstOrDefaultTimeline), () => FirstOrDefaultTimeline = null);
+            disposer.CollectAction(presenceTimer, () =>
+            {
+                presenceTimer.Stop();
+                presenceTimer.Tick -= PresenceTimer_Tick;
+            });
+            disposer.CollectAction(nameof(OnApplicationTerminating), () =>
+            {
+                AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
+                Application.Current?.Exit -= Application_Exit;
+                watchedMainView?.Closed -= OnMainViewClosed;
+            });
+            disposer.Collect(peerTransport);
+            disposer.CollectAction(nameof(OnDirectTransferDecided), () => DirectTransferChoice.Decided -= OnDirectTransferDecided);
+            disposer.Collect(previewService);
+            disposer.Collect(previewStreams);
+            disposer.Collect(renderStatusTimer);
+            disposer.CollectAction(nameof(missingReported), () =>
+            {
+                if (ResourceAvailabilityChecker.MissingReported == missingReported) ResourceAvailabilityChecker.MissingReported = null;
+            });
         }
+
+        private readonly Action<Guid, string[], string[]> missingReported;
 
         private void CurrentDomain_ProcessExit(object? sender, EventArgs e)
         {
@@ -709,6 +719,8 @@ namespace MultiUserEdit.Commons
         {
             if (Interlocked.Exchange(ref terminationNoticeSent, 1) != 0) return;
 
+            AudioProxy.DeleteCache();
+
             if (IsConnected && !disposed)
             {
                 try
@@ -719,68 +731,22 @@ namespace MultiUserEdit.Commons
                         ExecutorId = LocalUserId
                     };
                     sessionClient.SendAsync(null, evt).Wait(TerminationSendTimeout);
-                    if (IsHost) SendCloseRoomAsync().Wait(TerminationSendTimeout);
+                    if (IsHost && !IsKeptRoom) SendCloseRoomAsync().Wait(TerminationSendTimeout);
                     _ = sessionClient.StopAsync();
                 }
                 catch { }
             }
         }
 
-        private void CheckCommandLineArgsForDeepLink()
+        private void JoinFromDeepLink(string roomId)
         {
-            try
+            InputRoomId = roomId;
+            if (IsConnected) return;
+            Application.Current?.Dispatcher.InvokeAsync(async () =>
             {
-                var targetArg = GetDeepLinkTargetArgument();
-                if (string.IsNullOrEmpty(targetArg)) return;
-
-                var extracted = MultiUserEditViewModel.ExtractRoomId(targetArg);
-                if (string.IsNullOrEmpty(extracted)) return;
-
-                InputRoomId = extracted;
-                if (!IsConnected)
-                {
-                    Application.Current?.Dispatcher.InvokeAsync(async () =>
-                    {
-                        await Task.Delay(500);
-                        if (!IsConnected && !string.IsNullOrEmpty(InputRoomId))
-                        {
-                            await JoinRoomAsync();
-                        }
-                    }, System.Windows.Threading.DispatcherPriority.ContextIdle);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MultiUserEdit] DeepLink arg parse failed: {ex.Message}");
-            }
-        }
-
-        private static string? GetDeepLinkTargetArgument()
-        {
-            foreach (var arg in Environment.GetCommandLineArgs())
-            {
-                if (arg.StartsWith("ymm4-multi-user-edit://", StringComparison.OrdinalIgnoreCase))
-                {
-                    return arg;
-                }
-            }
-
-            var tempPath = Path.Combine(Path.GetTempPath(), "deeplink.txt");
-            if (File.Exists(tempPath))
-            {
-                try
-                {
-                    var content = File.ReadAllText(tempPath).Trim();
-                    File.Delete(tempPath);
-                    if (!string.IsNullOrEmpty(content))
-                    {
-                        return content;
-                    }
-                }
-                catch { }
-            }
-
-            return null;
+                await Task.Delay(500);
+                if (!IsConnected && !isJoining && !string.IsNullOrEmpty(InputRoomId)) await JoinRoomAsync();
+            }, System.Windows.Threading.DispatcherPriority.ContextIdle);
         }
 
         private int transferDisplayGeneration;
@@ -828,7 +794,7 @@ namespace MultiUserEdit.Commons
 
         private void PresenceTimer_Tick(object? sender, EventArgs e)
         {
-            UpdateRoomMigration();
+            WatchMainView();
             ExpireStalePlayback();
 
             var now = DateTime.Now;
@@ -846,6 +812,7 @@ namespace MultiUserEdit.Commons
             }
 
             RemoveLongDeparted();
+            TryUploadSnapshot();
 
             var staleOperations = OperatingItems
                 .Where(kvp => DateTime.UtcNow - kvp.Value.LastActivity > TimeSpan.FromSeconds(10))
@@ -865,13 +832,38 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        public void SetTimelineViewReference(YukkuriMovieMaker.Views.TimelineView timelineView)
+        private WeakReference<Window>? mainViewReference;
+
+        public Window? MainView
         {
-            adornerManager.SetTimelineViewReference(timelineView);
+            get
+            {
+                if (mainViewReference?.TryGetTarget(out var known) == true && known.IsLoaded) return known;
+                if (MainViewLocator.Find(Scenes) is not { } found) return null;
+                mainViewReference = new WeakReference<Window>(found);
+                return found;
+            }
+        }
+
+        private Window? watchedMainView;
+
+        private void WatchMainView()
+        {
+            if (watchedMainView != null || disposed || MainView is not { } window) return;
+            watchedMainView = window;
+            window.Closed += OnMainViewClosed;
+        }
+
+        private void OnMainViewClosed(object? sender, EventArgs e)
+        {
+            if (sender is Window window) window.Closed -= OnMainViewClosed;
+            OnApplicationTerminating();
+            Dispose();
         }
 
         public void SetTimelineToolInfo(TimelineToolInfo info, MultiUserEditViewModel viewModel)
         {
+            addItemStatus = info.AsyncAwaitStatus;
             undoRedoManager?.UndoRedoCommandCreated -= OnUndoRedoCommandCreated;
             undoRedoManager?.Recorded -= UndoRedoManager_Recorded;
             if (Scenes is not null)
@@ -965,7 +957,7 @@ namespace MultiUserEdit.Commons
                     if (!scenesSnapshot.Contains(t))
                     {
                         timelineSyncManager.RegisterTimeline(t, activeViewModel);
-                        SendSceneAddedAsync(i, t.Name, t.ID);
+                        SendSceneAdded(i, t.Name, t.ID);
                     }
                 }
             }
@@ -976,7 +968,7 @@ namespace MultiUserEdit.Commons
                 if (!currentTimelines.Contains(oldT))
                 {
                     timelineSyncManager.UnregisterTimeline(oldT);
-                    SendSceneRemovedAsync(i);
+                    SendSceneRemoved(i);
                 }
             }
 
@@ -998,60 +990,44 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        private async void SendSceneAddedAsync(int index, string name, Guid sceneId)
+        private void SendSceneAdded(int index, string name, Guid sceneId)
         {
-            if (!CurrentUserPermission.CanAddScenes) return;
-            await eventSender.SendSceneAddedAsync(index, name, sceneId);
+            if (CurrentUserPermission.CanAddScenes) _ = eventSender.SendSceneAddedAsync(index, name, sceneId);
         }
 
-        private async void SendSceneRemovedAsync(int index)
+        private void SendSceneRemoved(int index)
         {
-            if (!CurrentUserPermission.CanDeleteScenes) return;
-            await eventSender.SendSceneRemovedAsync(index);
+            if (CurrentUserPermission.CanDeleteScenes) _ = eventSender.SendSceneRemovedAsync(index);
         }
 
-        public async void UpdateGlobalPermission(UserPermission newPerm)
+        public void UpdateGlobalPermission(UserPermission newPerm)
         {
             permissionOverrides.Clear();
-            GlobalDefaultPermission.Level = newPerm.Level;
-            GlobalDefaultPermission.CanAddItems = newPerm.CanAddItems;
-            GlobalDefaultPermission.CanMoveItems = newPerm.CanMoveItems;
-            GlobalDefaultPermission.CanDeleteItems = newPerm.CanDeleteItems;
-            GlobalDefaultPermission.CanDeleteOthersItems = newPerm.CanDeleteOthersItems;
-            GlobalDefaultPermission.CanEditProperties = newPerm.CanEditProperties;
-            GlobalDefaultPermission.CanAddScenes = newPerm.CanAddScenes;
-            GlobalDefaultPermission.CanDeleteScenes = newPerm.CanDeleteScenes;
-            GlobalDefaultPermission.CanShareFiles = newPerm.CanShareFiles;
-            GlobalDefaultPermission.CanShareVideos = newPerm.CanShareVideos;
-            GlobalDefaultPermission.CanShareImages = newPerm.CanShareImages;
-            GlobalDefaultPermission.CanShareAudio = newPerm.CanShareAudio;
-            GlobalDefaultPermission.CanSyncSeekPosition = newPerm.CanSyncSeekPosition;
+            GlobalDefaultPermission.CopyFrom(newPerm);
 
             foreach (var p in Participants)
             {
                 p.Permission = newPerm;
             }
 
-            var evt = new PermissionUpdatedEvent(null, newPerm)
+            _ = sessionClient.SendAsync(null, new PermissionUpdatedEvent(null, newPerm)
             {
                 DateTime = DateTime.UtcNow,
                 ExecutorId = LocalUserId
-            };
-            await sessionClient.SendAsync(null, evt);
+            });
         }
 
-        public async void UpdateUserPermission(Guid targetUserId, UserPermission newPerm)
+        public void UpdateUserPermission(Guid targetUserId, UserPermission newPerm)
         {
             var p = Participants.FirstOrDefault(x => x.UserId == targetUserId);
             p?.Permission = newPerm;
             permissionOverrides[targetUserId] = newPerm;
 
-            var evt = new PermissionUpdatedEvent(targetUserId, newPerm)
+            _ = sessionClient.SendAsync(null, new PermissionUpdatedEvent(targetUserId, newPerm)
             {
                 DateTime = DateTime.UtcNow,
                 ExecutorId = LocalUserId
-            };
-            await sessionClient.SendAsync(null, evt);
+            });
         }
 
         internal void HandlePermissionUpdated(PermissionUpdatedEvent evt)
@@ -1065,19 +1041,7 @@ namespace MultiUserEdit.Commons
 
             if (evt.TargetUserId == null || evt.TargetUserId == Guid.Empty)
             {
-                GlobalDefaultPermission.Level = evt.Permission.Level;
-                GlobalDefaultPermission.CanAddItems = evt.Permission.CanAddItems;
-                GlobalDefaultPermission.CanMoveItems = evt.Permission.CanMoveItems;
-                GlobalDefaultPermission.CanDeleteItems = evt.Permission.CanDeleteItems;
-                GlobalDefaultPermission.CanDeleteOthersItems = evt.Permission.CanDeleteOthersItems;
-                GlobalDefaultPermission.CanEditProperties = evt.Permission.CanEditProperties;
-                GlobalDefaultPermission.CanAddScenes = evt.Permission.CanAddScenes;
-                GlobalDefaultPermission.CanDeleteScenes = evt.Permission.CanDeleteScenes;
-                GlobalDefaultPermission.CanShareFiles = evt.Permission.CanShareFiles;
-                GlobalDefaultPermission.CanShareVideos = evt.Permission.CanShareVideos;
-                GlobalDefaultPermission.CanShareImages = evt.Permission.CanShareImages;
-                GlobalDefaultPermission.CanShareAudio = evt.Permission.CanShareAudio;
-                GlobalDefaultPermission.CanSyncSeekPosition = evt.Permission.CanSyncSeekPosition;
+                GlobalDefaultPermission.CopyFrom(evt.Permission);
 
                 if (!IsHost)
                 {
@@ -1128,7 +1092,7 @@ namespace MultiUserEdit.Commons
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MultiUserEdit] HandleSceneAdded failed: {ex.Message}");
+                PluginLog.Error("could not add a scene from another participant", ex);
             }
 
             if (showedSceneTabs != SceneTabRefresher.ShowsSceneTabs(Scenes)) RequestSceneTabRefresh();
@@ -1151,7 +1115,7 @@ namespace MultiUserEdit.Commons
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MultiUserEdit] HandleSceneRemoved failed: {ex.Message}");
+                PluginLog.Error("could not remove a scene for another participant", ex);
             }
 
             if (showedSceneTabs != SceneTabRefresher.ShowsSceneTabs(Scenes)) RequestSceneTabRefresh();
@@ -1168,6 +1132,7 @@ namespace MultiUserEdit.Commons
 
             OnPropertyChanged(nameof(IsConnected));
             OnPropertyChanged(nameof(IsHost));
+            OnPropertyChanged(nameof(IsKeptRoomOwner));
             OnPropertyChanged(nameof(RoomId));
             OnPropertyChanged(nameof(InputRoomId));
             (CreateRoomCommand as ActionCommand)?.RaiseCanExecuteChanged();
@@ -1176,6 +1141,7 @@ namespace MultiUserEdit.Commons
             (CopyInviteLinkCommand as ActionCommand)?.RaiseCanExecuteChanged();
             (JoinFromClipboardCommand as ActionCommand)?.RaiseCanExecuteChanged();
             (DisconnectCommand as ActionCommand)?.RaiseCanExecuteChanged();
+            (DeleteKeptRoomCommand as ActionCommand)?.RaiseCanExecuteChanged();
             (SyncNowCommand as ActionCommand)?.RaiseCanExecuteChanged();
             System.Windows.Input.CommandManager.InvalidateRequerySuggested();
         }
@@ -1202,302 +1168,98 @@ namespace MultiUserEdit.Commons
 
         private bool isApplyingSyncScenes;
 
-        private void ApplySyncScenes(OnlineScenes onlineScenes, Guid ownerId, bool isManual)
+        private int TimelineIndexOf(Timeline timeline) => Scenes?.Timelines.IndexOf(timeline) ?? -1;
+
+        private void SelectRoomKind(RoomKind kind) =>
+            Set(ref selectedRoomKind, kind, nameof(IsNormalRoomSelected), nameof(IsKeptRoomSelected));
+
+        public bool IsNormalRoomSelected
         {
-            if (onlineScenes == null || Scenes == null) return;
-
-            if (isApplyingSyncScenes)
-            {
-                Debug.WriteLine("[MultiUserEdit] a sync is already running, ignoring this one");
-                return;
-            }
-
-            var showedSceneTabs = SceneTabRefresher.ShowsSceneTabs(Scenes);
-
-            isApplyingSyncScenes = true;
-            try
-            {
-                ApplySyncScenesCore(onlineScenes, ownerId, isManual);
-            }
-            finally
-            {
-                isApplyingSyncScenes = false;
-            }
-
-            if (showedSceneTabs != SceneTabRefresher.ShowsSceneTabs(Scenes)) RequestSceneTabRefresh();
-        }
-
-        private void ApplySyncScenesCore(OnlineScenes onlineScenes, Guid ownerId, bool isManual)
-        {
-
-            if (isManual)
-            {
-                var requestedByMe = pendingManualSyncSource == ownerId;
-                if (requestedByMe) pendingManualSyncSource = null;
-
-                if (!requestedByMe && Scenes.Timelines.Any(t => t.Items.Count > 0))
-                {
-                    var sourceName = GetParticipantName(ownerId);
-                    var accepted = MessageBox.Show(
-                        string.Format(Texts.PeerSyncedData, sourceName) + "\n\n" + SyncFromConfirmMessage(sourceName),
-                        Texts.SyncData,
-                        MessageBoxButton.OKCancel) == MessageBoxResult.OK;
-
-                    if (!accepted) return;
-                }
-            }
-            else if (!awaitingInitialSync)
-            {
-                return;
-            }
-            else
-            {
-                awaitingInitialSync = false;
-            }
-
-            if (!isManual && Scenes.Timelines.Any(t => t.Items.Count > 0))
-            {
-                var result = MessageBox.Show(
-                    Texts.InitialSyncConfirm,
-                    Texts.InitialSyncTitle,
-                    MessageBoxButton.OKCancel);
-
-                if (result != MessageBoxResult.OK)
-                {
-                    Application.Current?.Dispatcher.InvokeAsync(async () => await StopNetworkAsync());
-                    return;
-                }
-            }
-
-            eventSender.ClearAllBaselines();
-            SceneIdMap.Clear();
-
-            var previousApplying = isApplyingRemoteEvent;
-            isApplyingRemoteEvent = true;
-            using var undoScope = UndoRecordSuppressor.Suppress(undoRedoManager);
-            try
-            {
-                var hostSceneIds = onlineScenes.Timelines.Select(t => t.Id).Where(id => id != Guid.Empty).ToHashSet();
-                var claimed = new HashSet<Timeline>(ReferenceEqualityComparer.Instance);
-                var ordered = new List<Timeline>(onlineScenes.Timelines.Count);
-
-                for (int i = 0; i < onlineScenes.Timelines.Count; i++)
-                {
-                    var onlineTimeline = onlineScenes.Timelines[i];
-                    var timeline = Scenes.Timelines.FirstOrDefault(t => t.ID == onlineTimeline.Id && !claimed.Contains(t));
-
-                    if (timeline == null
-                        && Scenes.Timelines.ElementAtOrDefault(i) is { } candidate
-                        && !claimed.Contains(candidate)
-                        && !hostSceneIds.Contains(candidate.ID))
-                    {
-                        timeline = candidate;
-                    }
-
-                    timeline ??= CreateSceneForSync(onlineTimeline, Scenes.Timelines.Count);
-
-                    if (timeline == null)
-                    {
-                        ErrorNotifier.NotifyList(
-                            Texts.SceneUnavailableTitle,
-                            Texts.SceneUnavailableLead,
-                            ErrorNotifier.Quote(onlineTimeline.Name),
-                            Texts.SceneUnavailableNote);
-                        continue;
-                    }
-
-                    claimed.Add(timeline);
-                    ordered.Add(timeline);
-                    SceneIdMap.Remember(onlineTimeline.Id, timeline.ID);
-
-                    timeline.Name = onlineTimeline.Name;
-
-                    if (timeline.VideoInfo != null)
-                    {
-                        VideoInfoSerializer.Apply(timeline.VideoInfo, onlineTimeline.Width, onlineTimeline.Height,
-                            onlineTimeline.FPS, onlineTimeline.Hz, onlineTimeline.BackgroundColor);
-                    }
-
-                    if (timeline.Items.Count > 0)
-                        timeline.DeleteItems([.. timeline.Items]);
-
-                    foreach (var onlineItem in onlineTimeline.Items)
-                    {
-                        AddSyncedItem(timeline, onlineItem, ownerId);
-                    }
-                }
-
-                if (ordered.Count > 0 && !Scenes.Timelines.SequenceEqual(ordered))
-                {
-                    try
-                    {
-                        Scenes.Timelines = [.. ordered];
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"[MultiUserEdit] could not match the host's scene order: {ex.Message}");
-                    }
-                }
-
-                TrackRemoteSceneChanges();
-            }
-            finally
-            {
-                isApplyingRemoteEvent = previousApplying;
-                if (activeViewModel != null)
-                {
-                    adornerManager.AttachAdorner(activeViewModel);
-                }
-            }
-        }
-
-        private Timeline? CreateSceneForSync(OnlineTimeline onlineTimeline, int index)
-        {
-            if (Scenes == null) return null;
-
-            try
-            {
-                var videoInfo = new VideoInfo();
-                if (FirstOrDefaultTimeline?.VideoInfo is { } source)
-                {
-                    VideoInfoSerializer.Apply(videoInfo, source.Width, source.Height, source.FPS, source.Hz, null);
-                    videoInfo.BackgroundColor = source.BackgroundColor;
-                }
-
-                var name = string.IsNullOrWhiteSpace(onlineTimeline.Name) ? string.Format(Texts.SceneDefaultName, index + 1) : onlineTimeline.Name;
-                var sceneId = onlineTimeline.Id == Guid.Empty ? (Guid?)null : onlineTimeline.Id;
-
-                Scenes.CreateScene(name, index, videoInfo, new TimelineVerticalLine(), sceneId);
-
-                return (sceneId != null ? Scenes.Timelines.FirstOrDefault(t => t.ID == sceneId) : null)
-                    ?? Scenes.Timelines.ElementAtOrDefault(index);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MultiUserEdit] CreateScene failed: {ex.Message}");
-                return null;
-            }
-        }
-
-        private void AddSyncedItem(Timeline timeline, OnlineItem onlineItem, Guid ownerId) =>
-            AddSyncedItem(timeline, onlineItem, ownerId, canWait: true);
-
-        private void AddSyncedItem(Timeline timeline, OnlineItem onlineItem, Guid ownerId, bool canWait)
-        {
-            var itemType = ItemTypeResolver.Resolve(onlineItem.ItemTypeName);
-            if (itemType == null)
-            {
-                ResourceAvailabilityChecker.Notify(onlineItem.ItemId, ownerId, GetParticipantName(ownerId),
-                    onlineItem.ItemJson, onlineItem.ItemTypeName);
-                return;
-            }
-
-            try
-            {
-                var characterName = MediaFileResolver.GetCharacterNameFromJson(onlineItem.ItemJson);
-                if (!string.IsNullOrEmpty(characterName) && !CharacterShareManager.IsDecided(characterName))
-                {
-                    RequestCharacter(characterName, ownerId, () => AddSyncedItem(timeline, onlineItem, ownerId));
-                    return;
-                }
-
-                if (MediaFileResolver.RequiresRealMediaContainer(itemType))
-                {
-                    var pending = MediaFileResolver.GetMissingFileNames(onlineItem.MediaFileNames);
-                    if (pending.Count > 0)
-                    {
-                        if (canWait && activeViewModel != null)
-                        {
-                            TransferWaiter.WhenFilesReady(activeViewModel, pending,
-                                () => AddSyncedItem(timeline, onlineItem, ownerId, canWait: false),
-                                TransferWaiter.DefaultTimeout);
-                            return;
-                        }
-
-                        foreach (var name in pending)
-                        {
-                            ErrorNotifier.NotifyList(
-                                Texts.MediaNotReceivedTitle,
-                                string.Format(Texts.MediaNotReceivedLead, GetParticipantName(ownerId)),
-                                ErrorNotifier.Quote(name),
-                                Texts.ResyncToReceiveNote);
-                        }
-                        return;
-                    }
-                }
-
-                var itemJson = LocalMediaGuard.StripVoiceCache(
-                    ItemJsonSanitizer.RemoveUnknownEnumValues(
-                        MediaFileResolver.ResolveJsonFileReferences(onlineItem.ItemJson, itemType, onlineItem.MediaFileNames)));
-
-                if (JsonConvert.DeserializeObject(itemJson, itemType, ItemSerializerOptions.Default) is not IItem item) return;
-
-                CharacterResolver.TryResolveCharacter(item);
-
-                ItemIdManager.RegisterId(item, onlineItem.ItemId);
-                timeline.TryAddItems([item], onlineItem.Frame, onlineItem.Layer, false);
-
-                VoiceSynthesizer.Request(item);
-
-                var missingFiles = MediaFileResolver.GetMissingFileNames(
-                    onlineItem.MediaFileNames, TachieFileResolver.GetBaseDirectory(item));
-                if (missingFiles.Count > 0 && activeViewModel != null)
-                {
-                    TransferWaiter.WhenFilesReady(activeViewModel, missingFiles, () =>
-                        JsonConvert.PopulateObject(
-                            LocalMediaGuard.StripVoiceCache(LocalMediaGuard.Apply(
-                                MediaFileResolver.ResolveJsonFileReferences(onlineItem.ItemJson, itemType, onlineItem.MediaFileNames),
-                                item)),
-                            item,
-                            ItemSerializerOptions.Default),
-                        TransferWaiter.DefaultTimeout);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MultiUserEdit] Sync item failed ({onlineItem.ItemTypeName}): {ex.Message}");
-            }
-        }
-
-        private bool isLargeRoomSelected;
-        public bool IsLargeRoomSelected
-        {
-            get => isLargeRoomSelected;
-            set => Set(ref isLargeRoomSelected, value, nameof(IsLargeRoomSelected), nameof(IsSmallRoomSelected));
-        }
-
-        public bool IsSmallRoomSelected
-        {
-            get => !isLargeRoomSelected;
+            get => selectedRoomKind == RoomKind.Normal;
             set
             {
-                if (value) IsLargeRoomSelected = false;
+                if (value) SelectRoomKind(RoomKind.Normal);
             }
         }
 
-        private async Task CreateRoomAsync(bool isLargeRoom)
+        public bool IsKeptRoomSelected
+        {
+            get => selectedRoomKind == RoomKind.Kept;
+            set
+            {
+                if (value) SelectRoomKind(RoomKind.Kept);
+            }
+        }
+
+        private volatile bool isKeptRoom;
+
+        public bool IsKeptRoom => isKeptRoom;
+
+        public bool IsKeptRoomOwner => IsConnected && IsHost && isKeptRoom;
+
+        private async Task DeleteKeptRoomAsync()
+        {
+            if (!IsKeptRoomOwner) return;
+            if (MessageBox.Show(Texts.DeleteKeptRoomConfirm, Texts.DeleteKeptRoom, MessageBoxButton.OKCancel) != MessageBoxResult.OK) return;
+
+            var roomId = RoomId;
+            await SendCloseRoomAsync();
+            Settings.MultiUserEditSettings.Default.SetKeptRoomKey(roomId, null);
+            await StopNetworkAsync();
+        }
+
+        private async Task CreateRoomAsync(RoomKind kind)
         {
             if (!await EnsureLatestPluginAsync()) return;
 
-            if (isLargeRoom && !await ConfirmLargeRoomAsync()) return;
+            var (relayReachable, relayProblem) = await RelayAvailabilityChecker.CheckAsync();
+            if (!relayReachable && kind == RoomKind.Kept)
+            {
+                MessageBox.Show(RelayConnectionFailedMessage(relayProblem), Texts.RelayUnavailableTitle, MessageBoxButton.OK);
+                return;
+            }
 
-            RoomId = isLargeRoom
-                ? SessionClient.LargeRoomPrefix + Guid.NewGuid()
-                : Guid.NewGuid().ToString();
+            RoomId = Guid.NewGuid().ToString();
+            isKeptRoom = kind == RoomKind.Kept;
+            sessionClient.UsesBackupServer = !relayReachable;
+            sessionClient.HostRoomKind = isKeptRoom ? "keep" : "normal";
             hostKey = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+            if (kind == RoomKind.Kept) Settings.MultiUserEditSettings.Default.SetKeptRoomKey(RoomId, hostKey);
             localUserRole = UserRole.Host;
             IsHost = true;
             CurrentUserPermission = UserPermission.CreateFromLevel(PermissionLevel.Full);
             await ConnectNetworkAsync(RoomId);
         }
 
-        private async Task JoinRoomAsync()
+        private async Task JoinRoomAsync() => await JoinRoomAsync(asOwnerIfPossible: true, useBackupServer: false);
+
+        private async Task JoinRoomAsync(bool asOwnerIfPossible, bool useBackupServer)
         {
+            if (RoomIdParser.Parse(InputRoomId) is not { } roomId) return;
             if (!await EnsureLatestPluginAsync()) return;
 
-            RoomId = InputRoomId;
-            localUserRole = UserRole.Guest;
-            IsHost = false;
+            RoomId = roomId;
+            sessionClient.UsesBackupServer = useBackupServer;
+
+            if (asOwnerIfPossible
+                && !useBackupServer
+                && Settings.MultiUserEditSettings.Default.GetKeptRoomKey(RoomId) is { } ownerKey)
+            {
+                hostKey = ownerKey;
+                localUserRole = UserRole.Host;
+                IsHost = true;
+                isKeptRoom = true;
+                sessionClient.HostRoomKind = "keep";
+                CurrentUserPermission = UserPermission.CreateFromLevel(PermissionLevel.Full);
+            }
+            else
+            {
+                localUserRole = UserRole.Guest;
+                IsHost = false;
+                isKeptRoom = false;
+                sessionClient.HostRoomKind = null;
+            }
+
             await ConnectNetworkAsync(RoomId);
         }
 
@@ -1521,23 +1283,11 @@ namespace MultiUserEdit.Commons
             if (result == MessageBoxResult.Yes) UpdateChecker.Instance.OpenUpdatePage();
         }
 
-        public bool IsLargeRoom => SessionClient.IsLargeRoom(RoomId);
-
         private static string RelayConnectionFailedMessage(string detail) =>
             string.Format(Texts.RelayConnectFailed, detail);
 
-        private static async Task<bool> ConfirmLargeRoomAsync()
-        {
-            var (reachable, detail) = await RelayAvailabilityChecker.CheckAsync();
-            if (reachable) return true;
-
-            return MessageBox.Show(
-                string.Format(Texts.RelayConnectFailedCreate, detail),
-                Texts.RelayUnavailableTitle,
-                MessageBoxButton.YesNo) == MessageBoxResult.Yes;
-        }
-
         private TaskCompletionSource<bool>? guestRoomValidation;
+        private string? relayFailureDetail;
         private bool isJoining;
 
         private int connectGeneration;
@@ -1548,9 +1298,12 @@ namespace MultiUserEdit.Commons
             bool IsCurrent() => Volatile.Read(ref connectGeneration) == myGeneration;
 
             isJoining = true;
+            WatchMainView();
             RefreshCommandStates();
-            roomMigration.Reset();
             hostLeftHandled = false;
+            keptRoomJoined = false;
+            snapshotUploadPending = false;
+            lastAppliedSeq = 0;
             try
             {
                 if (localUserRole == UserRole.Guest)
@@ -1576,6 +1329,7 @@ namespace MultiUserEdit.Commons
                 }
 
                 Participants.Clear();
+                ClearSharedScripts();
                 eventSender.ClearAllBaselines();
                 HasDivergenceWarning = false;
                 ResourceAvailabilityChecker.Reset();
@@ -1596,7 +1350,9 @@ namespace MultiUserEdit.Commons
                 var presenceEvt = new PresenceEvent(LocalUserId, UserName, localUserRole, false, LocalProfileId, UserDescription, UpdateChecker.Instance.CurrentVersion, sessionClient.HasFileChannel)
                 {
                     DateTime = DateTime.UtcNow,
-                    ExecutorId = LocalUserId
+                    ExecutorId = LocalUserId,
+                    CanDirect = CanDirectNow,
+                    CanCatchUp = true
                 };
                 await sessionClient.SendAsync(null, presenceEvt);
 
@@ -1615,11 +1371,22 @@ namespace MultiUserEdit.Commons
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MultiUserEdit] start failed: {ex.Message}");
 
-                if (IsCurrent() && SessionClient.IsLargeRoom(targetRoomId))
+                if (IsCurrent() && localUserRole == UserRole.Guest && !sessionClient.UsesBackupServer)
                 {
-                    var detail = RelayAvailabilityChecker.Describe(ex);
+                    relayFailureDetail = RelayAvailabilityChecker.Describe(ex);
+                    Application.Current?.Dispatcher.InvokeAsync(async () =>
+                    {
+                        InputRoomId = targetRoomId;
+                        await JoinRoomAsync(asOwnerIfPossible: false, useBackupServer: true);
+                    });
+                    return;
+                }
+
+                if (IsCurrent() && (!sessionClient.UsesBackupServer || relayFailureDetail != null))
+                {
+                    var detail = relayFailureDetail ?? RelayAvailabilityChecker.Describe(ex);
+                    relayFailureDetail = null;
 
                     Application.Current?.Dispatcher.InvokeAsync(() => MessageBox.Show(
                         RelayConnectionFailedMessage(detail),
@@ -1649,13 +1416,12 @@ namespace MultiUserEdit.Commons
                         ExecutorId = LocalUserId
                     });
 
-                    if (IsHost) await SendCloseRoomAsync();
+                    if (IsHost && !IsKeptRoom) await SendCloseRoomAsync();
                 }
                 await sessionClient.StopAsync();
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] StopNetworkAsync exception: {ex.Message}");
             }
             finally
             {
@@ -1670,6 +1436,7 @@ namespace MultiUserEdit.Commons
             void ClearState()
             {
                 IsConnected = false;
+                isKeptRoom = false;
                 isJoining = false;
                 watchedHostId = Guid.Empty;
                 awaitingInitialSync = false;
@@ -1680,12 +1447,21 @@ namespace MultiUserEdit.Commons
                 RoomId = string.Empty;
                 InputRoomId = string.Empty;
                 Participants.Clear();
+                ClearSharedScripts();
                 peerFileChannels.Clear();
+                webParticipants.Clear();
+                catchUpPeers.Clear();
                 syncScenesTransfer.Clear();
                 permissionOverrides.Clear();
                 VerifiedHostId = Guid.Empty;
                 MoveOrdering.Clear();
                 departedAt.Clear();
+                lock (wantedFiles)
+                {
+                    wantedFiles.Clear();
+                    pendingWants.Clear();
+                    pulledFiles.Clear();
+                }
                 lock (rejectedLocalChanges) rejectedLocalChanges.Clear();
                 locallyLockedItems.Clear();
                 lock (locallyAddedItems) locallyAddedItems.Clear();
@@ -1724,7 +1500,68 @@ namespace MultiUserEdit.Commons
                 return;
             }
 
+            if (editEvent is RtcSignalEvent signal)
+            {
+                if (editEvent.ExecutorId != LocalUserId && editEvent.ExecutorId != Guid.Empty)
+                {
+                    if (webParticipants.ContainsKey(editEvent.ExecutorId)) previewStreams.HandleSignal(editEvent.ExecutorId, signal);
+                    else peerTransport?.HandleSignal(editEvent.ExecutorId, signal);
+                }
+                return;
+            }
+
+            if (editEvent is ScriptEvent script)
+            {
+                HandleScript(script);
+                return;
+            }
+
+            if (editEvent is CatchUpRequestEvent catchUpRequest)
+            {
+                if (editEvent.ExecutorId != LocalUserId && editEvent.ExecutorId != Guid.Empty) SendCatchUp(catchUpRequest);
+                return;
+            }
+
+            if (editEvent is CatchUpEvent catchUp)
+            {
+                if (editEvent.ExecutorId != LocalUserId && editEvent.ExecutorId != Guid.Empty) ReceiveCatchUp(catchUp);
+                return;
+            }
+
+            if (editEvent is ScriptListEvent scriptList)
+            {
+                if (scriptList.ExecutorId != LocalUserId && Participants.Any(p => p.UserId == scriptList.ExecutorId && p.Role == UserRole.Host))
+                {
+                    foreach (var item in scriptList.Scripts.Take(MaxScripts)) HandleScript(new ScriptEvent("add", item) { ExecutorId = item.AuthorId });
+                }
+                return;
+            }
+
+            if (editEvent is PreviewRequestEvent previewRequest)
+            {
+                if (editEvent.ExecutorId != LocalUserId && editEvent.ExecutorId != Guid.Empty) previewService.Request(previewRequest);
+                return;
+            }
+
+            if (editEvent is PreviewFrameEvent or ItemSchemaEvent or ItemVisualsEvent or CreateItemResultEvent or MediaResultEvent or CatalogEvent) return;
+
+            if (editEvent is ItemSchemaRequestEvent or CreateItemRequestEvent or ItemVisualsRequestEvent or MediaRequestEvent or CatalogRequestEvent)
+            {
+                if (editEvent.ExecutorId != LocalUserId && editEvent.ExecutorId != Guid.Empty) webAssist.Handle(editEvent);
+                return;
+            }
+
+            if (editEvent is FileWantedEvent or FileOfferEvent or FilePullEvent)
+            {
+                if (editEvent.ExecutorId == LocalUserId || editEvent.ExecutorId == Guid.Empty) return;
+
+                dispatcher.InvokeAsync(() => HandleFileSharingRequest(editEvent));
+                return;
+            }
+
             if (editEvent.ExecutorId == LocalUserId) return;
+
+            if (SyncScenesTransfer.IsProjectEdit(editEvent) && HoldForCatchUp(editEvent)) return;
 
             if (dispatcher.CheckAccess())
             {
@@ -1765,9 +1602,8 @@ namespace MultiUserEdit.Commons
                     {
                         ApplyEvent(next, suppressRedraw: more);
                     }
-                    catch (Exception ex)
+                    catch
                     {
-                        Debug.WriteLine($"[MultiUserEdit] apply event failed: {ex.Message}");
                     }
                 }
             }
@@ -1786,417 +1622,27 @@ namespace MultiUserEdit.Commons
 
         private void ApplyEvent(EditEvent editEvent, bool suppressRedraw = false)
         {
-            UpdateParticipantActivity(editEvent.ExecutorId);
+            var isReplay = editEvent is ReplayedEvent;
+            if (editEvent is ReplayedEvent replayed) editEvent = replayed.Inner;
+
+            if (!isReplay) UpdateParticipantActivity(editEvent.ExecutorId);
 
             if (!IsAllowedFrom(editEvent))
             {
-                Debug.WriteLine($"[MultiUserEdit] Ignored {editEvent.GetType().Name} from {editEvent.ExecutorId}: not permitted");
                 return;
+            }
+
+            if (SyncScenesTransfer.IsProjectEdit(editEvent))
+            {
+                if (sessionClient.Clock.Accept(editEvent) is not { } accepted) return;
+                editEvent = accepted;
             }
 
             if (syncScenesTransfer.ShouldRelease) ReleaseHeldEvents();
             if (syncScenesTransfer.Hold(editEvent)) return;
 
             DispatchEvent(editEvent, suppressRedraw);
-            NoteRemoteOperation(editEvent);
-        }
-
-        private void UpdateParticipantActivity(Guid executorId)
-        {
-            if (executorId == Guid.Empty || executorId == LocalUserId) return;
-
-            NotePeerAlive(executorId);
-
-            var p = EnsureParticipant(executorId);
-            p.Status = UserStatus.Active;
-            p.LastActivity = DateTime.Now;
-        }
-
-        private Participant EnsureParticipant(Guid userId)
-        {
-            var p = Participants.FirstOrDefault(x => x.UserId == userId);
-            if (p != null)
-            {
-                p.LastActivity = DateTime.Now;
-                p.Status = UserStatus.Active;
-                return p;
-            }
-
-            p = new Participant
-            {
-                UserId = userId,
-                UserName = $"User {userId.ToString()[..8]}",
-                Role = UserRole.Guest,
-                LastActivity = DateTime.Now,
-                JoinedAt = DateTime.Now,
-                ThemeColor = ParticipantColorGenerator.Generate(userId),
-                Status = UserStatus.Active
-            };
-
-            AddParticipantSorted(p);
-            return p;
-        }
-
-        internal void HandlePresenceEvent(PresenceEvent evt)
-        {
-            if (evt.UserId != evt.ExecutorId) return;
-
-            var role = NormalizeRole(evt.UserId, evt.Role);
-
-            if (evt.UserId != LocalUserId) peerFileChannels[evt.UserId] = evt.HasFileChannel;
-
-            var p = Participants.FirstOrDefault(x => x.UserId == evt.UserId);
-            if (p == null)
-            {
-                p = new Participant
-                {
-                    UserId = evt.UserId,
-                    ProfileId = evt.ProfileId,
-                    UserName = evt.UserName,
-                    Description = ProfileText.NormalizeDescription(evt.Description),
-                    Role = role,
-                    HasFileChannel = evt.HasFileChannel,
-                    LastActivity = DateTime.Now,
-                    JoinedAt = DateTime.Now,
-                    ThemeColor = ParticipantColorGenerator.Generate(evt.UserId),
-                    Status = UserStatus.Active
-                };
-                AddParticipantSorted(p);
-            }
-            else
-            {
-                p.UserName = evt.UserName;
-                p.Description = ProfileText.NormalizeDescription(evt.Description);
-                p.Role = role;
-                p.HasFileChannel = evt.HasFileChannel;
-                p.LastActivity = DateTime.Now;
-                p.Status = UserStatus.Active;
-                if (evt.ProfileId != Guid.Empty) p.ProfileId = evt.ProfileId;
-                MoveHostToTopIfNeeded(p);
-            }
-
-            if (!IsHost && role == UserRole.Host && !IsCompatibleVersion(evt.Version))
-            {
-                HandleHostVersionMismatch(evt.Version);
-                return;
-            }
-
-            if (IsHost && !evt.IsReply)
-            {
-                var permissionEvt = new PermissionUpdatedEvent(null, GlobalDefaultPermission)
-                {
-                    DateTime = DateTime.UtcNow,
-                    ExecutorId = LocalUserId
-                };
-                _ = sessionClient.SendAsync(evt.UserId.ToString(), permissionEvt);
-
-                foreach (var (userId, permission) in permissionOverrides)
-                {
-                    _ = sessionClient.SendAsync(evt.UserId.ToString(), new PermissionUpdatedEvent(userId, permission)
-                    {
-                        DateTime = DateTime.UtcNow,
-                        ExecutorId = LocalUserId
-                    });
-                }
-            }
-
-            if (!evt.IsReply)
-            {
-                var replyEvt = new PresenceEvent(LocalUserId, UserName, localUserRole, true, LocalProfileId, UserDescription, UpdateChecker.Instance.CurrentVersion, sessionClient.HasFileChannel)
-                {
-                    DateTime = DateTime.UtcNow,
-                    ExecutorId = LocalUserId
-                };
-                _ = sessionClient.SendAsync(null, replyEvt);
-
-                if (FirstOrDefaultTimeline != null)
-                    SendCursorMovedAsync(FirstOrDefaultTimeline.CurrentFrame);
-            }
-        }
-
-        private bool versionMismatchHandled;
-
-        private static bool IsCompatibleVersion(string peerVersion) =>
-            Version.TryParse(peerVersion, out var peer)
-            && Version.TryParse(UpdateChecker.Instance.CurrentVersion, out var mine)
-            && peer == mine;
-
-        private void HandleHostVersionMismatch(string hostVersion)
-        {
-            if (versionMismatchHandled) return;
-            versionMismatchHandled = true;
-
-            var hostIsNewer = !Version.TryParse(hostVersion, out var host)
-                || !Version.TryParse(UpdateChecker.Instance.CurrentVersion, out var mine)
-                || host > mine;
-            var shownHostVersion = string.IsNullOrEmpty(hostVersion) ? Texts.Unknown : hostVersion;
-
-            Application.Current?.Dispatcher.InvokeAsync(async () =>
-            {
-                await StopNetworkAsync();
-                versionMismatchHandled = false;
-
-                if (hostIsNewer)
-                {
-                    PromptUpdate(string.Format(Texts.HostIsNewer, shownHostVersion, UpdateChecker.Instance.CurrentVersion));
-                }
-                else
-                {
-                    MessageBox.Show(
-                        string.Format(Texts.HostIsOlder, shownHostVersion),
-                        Texts.ConnectionError,
-                        MessageBoxButton.OK);
-                }
-            });
-        }
-
-        internal void HandleSyncRequestEvent(SyncRequestEvent evt)
-        {
-            var isAddressedToMe = evt.SourceUserId == LocalUserId
-                || (evt.SourceUserId == null && localUserRole == UserRole.Host);
-            if (!isAddressedToMe) return;
-
-            SendSyncScenes(evt.ExecutorId.ToString(), evt.IsManual);
-        }
-
-        private void SendSyncScenes(string? targetId, bool isManual)
-        {
-            if (Scenes == null) return;
-
-            var onlineScenes = new OnlineScenes();
-            var filesToTransfer = new List<(SharedFile File, string? CharacterName)>();
-            foreach (var timeline in Scenes.Timelines)
-            {
-                var onlineTimeline = new OnlineTimeline
-                {
-                    Id = timeline.ID,
-                    Name = timeline.Name,
-                    Length = timeline.Length,
-                    Width = timeline.VideoInfo?.Width ?? 0,
-                    Height = timeline.VideoInfo?.Height ?? 0,
-                    FPS = timeline.VideoInfo?.FPS ?? 0,
-                    Hz = timeline.VideoInfo?.Hz ?? 0,
-                    BackgroundColor = timeline.VideoInfo is { } info ? VideoInfoSerializer.ToText(info.BackgroundColor) : null
-                };
-                foreach (var item in timeline.Items)
-                {
-                    var itemType = item.GetType();
-                    var (rawJson, files) = MediaFileResolver.SerializeForSync(item, itemType);
-                    onlineTimeline.Items.Add(new OnlineItem
-                    {
-                        ItemId = ItemIdManager.GetOrCreateId(item),
-                        ItemTypeName = ItemTypeResolver.GetTypeName(itemType),
-                        ItemJson = LocalMediaGuard.StripVoiceCache(rawJson),
-                        MediaFileNames = files.Count > 0 ? [.. files.Where(file => file.ShouldTransfer).Select(file => file.Name)] : null,
-                        Frame = item.Frame,
-                        Layer = item.Layer
-                    });
-
-                    var characterName = CharacterResolver.GetCharacter(item)?.Name;
-                    filesToTransfer.AddRange(files.Where(file => file.ShouldTransfer).Select(file => (file, characterName)));
-                }
-                onlineScenes.Timelines.Add(onlineTimeline);
-            }
-
-            var syncId = Guid.NewGuid();
-
-            _ = sessionClient.SendAsync(targetId, new SyncScenesBeginEvent(syncId, isManual)
-            {
-                DateTime = DateTime.UtcNow,
-                ExecutorId = LocalUserId
-            });
-
-            _ = SendSyncChunksAsync(targetId, syncId, onlineScenes, isManual);
-
-            fileTransferManager.ForgetAnnouncedFiles();
-
-            foreach (var (file, characterName) in filesToTransfer.DistinctBy(entry => entry.File.FullPath, StringComparer.OrdinalIgnoreCase))
-            {
-                if (fileTransferManager.IsSendDenied(file.FullPath)) continue;
-
-                fileTransferManager.MarkSendAllowed(file.FullPath);
-                _ = fileTransferManager.TransferAsync(file, characterName, sessionClient, LocalUserId);
-            }
-        }
-
-        private Task SendSyncChunksAsync(string? targetId, Guid syncId, OnlineScenes onlineScenes, bool isManual) =>
-            Task.Run(async () =>
-            {
-                try
-                {
-                    foreach (var chunk in SyncScenesTransfer.Split(syncId, onlineScenes, isManual))
-                    {
-                        if (!sessionClient.IsConnected) return;
-
-                        await sessionClient.SendAsync(targetId, chunk with
-                        {
-                            DateTime = DateTime.UtcNow,
-                            ExecutorId = LocalUserId
-                        });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"[MultiUserEdit] sync send failed: {ex.Message}");
-                }
-            });
-
-        internal void HandleSyncScenesBegin(SyncScenesBeginEvent evt)
-        {
-            if (!evt.IsManual && !IsFromHost(evt.ExecutorId)) return;
-
-            syncScenesTransfer.BeginHolding(evt.SyncId);
-        }
-
-        internal void HandleSyncScenesChunk(SyncScenesChunkEvent evt)
-        {
-            if (!evt.IsManual && !IsFromHost(evt.ExecutorId)) return;
-
-            var scenes = syncScenesTransfer.Receive(evt);
-            if (scenes == null) return;
-
-            try
-            {
-                ApplySyncScenes(scenes, evt.ExecutorId, evt.IsManual);
-            }
-            finally
-            {
-                ReleaseHeldEvents();
-            }
-        }
-
-        private void ReleaseHeldEvents()
-        {
-            var heldEvents = syncScenesTransfer.TakeHeld();
-
-            for (var index = 0; index < heldEvents.Count; index++)
-                DispatchEvent(heldEvents[index], suppressRedraw: index < heldEvents.Count - 1);
-        }
-
-        private void DispatchEvent(EditEvent editEvent) => DispatchEvent(editEvent, suppressRedraw: false);
-
-        private void DispatchEvent(EditEvent editEvent, bool suppressRedraw)
-        {
-            if (activeViewModel == null) return;
-
-            var previous = isApplyingRemoteEvent;
-            isApplyingRemoteEvent = true;
-            using var undoScope = suppressRedraw
-                ? UndoRecordSuppressor.SuppressSilently(undoRedoManager)
-                : UndoRecordSuppressor.Suppress(undoRedoManager);
-            try
-            {
-                eventDispatcher.Dispatch(editEvent, activeViewModel);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MultiUserEdit] Dispatch failed: {ex.Message}");
-            }
-            finally
-            {
-                isApplyingRemoteEvent = previous;
-            }
-        }
-
-        private static readonly TimeSpan CursorEchoWindow = TimeSpan.FromSeconds(2);
-
-        private static readonly TimeSpan[] ReconnectDelays =
-        [
-            TimeSpan.FromSeconds(2),
-            TimeSpan.FromSeconds(5),
-            TimeSpan.FromSeconds(10),
-            TimeSpan.FromSeconds(20),
-            TimeSpan.FromSeconds(30),
-        ];
-
-        private bool isReconnecting;
-
-        private void HandleDisconnected()
-        {
-            Debug.WriteLine("[MultiUserEdit] Disconnected by server");
-
-            eventSender.ClearAllBaselines();
-
-            if (isSwitchingRoom) return;
-
-            if (disposed || isReconnecting || string.IsNullOrEmpty(RoomId))
-            {
-                ResetNetworkState();
-                return;
-            }
-
-            _ = ReconnectAsync(RoomId, localUserRole);
-        }
-
-        private async Task ReconnectAsync(string targetRoomId, UserRole role)
-        {
-            isReconnecting = true;
-            try
-            {
-                for (var attempt = 0; attempt < ReconnectDelays.Length; attempt++)
-                {
-                    await Task.Delay(ReconnectDelays[attempt]);
-
-                    if (disposed || sessionClient.IsConnected || RoomId != targetRoomId) return;
-
-                    try
-                    {
-                        await sessionClient.StartAsync(targetRoomId, role == UserRole.Host, hostKey);
-                    }
-                    catch
-                    {
-                        continue;
-                    }
-
-                    if (!sessionClient.IsConnected) continue;
-
-                    BroadcastLocalPresence();
-                    Application.Current?.Dispatcher.InvokeAsync(() =>
-                    {
-                        if (FirstOrDefaultTimeline != null) SendCursorMovedAsync(FirstOrDefaultTimeline.CurrentFrame, force: true);
-                    });
-                    CheckStateAfterReconnect(role);
-                    Debug.WriteLine($"[MultiUserEdit] Reconnected (attempt {attempt + 1})");
-                    return;
-                }
-
-                ErrorNotifier.NotifyOnce(
-                    Texts.ConnectionLostTitle,
-                    Texts.ConnectionLostMessage);
-                ResetNetworkState();
-            }
-            finally
-            {
-                isReconnecting = false;
-            }
-        }
-
-        private void CheckStateAfterReconnect(UserRole role)
-        {
-            Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                if (!IsConnected) return;
-
-                if (role == UserRole.Host)
-                {
-                    var digest = ComputeStateDigest();
-                    if (digest == null) return;
-
-                    _ = sessionClient.SendAsync(null, new StateDigestEvent(digest)
-                    {
-                        DateTime = DateTime.UtcNow,
-                        ExecutorId = LocalUserId
-                    });
-                    return;
-                }
-
-                var host = Participants.FirstOrDefault(p => p.Role == UserRole.Host && p.UserId != LocalUserId);
-                _ = sessionClient.SendAsync(host?.UserId.ToString(), new StateDigestRequestEvent
-                {
-                    DateTime = DateTime.UtcNow,
-                    ExecutorId = LocalUserId
-                });
-            });
+            if (!isReplay) NoteRemoteOperation(editEvent);
         }
 
         private void SendMissingResource(Guid targetUserId, string[] fonts, string[] plugins)
@@ -2225,244 +1671,11 @@ namespace MultiUserEdit.Commons
             }
         }
 
-        private void UpdateRoomMigration()
-        {
-            if (!IsConnected || !IsHost || !IsLargeRoom) return;
-
-            var others = Participants.Where(p => p.UserId != LocalUserId).Select(p => p.UserId).ToList();
-            roomMigration.NoteParticipantCount(Participants.Count);
-
-            if (roomMigration.IsRunning)
-            {
-                var roomId = roomMigration.PendingRoomId;
-                var key = roomMigration.PendingHostKey;
-                if (roomId == null || key == null) return;
-
-                if (roomMigration.HasFailure || roomMigration.TimedOut)
-                {
-                    roomMigration.Broadcast(RoomMigration.PhaseAbort, roomId);
-                    roomMigration.Finish();
-                    return;
-                }
-
-                if (!roomMigration.AllAcked(others)) return;
-
-                roomMigration.Broadcast(RoomMigration.PhaseCommit, roomId);
-                roomMigration.Finish();
-                _ = SwitchRoomAsync(roomId, key);
-                return;
-            }
-
-            if (roomMigration.ShouldStart(Participants.Count)) _ = StartRoomMigrationAsync();
-        }
-
-        private async Task StartRoomMigrationAsync()
-        {
-            var (newRoomId, newHostKey) = roomMigration.Begin();
-
-            if (!await RoomProbe.CreateRoomAsync(newRoomId, newHostKey))
-            {
-                Debug.WriteLine("[MultiUserEdit] migration aborted: could not create the small room");
-                roomMigration.Finish();
-                return;
-            }
-
-            if (!Participants.Any(p => p.UserId != LocalUserId))
-            {
-                roomMigration.Finish();
-                _ = SwitchRoomAsync(newRoomId, newHostKey);
-                return;
-            }
-
-            roomMigration.Broadcast(RoomMigration.PhasePrepare, newRoomId);
-        }
-
-        internal void HandleRoomMigration(RoomMigrationEvent evt)
-        {
-            if (IsHost || !IsFromHost(evt.ExecutorId)) return;
-
-            switch (evt.Phase)
-            {
-                case RoomMigration.PhasePrepare:
-                    var hostId = evt.ExecutorId;
-                    var target = evt.NewRoomId;
-                    _ = Task.Run(async () =>
-                    {
-                        var ok = await RoomProbe.CanJoinAsync(target);
-                        pendingMigrationRoomId = ok ? target : null;
-                        roomMigration.SendAck(hostId, ok);
-                    });
-                    break;
-
-                case RoomMigration.PhaseCommit:
-                    if (pendingMigrationRoomId == evt.NewRoomId)
-                    {
-                        pendingMigrationRoomId = null;
-                        _ = SwitchRoomAsync(evt.NewRoomId, null);
-                    }
-                    break;
-
-                case RoomMigration.PhaseAbort:
-                    pendingMigrationRoomId = null;
-                    break;
-            }
-        }
-
-        internal void HandleRoomMigrationAck(RoomMigrationAckEvent evt)
-        {
-            if (!IsHost) return;
-            roomMigration.NoteAck(evt.ExecutorId, evt.Success);
-        }
-
-        private async Task SwitchRoomAsync(string newRoomId, string? newHostKey)
-        {
-            if (isSwitchingRoom) return;
-
-            isSwitchingRoom = true;
-            try
-            {
-                await sessionClient.StopAsync();
-
-                if (newHostKey != null) hostKey = newHostKey;
-                RoomId = newRoomId;
-
-                await sessionClient.StartAsync(newRoomId, localUserRole == UserRole.Host, hostKey);
-
-                IsConnected = sessionClient.IsConnected;
-                BroadcastLocalPresence();
-                RoomMigration.NotifyMoved();
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MultiUserEdit] room switch failed: {ex.Message}");
-            }
-            finally
-            {
-                isSwitchingRoom = false;
-                RefreshCommandStates();
-            }
-        }
-
         internal void HandleMissingResource(MissingResourceEvent evt)
         {
             ResourceAvailabilityChecker.NotifyReportedByPeer(
                 GetParticipantName(evt.ExecutorId), evt.Fonts, evt.Plugins);
         }
-
-        internal void HandleStateDigestRequest(StateDigestRequestEvent evt)
-        {
-            if (!IsConnected || !IsHost) return;
-
-            var digest = ComputeStateDigest();
-            if (digest == null) return;
-
-            _ = sessionClient.SendAsync(evt.ExecutorId.ToString(), new StateDigestEvent(digest)
-            {
-                DateTime = DateTime.UtcNow,
-                ExecutorId = LocalUserId
-            });
-        }
-
-        private bool hasDivergenceWarning;
-        public bool HasDivergenceWarning
-        {
-            get => hasDivergenceWarning;
-            private set => Set(ref hasDivergenceWarning, value);
-        }
-
-        private string divergenceWarningText = string.Empty;
-        public string DivergenceWarningText
-        {
-            get => divergenceWarningText;
-            private set => Set(ref divergenceWarningText, value);
-        }
-
-        public void DismissDivergenceWarning() => HasDivergenceWarning = false;
-
-        internal void HandleStateDigest(StateDigestEvent evt)
-        {
-            if (!IsConnected || IsHost) return;
-
-            var host = Participants.FirstOrDefault(p => p.UserId == evt.ExecutorId && p.Role == UserRole.Host);
-            if (host == null) return;
-
-            var digest = ComputeStateDigest();
-            if (digest == null) return;
-
-            var matched = digest == evt.Digest;
-            var hostName = host.UserName;
-
-            Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                if (matched)
-                {
-                    HasDivergenceWarning = false;
-                    return;
-                }
-
-                DivergenceWarningText = string.Format(Texts.DivergenceWarning, hostName);
-                HasDivergenceWarning = true;
-            });
-        }
-
-        private static readonly string[] LocallyGeneratedVoiceProperties =
-            ["VoiceCache", "Pronounce", "LipSyncFrames", "LipSyncSourceFileStamp", "VoiceLength"];
-
-        private static string WithoutLocallyGeneratedVoice(string json)
-        {
-            try
-            {
-                var root = Newtonsoft.Json.Linq.JObject.Parse(json);
-                foreach (var name in LocallyGeneratedVoiceProperties) root.Remove(name);
-                return root.ToString(Formatting.None);
-            }
-            catch
-            {
-                return json;
-            }
-        }
-
-        private string? ComputeStateDigest()
-        {
-            if (Scenes == null) return null;
-
-            try
-            {
-                var builder = new StringBuilder();
-                foreach (var timeline in Scenes.Timelines)
-                {
-                    builder.Append(timeline.ID).Append('|').Append(timeline.Name);
-                    if (timeline.VideoInfo is { } info)
-                    {
-                        builder.Append('|').Append(info.Width).Append('x').Append(info.Height)
-                            .Append('@').Append(info.FPS).Append('/').Append(info.Hz)
-                            .Append('|').Append(VideoInfoSerializer.ToText(info.BackgroundColor));
-                    }
-                    builder.Append('\n');
-
-                    var lines = new List<string>();
-                    foreach (var item in timeline.Items)
-                    {
-                        var json = JsonConvert.SerializeObject(item, ItemSerializerOptions.NullPath);
-                        if (item is VoiceItem) json = WithoutLocallyGeneratedVoice(json);
-                        var itemHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json)));
-                        lines.Add($"{ItemIdManager.GetOrCreateId(item)}|{item.Frame}|{item.Layer}|{item.Length}|{itemHash}");
-                    }
-
-                    lines.Sort(StringComparer.Ordinal);
-                    foreach (var line in lines) builder.Append(line).Append('\n');
-                }
-
-                return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(builder.ToString())));
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MultiUserEdit] ComputeStateDigest failed: {ex.Message}");
-                return null;
-            }
-        }
-
-        private bool updateNoticeShown;
 
         private void HandleUpdateAvailable(string? latestVersion)
         {
@@ -2478,24 +1691,41 @@ namespace MultiUserEdit.Commons
 
         private void HandleRoomNotFound(string? reason, string? latestVersion)
         {
+            var refusedRoomId = RoomId;
+            if (reason == "kept_limit") Settings.MultiUserEditSettings.Default.SetKeptRoomKey(refusedRoomId, null);
+            var refusedAsOwner = reason == "host_key"
+                && localUserRole == UserRole.Host
+                && isKeptRoom;
+            var missingOnRelay = reason == "missing"
+                && localUserRole == UserRole.Guest
+                && !sessionClient.UsesBackupServer;
+
             guestRoomValidation?.TrySetResult(false);
             ResetNetworkState();
+
+            if (refusedAsOwner || missingOnRelay)
+            {
+                Application.Current?.Dispatcher.InvokeAsync(async () =>
+                {
+                    InputRoomId = refusedRoomId;
+                    await JoinRoomAsync(asOwnerIfPossible: false, useBackupServer: missingOnRelay);
+                });
+                return;
+            }
+
+            relayFailureDetail = null;
 
             if (reason == "outdated")
             {
                 Application.Current?.Dispatcher.InvokeAsync(() =>
-                    PromptUpdate(string.Format(Texts.OutdatedPlugin, UpdateChecker.Instance.CurrentVersion, ShownVersion(latestVersion))));
+                    PromptUpdate(string.Format(Texts.OutdatedPlugin, UpdateChecker.Instance.DisplayVersion, ShownVersion(latestVersion))));
                 return;
             }
 
             if (reason == "full")
             {
-                var limitText = SessionClient.IsLargeRoom(RoomId) || SessionClient.IsLargeRoom(InputRoomId)
-                    ? Texts.RoomFull
-                    : Texts.RoomFullAskLarge;
-
                 Application.Current?.Dispatcher.InvokeAsync(() =>
-                    MessageBox.Show(limitText, Texts.RoomFullTitle, MessageBoxButton.OK));
+                    MessageBox.Show(Texts.RoomFull, Texts.RoomFullTitle, MessageBoxButton.OK));
                 return;
             }
 
@@ -2503,6 +1733,11 @@ namespace MultiUserEdit.Commons
             {
                 "expired" => Texts.RoomExpired,
                 "host_key" => Texts.RoomHostKeyRejected,
+                "identity" => Texts.RoomIdentityRejected,
+                "rate_limited" => Texts.RoomRateLimited,
+                "too_many_joins" => Texts.RoomJoinRateLimited,
+                "kept_limit" => Texts.RoomKeptLimit,
+                "closed" => Texts.HostClosedRoom,
                 _ => Texts.RoomNotFound
             };
 
@@ -2514,8 +1749,6 @@ namespace MultiUserEdit.Commons
 
         private void HandleConnectionStateChanged(bool connected)
         {
-            if (isSwitchingRoom) return;
-
             if (!connected)
             {
                 ResetNetworkState();
@@ -2544,6 +1777,9 @@ namespace MultiUserEdit.Commons
                 CommitParticipationTime(participant);
                 Participants.Remove(participant);
                 peerFileChannels.TryRemove(participant.UserId, out _);
+                directPeers.TryRemove(participant.UserId, out _);
+                peerTransport?.Forget(participant.UserId);
+                previewStreams.Forget(participant.UserId);
                 permissionOverrides.TryRemove(participant.UserId, out _);
             }
         }
@@ -2570,167 +1806,12 @@ namespace MultiUserEdit.Commons
                         CommitParticipationTime(p);
                         Participants.Remove(p);
                         peerFileChannels.TryRemove(p.UserId, out _);
+                        directPeers.TryRemove(p.UserId, out _);
+                        peerTransport?.Forget(p.UserId);
+                        previewStreams.Forget(p.UserId);
                         permissionOverrides.TryRemove(p.UserId, out _);
                     }
                 });
-            }
-        }
-
-        private void HandlePeerDisconnected(Guid userId, bool isHost)
-        {
-            if (isHost)
-            {
-                Application.Current?.Dispatcher.InvokeAsync(() => BeginHostWatch(userId));
-                return;
-            }
-
-            Application.Current?.Dispatcher.InvokeAsync(() => MarkDeparted(userId));
-        }
-
-        private static readonly TimeSpan DepartureDelay = TimeSpan.FromMinutes(30);
-        private static readonly TimeSpan HostWatchInterval = TimeSpan.FromMinutes(1);
-
-        private readonly Dictionary<Guid, DateTime> departedAt = [];
-
-        private Guid watchedHostId;
-
-        private void MarkDeparted(Guid userId)
-        {
-            var participant = Participants.FirstOrDefault(p => p.UserId == userId);
-            if (participant == null) return;
-
-            participant.Status = UserStatus.Away;
-            departedAt[userId] = DateTime.UtcNow;
-        }
-
-        private void RemoveParticipant(Guid userId)
-        {
-            departedAt.Remove(userId);
-
-            var participant = Participants.FirstOrDefault(p => p.UserId == userId);
-            if (participant == null) return;
-
-            CommitParticipationTime(participant);
-            Participants.Remove(participant);
-            peerFileChannels.TryRemove(userId, out _);
-            permissionOverrides.TryRemove(userId, out _);
-        }
-
-        private void RemoveLongDeparted()
-        {
-            var now = DateTime.UtcNow;
-            foreach (var (userId, since) in departedAt.ToArray())
-            {
-                if (userId == watchedHostId || now - since < DepartureDelay) continue;
-
-                RemoveParticipant(userId);
-            }
-        }
-
-        private void BeginHostWatch(Guid hostUserId)
-        {
-            if (hostUserId == LocalUserId || watchedHostId == hostUserId) return;
-
-            watchedHostId = hostUserId;
-            MarkDeparted(hostUserId);
-
-            _ = WatchHostAsync(hostUserId);
-        }
-
-        private void NotePeerAlive(Guid userId)
-        {
-            departedAt.Remove(userId);
-            if (watchedHostId == userId) watchedHostId = Guid.Empty;
-        }
-
-        private async Task WatchHostAsync(Guid hostUserId)
-        {
-            var waitingSince = DateTime.UtcNow;
-
-            while (true)
-            {
-                await Task.Delay(HostWatchInterval);
-
-                if (disposed || !IsConnected || watchedHostId != hostUserId) return;
-                if (DateTime.UtcNow - waitingSince < DepartureDelay) continue;
-
-                var hostName = Participants.FirstOrDefault(p => p.UserId == hostUserId)?.UserName ?? Texts.Host;
-                var keepWaiting = MessageBox.Show(
-                    string.Format(Texts.HostNoResponse, hostName, DepartureDelay.TotalMinutes),
-                    Texts.HostNoResponseTitle,
-                    MessageBoxButton.YesNo) == MessageBoxResult.Yes;
-
-                if (disposed || !IsConnected || watchedHostId != hostUserId) return;
-
-                if (!keepWaiting)
-                {
-                    watchedHostId = Guid.Empty;
-                    AskWhatToKeepAfterHostLeft(Texts.HostDidNotReturn);
-                    return;
-                }
-
-                waitingSince = DateTime.UtcNow;
-            }
-        }
-
-        internal void HandleUserLeftEvent(UserLeftEvent evt)
-        {
-            if (evt.UserId == LocalUserId) return;
-            if (evt.UserId != evt.ExecutorId) return;
-            if (evt.IsHost && !IsFromHost(evt.UserId)) evt = evt with { IsHost = false };
-
-            Application.Current?.Dispatcher.InvokeAsync(() =>
-            {
-                if (evt.IsHost)
-                {
-                    AskWhatToKeepAfterHostLeft(Texts.HostClosedRoom);
-                }
-                else
-                {
-                    RemoveParticipant(evt.UserId);
-                }
-            });
-        }
-
-        private bool hostLeftHandled;
-
-        private void AskWhatToKeepAfterHostLeft(string reason)
-        {
-            if (hostLeftHandled) return;
-            hostLeftHandled = true;
-
-            var keep = MessageBox.Show(
-                string.Format(Texts.KeepTimelineQuestion, reason),
-                Texts.RoomEndedTitle,
-                MessageBoxButton.YesNo) == MessageBoxResult.Yes;
-
-            if (!keep) ClearAllTimelines();
-
-            _ = StopNetworkAsync();
-        }
-
-        private void ClearAllTimelines()
-        {
-            if (Scenes == null) return;
-
-            var previous = isApplyingRemoteEvent;
-            isApplyingRemoteEvent = true;
-            try
-            {
-                using var undoScope = UndoRecordSuppressor.Suppress(undoRedoManager);
-                foreach (var timeline in Scenes.Timelines)
-                {
-                    var items = timeline.Items.ToArray();
-                    if (items.Length > 0) timeline.DeleteItems(items);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MultiUserEdit] could not clear the timeline: {ex.Message}");
-            }
-            finally
-            {
-                isApplyingRemoteEvent = previous;
             }
         }
 
@@ -2766,100 +1847,6 @@ namespace MultiUserEdit.Commons
             lockedItemsReceivedAt.Remove(evt.ItemId);
         }
 
-        internal void HandleCursorMovedEvent(CursorMovedEvent evt)
-        {
-            if (evt.ExecutorId == Guid.Empty || evt.ExecutorId == LocalUserId) return;
-            var p = EnsureParticipant(evt.ExecutorId);
-            p.CurrentFrame = evt.CurrentFrame;
-            p.CurrentTimelineIndex = evt.TimelineIndex;
-            p.IsPlaying = evt.IsPlaying;
-            p.FrameUpdatedAt = DateTime.UtcNow;
-
-            if (!IsHost && CurrentUserPermission.CanSyncSeekPosition && p.Role == UserRole.Host)
-            {
-                QueuePlaybackSync(evt.CurrentFrame, evt.IsPlaying);
-            }
-        }
-
-        private static readonly TimeSpan SeekApplyInterval = TimeSpan.FromMilliseconds(120);
-
-        private readonly System.Threading.Lock seekLock = new();
-        private (int Frame, bool IsPlaying)? pendingSeek;
-        private DateTime lastSeekAppliedAt = DateTime.MinValue;
-        private bool seekFlushScheduled;
-
-        private void QueuePlaybackSync(int frame, bool isPlaying)
-        {
-            lock (seekLock)
-            {
-                pendingSeek = (frame, isPlaying);
-
-                var now = DateTime.UtcNow;
-                var waited = now - lastSeekAppliedAt;
-
-                if (waited >= SeekApplyInterval)
-                {
-                    lastSeekAppliedAt = now;
-                    pendingSeek = null;
-                    _ = SyncPlaybackStateAsync(frame, isPlaying);
-                    return;
-                }
-
-                if (seekFlushScheduled) return;
-                seekFlushScheduled = true;
-
-                var delay = SeekApplyInterval - waited;
-                _ = Task.Delay(delay).ContinueWith(
-                    _ => Application.Current?.Dispatcher.InvokeAsync(FlushPendingSeek),
-                    TaskScheduler.Default);
-            }
-        }
-
-        private void FlushPendingSeek()
-        {
-            (int Frame, bool IsPlaying) target;
-            lock (seekLock)
-            {
-                seekFlushScheduled = false;
-                if (pendingSeek == null) return;
-
-                target = pendingSeek.Value;
-                pendingSeek = null;
-                lastSeekAppliedAt = DateTime.UtcNow;
-            }
-
-            _ = SyncPlaybackStateAsync(target.Frame, target.IsPlaying);
-        }
-
-        private int lastAppliedRemoteFrame = -1;
-        private DateTime lastAppliedRemoteFrameAt = DateTime.MinValue;
-
-        private async Task SyncPlaybackStateAsync(int frame, bool isPlaying)
-        {
-            lastAppliedRemoteFrame = frame;
-            lastAppliedRemoteFrameAt = DateTime.UtcNow;
-
-            if (!isPlaying && FirstOrDefaultTimeline != null)
-            {
-                var previous = isApplyingRemoteEvent;
-                isApplyingRemoteEvent = true;
-                try
-                {
-                    FirstOrDefaultTimeline.UnlockCurrentFrame();
-                    FirstOrDefaultTimeline.CurrentFrame = frame;
-                }
-                finally
-                {
-                    isApplyingRemoteEvent = previous;
-                }
-            }
-
-            if (previewSeekAction != null)
-            {
-                await previewSeekAction(frame, isPlaying);
-            }
-        }
-
         internal void HandleCharacterRequest(CharacterRequestEvent evt) => characterShareManager.HandleRequest(evt);
 
         internal void HandleCharacterShared(CharacterSharedEvent evt) => characterShareManager.HandleShared(evt);
@@ -2871,61 +1858,6 @@ namespace MultiUserEdit.Commons
             characterShareManager.WhenDecided(characterName, resume);
             characterShareManager.RequestIfNeeded(characterName, ownerId);
         }
-
-        internal void HandleFileAvailable(FileAvailableEvent evt)
-        {
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    var needsTransfer = await fileTransferManager.NeedsTransferAsync(evt);
-
-                    var requestEvt = new FileRequestEvent(evt.TransferId, LocalUserId, needsTransfer)
-                    {
-                        DateTime = DateTime.UtcNow,
-                        ExecutorId = LocalUserId
-                    };
-
-                    await sessionClient.SendAsync(evt.ExecutorId.ToString(), requestEvt);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"[MultiUserEdit] HandleFileAvailable failed: {ex.Message}");
-                }
-            });
-        }
-
-        internal void HandleFileRequest(FileRequestEvent evt)
-        {
-            _ = fileTransferManager.HandleFileRequestAsync(evt, sessionClient, LocalUserId);
-        }
-
-        internal void HandleFileTransferStart(FileTransferStartEvent evt)
-        {
-            fileTransferManager.HandleTransferStart(evt);
-        }
-
-        internal void HandleFileChunk(FileChunkEvent evt)
-        {
-            fileTransferManager.HandleChunk(evt);
-        }
-
-        public void CancelIncomingTransfer(Guid transferId)
-        {
-            var senderId = fileTransferManager.CancelIncoming(transferId);
-            if (senderId == Guid.Empty) return;
-
-            var evt = new FileTransferCancelEvent(transferId, LocalUserId)
-            {
-                DateTime = DateTime.UtcNow,
-                ExecutorId = LocalUserId
-            };
-
-            _ = sessionClient.SendAsync(senderId.ToString(), evt);
-        }
-
-        public Task SendFileAsync(string filePath) =>
-            fileTransferManager.SendFileAsync(filePath, sessionClient, LocalUserId);
 
         private void ForceDeselectItem(Guid itemId)
         {
@@ -2947,9 +1879,8 @@ namespace MultiUserEdit.Commons
                         foreach (var rm in toRemove)
                             selectedItems.Remove(rm);
                     }
-                    catch (Exception ex)
+                    catch
                     {
-                        Debug.WriteLine($"[MultiUserEdit] ForceDeselect failed: {ex.Message}");
                     }
                     break;
                 }
@@ -2991,213 +1922,12 @@ namespace MultiUserEdit.Commons
             catch { }
         }
 
-        private void OnUndoRedoCommandCreated(object? sender, EventArgs e)
-        {
-            if (isApplyingRemoteEvent || !IsConnected) return;
-            if (sender is IItem or Timeline or YukkuriMovieMaker.Project.Scenes or VideoInfo) return;
-
-            if (FirstOrDefaultTimeline != null && Scenes != null)
-            {
-                var index = Scenes.Timelines.IndexOf(FirstOrDefaultTimeline);
-                if (index < 0) index = 0;
-
-                foreach (var item in FirstOrDefaultTimeline.SelectedItems)
-                {
-                    _ = eventSender.SendItemUpdatedThrottledAsync(item, index);
-                }
-            }
-        }
-
-        public void LockItemLocally(Guid itemId)
-        {
-            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            locallyLockedItems[itemId] = timestamp;
-            _ = eventSender.SendItemLockAsync(itemId, timestamp);
-        }
-
-        public void UnlockItemLocally(Guid itemId)
-        {
-            if (!locallyLockedItems.Remove(itemId)) return;
-            _ = eventSender.SendItemUnlockAsync(itemId);
-        }
-
-        internal bool IsReceivingFiles() => fileTransferManager.IsReceivingAny();
-
-        private readonly HashSet<Guid> locallyAddedItems = [];
-
-        private void NoteLocallyAddedItem(IItem item)
-        {
-            try
-            {
-                lock (locallyAddedItems) locallyAddedItems.Add(ItemIdManager.GetOrCreateId(item));
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MultiUserEdit] could not remember a local addition: {ex.Message}");
-            }
-        }
-
-        private bool WasAddedLocally(IItem item)
-        {
-            var itemId = ItemIdManager.GetOrCreateId(item);
-
-            lock (locallyAddedItems) return locallyAddedItems.Contains(itemId);
-        }
-
-        private string? DescribeFileSendBlock(string filePath)
-        {
-            if (IsHost) return null;
-
-            var permission = CurrentUserPermission;
-            if (!permission.CanShareFiles)
-                return Texts.SendBlockedAll;
-
-            return FileExtensionCatalog.GetKindForFile(filePath) switch
-            {
-                FileGroupKind.Video when !permission.CanShareVideos => Texts.SendBlockedVideo,
-                FileGroupKind.Image when !permission.CanShareImages => Texts.SendBlockedImage,
-                FileGroupKind.Audio when !permission.CanShareAudio => Texts.SendBlockedAudio,
-                _ => null
-            };
-        }
-
-        private bool RejectRestrictedRemoval(IReadOnlyList<IItem> removed, Timeline timeline)
-        {
-            if (!IsConnected || IsHost) return false;
-
-            var othersOnly = CurrentUserPermission.CanDeleteItems
-                && !CurrentUserPermission.CanDeleteOthersItems
-                && removed.Any(item => !WasAddedLocally(item));
-
-            if (CurrentUserPermission.CanDeleteItems && !othersOnly) return false;
-
-            var previous = isApplyingRemoteEvent;
-            isApplyingRemoteEvent = true;
-            try
-            {
-                using var undoScope = UndoRecordSuppressor.Suppress(undoRedoManager);
-                foreach (var item in removed) timeline.TryAddItems([item], item.Frame, item.Layer, false);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MultiUserEdit] could not restore a restricted removal: {ex.Message}");
-            }
-            finally
-            {
-                isApplyingRemoteEvent = previous;
-            }
-
-            if (othersOnly)
-            {
-                ErrorNotifier.NotifyOnce(
-                    Texts.CannotDeleteItemTitle,
-                    Texts.DeleteOwnOnly);
-            }
-            else
-            {
-                ErrorNotifier.NotifyOnce(
-                    Texts.CannotDeleteItemTitle,
-                    Texts.DeleteNotAllowed);
-            }
-
-            return true;
-        }
-
-        private bool RejectRestrictedAddition(IReadOnlyList<IItem> added, Timeline timeline)
-        {
-            if (!IsConnected || IsHost || CurrentUserPermission.CanAddItems) return false;
-
-            var previous = isApplyingRemoteEvent;
-            isApplyingRemoteEvent = true;
-            try
-            {
-                using var undoScope = UndoRecordSuppressor.Suppress(undoRedoManager);
-                timeline.DeleteItems([.. added]);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MultiUserEdit] could not revert a restricted addition: {ex.Message}");
-            }
-            finally
-            {
-                isApplyingRemoteEvent = previous;
-            }
-
-            ErrorNotifier.NotifyOnce(
-                Texts.CannotAddItemTitle,
-                Texts.AddNotAllowed);
-
-            return true;
-        }
-
-        internal bool IsItemEditableLocally(Guid itemId) =>
-            locallyLockedItems.ContainsKey(itemId) || !LockedItems.ContainsKey(itemId);
-
-        internal void HandleItemStateRequest(ItemStateRequestEvent evt)
-        {
-            if (!IsConnected || Scenes == null) return;
-
-            foreach (var timeline in Scenes.Timelines)
-            {
-                var item = timeline.Items.FirstOrDefault(i => ItemIdManager.GetOrCreateId(i) == evt.ItemId);
-                if (item == null) continue;
-
-                eventSender.ClearBaseline(evt.ItemId);
-                _ = eventSender.SendItemUpdatedAsync(item, Scenes.Timelines.IndexOf(timeline));
-                return;
-            }
-        }
-
-        private void RequestItemState(Guid itemId, Guid ownerId)
-        {
-            if (!IsConnected) return;
-
-            var request = new ItemStateRequestEvent(itemId, LocalUserId)
-            {
-                DateTime = DateTime.UtcNow,
-                ExecutorId = LocalUserId
-            };
-            _ = sessionClient.SendAsync(ownerId.ToString(), request);
-        }
-
         public void Dispose()
         {
             if (disposed) return;
             disposed = true;
 
-            ResourceAvailabilityChecker.MissingReported = null;
-
-            AppDomain.CurrentDomain.ProcessExit -= CurrentDomain_ProcessExit;
-            Application.Current?.Exit -= Application_Exit;
-
-            presenceTimer.Stop();
-            presenceTimer.Tick -= PresenceTimer_Tick;
-
-            FirstOrDefaultTimeline = null;
-
-            sessionClient.EventReceived -= HandleEventReceived;
-            sessionClient.Disconnected -= HandleDisconnected;
-            sessionClient.RoomNotFound -= HandleRoomNotFound;
-            sessionClient.UpdateAvailable -= HandleUpdateAvailable;
-            sessionClient.PeerDisconnected -= HandlePeerDisconnected;
-            sessionClient.ConnectionStateChanged -= HandleConnectionStateChanged;
-
-            undoRedoManager?.UndoRedoCommandCreated -= OnUndoRedoCommandCreated;
-            undoRedoManager?.Recorded -= UndoRedoManager_Recorded;
-
-            if (Scenes is not null)
-            {
-                UnsubscribeScenesEvents();
-                foreach (var timeline in Scenes.Timelines) timelineSyncManager.UnregisterTimeline(timeline);
-            }
-
-            locallyLockedItems.Clear();
-            lockedItemsReceivedAt.Clear();
-
-            fileTransferManager.CancelAll();
-            adornerManager.DetachAdorner();
-
-            _ = sessionClient.StopAsync();
+            disposer.Dispose();
 
             GC.SuppressFinalize(this);
         }

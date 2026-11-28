@@ -15,6 +15,12 @@
 
         public static Type? Resolve(string? typeName)
         {
+            var type = Find(typeName);
+            return type != null && ItemSerializerOptions.IsAllowedType(type) ? type : null;
+        }
+
+        private static Type? Find(string? typeName)
+        {
             if (string.IsNullOrWhiteSpace(typeName)) return null;
 
             var type = Type.GetType(typeName, throwOnError: false);

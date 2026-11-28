@@ -1,6 +1,7 @@
 ﻿<UserControl x:Class="MultiUserEdit.Views.SettingsPages.FileSettingsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ymm="clr-namespace:YukkuriMovieMaker.Controls;assembly=YukkuriMovieMaker.Controls"
              xmlns:loc="clr-namespace:MultiUserEdit"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -34,13 +35,17 @@
 
                     <Separator Margin="0,8" />
 
-                    <CheckBox x:Name="ConfirmLargeReceiveCheck" Content="{x:Static loc:Texts.ConfirmLargeReceive}"
-                              IsChecked="{Binding Source={x:Static settings:MultiUserEditSettings.Default}, Path=ConfirmLargeFileReceive}"
-                              Cursor="Hand" FontSize="12" Margin="0,4"
-                              ToolTip="{x:Static loc:Texts.ConfirmLargeReceiveTip}" />
+                    <Grid Margin="0,4" ToolTip="{x:Static loc:Texts.ConfirmLargeReceiveTip}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{x:Static loc:Texts.ConfirmLargeReceive}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" FontSize="12" />
+                        <ymm:ToggleSlider x:Name="ConfirmLargeReceiveCheck" Grid.Column="1" VerticalAlignment="Center" Value="{Binding Source={x:Static settings:MultiUserEditSettings.Default}, Path=ConfirmLargeFileReceive}" />
+                    </Grid>
 
                     <StackPanel Orientation="Horizontal" Margin="18,2,0,0"
-                                IsEnabled="{Binding IsChecked, ElementName=ConfirmLargeReceiveCheck}">
+                                IsEnabled="{Binding Value, ElementName=ConfirmLargeReceiveCheck}">
                         <TextBlock Text="{x:Static loc:Texts.ConfirmSize}" FontSize="11" Opacity="0.75" VerticalAlignment="Center" />
                         <TextBox Text="{Binding Source={x:Static settings:MultiUserEditSettings.Default}, Path=LargeFileConfirmMegaBytes, UpdateSourceTrigger=PropertyChanged}"
                                  PreviewMouseWheel="OnInputPreviewMouseWheel"
@@ -55,10 +60,23 @@
                 <StackPanel>
                     <TextBlock Text="{x:Static loc:Texts.SendLimits}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,8" />
 
-                    <CheckBox Content="{x:Static loc:Texts.ConfirmBeforeSend}"
-                              IsChecked="{Binding Source={x:Static settings:MultiUserEditSettings.Default}, Path=ConfirmBeforeFileSend}"
-                              Cursor="Hand" FontSize="12" Margin="0,4" 
-                              ToolTip="{x:Static loc:Texts.ConfirmBeforeSendTip}"/>
+                    <Grid Margin="0,4" ToolTip="{x:Static loc:Texts.ConfirmBeforeSendTip}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{x:Static loc:Texts.ConfirmBeforeSend}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" FontSize="12" />
+                        <ymm:ToggleSlider Grid.Column="1" VerticalAlignment="Center" Value="{Binding Source={x:Static settings:MultiUserEditSettings.Default}, Path=ConfirmBeforeFileSend}" />
+                    </Grid>
+
+                    <Grid Margin="0,4" ToolTip="{x:Static loc:Texts.UseDirectTransferTip}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{x:Static loc:Texts.UseDirectTransfer}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" FontSize="12" />
+                        <ymm:ToggleSlider Grid.Column="1" VerticalAlignment="Center" Value="{Binding Source={x:Static settings:MultiUserEditSettings.Default}, Path=UseDirectTransfer}" />
+                    </Grid>
 
                     <Grid Margin="0,8,0,4">
                         <TextBlock Text="{x:Static loc:Texts.ShareableExtensions}" FontSize="11" Opacity="0.75" VerticalAlignment="Center" />
@@ -112,8 +130,14 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" Margin="0,2,12,2">
-                                            <CheckBox IsChecked="{Binding IsEnabled}" Content="{Binding Extension}"
-                                                      FontSize="11" Cursor="Hand" VerticalContentAlignment="Center" />
+                                            <Grid Margin="0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Extension}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" FontSize="11" />
+                                                <ymm:ToggleSlider Grid.Column="1" VerticalAlignment="Center" Value="{Binding IsEnabled}" />
+                                            </Grid>
                                             <Button Click="OnRemoveExtensionClick" Cursor="Hand" ToolTip="{x:Static loc:Texts.RemoveFormat}"
                                                     Background="Transparent" BorderThickness="0" Padding="3,0" Margin="2,0,0,0"
                                                     Visibility="{Binding IsCustom, Converter={StaticResource BoolToVisConverter}}">

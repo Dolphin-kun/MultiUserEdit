@@ -35,8 +35,6 @@ namespace MultiUserEdit.Commons
             Register(new StateDigestRequestEventHandler());
             Register(new StateDigestEventHandler());
             Register(new MissingResourceEventHandler());
-            Register(new RoomMigrationEventHandler());
-            Register(new RoomMigrationAckEventHandler());
             Register(new PermissionUpdatedEventHandler());
             Register(new UserLeftEventHandler());
             Register(new UserKickedEventHandler());

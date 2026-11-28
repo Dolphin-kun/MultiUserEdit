@@ -61,6 +61,7 @@
 <data name="CurrentCulture" xml:space="preserve"><value>zh-tw</value></data>
 <data name="PluginName" xml:space="preserve"><value>協同編輯</value></data>
 <data name="Host" xml:space="preserve"><value>房主</value></data>
+<data name="WebGuest" xml:space="preserve"><value>訪客（Web）</value></data>
 <data name="Guest" xml:space="preserve"><value>訪客</value></data>
 <data name="Unknown" xml:space="preserve"><value>未知</value></data>
 <data name="DefaultUserName" xml:space="preserve"><value>使用者</value></data>
@@ -108,10 +109,13 @@
 <data name="LatestOnlyPleaseUpdate" xml:space="preserve"><value>協同編輯只能在最新版本的外掛之間使用。請更新。</value></data>
 <data name="OpenUpdatePage" xml:space="preserve"><value>開啟更新頁面</value></data>
 <data name="Room" xml:space="preserve"><value>房間</value></data>
-<data name="SmallRoomLabel" xml:space="preserve"><value>小房間（最多 {0} 人）</value></data>
-<data name="LargeRoomLabel" xml:space="preserve"><value>大房間（最多 {0} 人）</value></data>
-<data name="SmallRoomTip" xml:space="preserve"><value>適合少數人。可立即連線。</value></data>
-<data name="LargeRoomTip" xml:space="preserve"><value>適合多人。使用專用中繼伺服器。人數持續較少時會自動轉移到小房間。</value></data>
+<data name="NormalRoomLabel" xml:space="preserve"><value>一般房間</value></data>
+<data name="NormalRoomTip" xml:space="preserve"><value>可以使用到房主關閉房間為止。最多可加入 100 人。</value></data>
+<data name="KeptRoomLabel" xml:space="preserve"><value>常駐房間</value></data>
+<data name="KeptRoomTip" xml:space="preserve"><value>即使房主不在也能繼續的房間。內容儲存在伺服器上，最後一次使用 30 天後刪除。如果在沒有任何項目的情況下所有人都離開，房間會立即刪除。每人最多可建立 3 個。</value></data>
+<data name="DeleteKeptRoom" xml:space="preserve"><value>刪除常駐房間</value></data>
+<data name="DeleteKeptRoomConfirm" xml:space="preserve"><value>將刪除此常駐房間。儲存在伺服器上的內容將被清除，房間內的人也會退出。確定嗎？</value></data>
+<data name="RoomKeptLimit" xml:space="preserve"><value>每人最多可擁有 3 個常駐房間。請進入不再使用的常駐房間並點擊「刪除常駐房間」後再建立。最後一次使用 30 天後的常駐房間會自動刪除。</value></data>
 <data name="CreateRoom" xml:space="preserve"><value>建立房間</value></data>
 <data name="JoinExistingRoom" xml:space="preserve"><value>加入現有房間</value></data>
 <data name="JoinFromClipboard" xml:space="preserve"><value>透過剪貼簿中的連結加入</value></data>
@@ -208,7 +212,7 @@
 <data name="FileSharingCache" xml:space="preserve"><value>檔案共享・快取</value></data>
 <data name="ReceivedFileStorage" xml:space="preserve"><value>接收檔案的保存方式</value></data>
 <data name="TemporaryStorage" xml:space="preserve"><value>工作階段期間暫存（結束時自動清除）</value></data>
-<data name="TemporaryStorageTip" xml:space="preserve"><value>YMM4 結束時自動刪除所有快取素材</value></data>
+<data name="TemporaryStorageTip" xml:space="preserve"><value>YMM4 結束時自動刪除所有快取素材。在常駐房間中收到的素材會保留，以便之後繼續編輯</value></data>
 <data name="KeepStorage" xml:space="preserve"><value>保留在儲存空間中（之後繼續使用快取）</value></data>
 <data name="KeepStorageTip" xml:space="preserve"><value>儲存到暫存資料夾，之後也從那裡讀取</value></data>
 <data name="ConfirmLargeReceive" xml:space="preserve"><value>接收大型素材檔案前確認</value></data>
@@ -218,6 +222,22 @@
 <data name="SendLimits" xml:space="preserve"><value>傳送限制</value></data>
 <data name="ConfirmBeforeSend" xml:space="preserve"><value>傳送素材檔案前顯示確認訊息</value></data>
 <data name="ConfirmBeforeSendTip" xml:space="preserve"><value>在影片・圖片・音訊等檔案自動傳送給其他使用者前顯示確認對話方塊</value></data>
+<data name="UseDirectTransfer" xml:space="preserve"><value>大型檔案在參與者之間直接傳送（WebRTC）</value></data>
+<data name="UseDirectTransferTip" xml:space="preserve"><value>4MB以上的檔案不經過中繼伺服器而直接傳送。無法直接連線時會改用中繼伺服器，但1GB以上的檔案無法透過中繼伺服器傳送。直接傳送時，對方會得知你的IP位址。關閉後立即生效，開啟後會在下次進入房間時生效。</value></data>
+<data name="DirectTransferAskTitle" xml:space="preserve"><value>檔案傳送方式</value></data>
+<data name="DirectTransferAskMessage" xml:space="preserve"><value>是否在參與者之間直接傳送大型檔案（4MB以上）？
+
+是（建議）：直接傳送（WebRTC）
+傳送更快，也能減輕中繼伺服器的負擔。由於是直接傳送，對方會得知你的IP位址。
+無法直接連線時會自動改用中繼伺服器（1GB以上的檔案除外）。
+
+否：全部經由中繼伺服器
+對方不會得知你的IP位址，但大型檔案需要更長時間。將無法收發1GB以上的檔案。
+
+之後可以在「設定」→「檔案」中變更。</value></data>
+<data name="LargeFileNoDirectPeer" xml:space="preserve"><value>1GB以上的檔案僅透過直接傳送。以下素材未能傳送給無法使用直接傳送的參與者（對方可能關閉了直接傳送，或正在使用舊版本）。</value></data>
+<data name="LargeFileDirectDisabled" xml:space="preserve"><value>1GB以上的檔案只能透過直接傳送。要傳送以下素材，請在「設定」→「檔案」中開啟直接傳送，然後重新進入房間。</value></data>
+<data name="LargeFileDirectFailed" xml:space="preserve"><value>由於檔案為1GB以上，已嘗試直接傳送，但因無法與對方連線或連線中斷，未能傳送。</value></data>
 <data name="ShareableExtensions" xml:space="preserve"><value>可共享的副檔名</value></data>
 <data name="SelectAll" xml:space="preserve"><value>全選</value></data>
 <data name="DeselectAll" xml:space="preserve"><value>全部取消</value></data>
@@ -293,17 +313,11 @@
 
 要開啟更新頁面嗎？</value></data>
 <data name="UpdateRequiredTitle" xml:space="preserve"><value>需要更新外掛</value></data>
-<data name="RelayConnectFailed" xml:space="preserve"><value>無法連線到大房間用的中繼伺服器。
+<data name="RelayConnectFailed" xml:space="preserve"><value>無法連線到中繼伺服器。
 
 原因：{0}
 
-小房間使用其他伺服器，如果只有這裡無法連線，通常是你的網路或安全軟體導致的。
-請將此畫面告知房主。</value></data>
-<data name="RelayConnectFailedCreate" xml:space="preserve"><value>無法連線到大房間用的中繼伺服器。
-
-原因：{0}
-
-仍要建立嗎？（參與者可能也無法連線）</value></data>
+通常是你的網路或安全軟體導致的。請將此畫面告知房主。</value></data>
 <data name="RelayUnavailableTitle" xml:space="preserve"><value>無法連線到中繼伺服器</value></data>
 <data name="ConnectionError" xml:space="preserve"><value>連線錯誤</value></data>
 <data name="HostIsNewer" xml:space="preserve"><value>你的版本（{1}）比房主的外掛（{0}）舊，因此已中斷連線。</value></data>
@@ -316,8 +330,6 @@
 <data name="OutdatedPlugin" xml:space="preserve"><value>你的外掛（{0}）版本較舊，無法連線到協同編輯伺服器。
 目前最新版本為 {1}。</value></data>
 <data name="RoomFull" xml:space="preserve"><value>此房間已達到可加入人數的上限。</value></data>
-<data name="RoomFullAskLarge" xml:space="preserve"><value>此房間已達到可加入人數的上限。
-請房主建立大房間。</value></data>
 <data name="RoomFullTitle" xml:space="preserve"><value>房間已滿</value></data>
 <data name="RoomExpired" xml:space="preserve"><value>此房間因一段時間沒有通訊而被自動關閉。
 請房主重新建立房間。</value></data>
@@ -420,9 +432,6 @@ YMM4 可能已當機，或通訊已中斷。
 <data name="MyFontMissingLead" xml:space="preserve"><value>你使用的以下字型在對方的環境中不存在。</value></data>
 <data name="OwnersFew" xml:space="preserve"><value>（{0}）</value></data>
 <data name="OwnersMany" xml:space="preserve"><value>（{0} 等 {1} 人）</value></data>
-<data name="MigratedMessage" xml:space="preserve"><value>由於人數持續較少，已轉移到小房間。
-房間 ID 已變更，如需邀請新成員，請重新取得邀請連結。</value></data>
-<data name="MigratedTitle" xml:space="preserve"><value>已轉移房間</value></data>
 <data name="ProjectTooLargeTitle" xml:space="preserve"><value>專案過大</value></data>
 <data name="ProjectTooLargeMessage" xml:space="preserve"><value>對方的專案過大，已中止同步。</value></data>
 <data name="Checking" xml:space="preserve"><value>正在檢查...</value></data>
@@ -442,4 +451,12 @@ YMM4 可能已當機，或通訊已中斷。
 <data name="PeerDataUnreadableTitle" xml:space="preserve"><value>無法讀取對方外掛的資料</value></data>
 <data name="PeerDataUnreadableMessage" xml:space="preserve"><value>無法解析從對方收到的內容。
 請確認是否使用相同版本的 MultiUserEdit。</value></data>
+<data name="Scripts" xml:space="preserve"><value>台本</value></data>
+<data name="ScriptAddToTimeline" xml:space="preserve"><value>新增到時間軸</value></data>
+<data name="ScriptDelete" xml:space="preserve"><value>刪除</value></data>
+<data name="ScriptCharacterMissing" xml:space="preserve"><value>這台電腦的 YMM4 中沒有角色「{0}」。請檢查角色設定。</value></data>
+<data name="ScriptGenerateFailed" xml:space="preserve"><value>無法新增語音項目。YMM4 可能正在處理其他操作。請稍後再試。</value></data>
+<data name="RoomIdentityRejected" xml:space="preserve"><value>由於同一使用者的其他連線已在房間中，無法加入。請稍後再試。</value></data>
+<data name="RoomRateLimited" xml:space="preserve"><value>短時間內建立的房間過多，無法建立。請稍後再試。</value></data>
+<data name="RoomJoinRateLimited" xml:space="preserve"><value>短時間內嘗試加入的次數過多，無法加入。請稍後再試。</value></data>
 </root>

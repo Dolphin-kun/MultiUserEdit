@@ -15,6 +15,11 @@ namespace MultiUserEdit.Networking
         event Action<string?> UpdateAvailable;
         event Action<Guid, bool> PeerDisconnected;
         event Action<string?> RoomInfoReceived;
+        event Action<bool, bool> KeptRoomInfoReceived;
+        event Action SnapshotRequested;
+        event Action ResyncRequired;
+
+        bool HasUnacknowledgedEdits { get; }
 
         string LocalUserId { get; }
         string? RoomId { get; }

@@ -5,7 +5,6 @@ using MultiUserEdit.ViewModels;
 using MultiUserEdit.Views;
 using Microsoft.Win32;
 using Newtonsoft.Json;
-using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using YukkuriMovieMaker.Project;
@@ -19,7 +18,8 @@ namespace MultiUserEdit.Commons
         Func<Guid> getLocalUserId,
         Func<Guid, string> getUserName,
         Func<MultiUserEditViewModel?> getViewModel,
-        Action<Action> executeRemoteAction)
+        Action<Action> executeRemoteAction,
+        Func<Window?> getOwnerWindow)
     {
         private static readonly TimeSpan ReplyTimeout = TimeSpan.FromSeconds(20);
         private static readonly TimeSpan FileWaitTimeout = TimeSpan.FromMinutes(2);
@@ -65,7 +65,6 @@ namespace MultiUserEdit.Commons
                 Application.Current?.Dispatcher.InvokeAsync(() =>
                 {
                     if (IsDecided(characterName)) return;
-                    Debug.WriteLine($"[MultiUserEdit] Character definition not received: {characterName}");
                     Decide(characterName, characterName);
                 });
             }, TaskScheduler.Default);
@@ -105,9 +104,8 @@ namespace MultiUserEdit.Commons
                 {
                     (characterJson, files) = MediaFileResolver.SerializeCharacterForSync(character);
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Debug.WriteLine($"[MultiUserEdit] Failed to serialize character '{evt.CharacterName}': {ex}");
                     characterJson = string.Empty;
                 }
             }
@@ -146,7 +144,7 @@ namespace MultiUserEdit.Commons
 
             var dialog = new CharacterImportDialog(evt.CharacterName, ownerName, characters, canCreate)
             {
-                Owner = Application.Current?.MainWindow
+                Owner = getOwnerWindow()
             };
 
             if (dialog.ShowDialog() == true && dialog.LinkedCharacter == null && canCreate)
@@ -181,9 +179,8 @@ namespace MultiUserEdit.Commons
                     VoiceSynthesizer.Request(voice);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] Could not synthesize voices after the character was decided: {ex.Message}");
             }
         }
 
@@ -223,20 +220,19 @@ namespace MultiUserEdit.Commons
 
                 return dialog.ShowDialog() == true ? dialog.FolderName : null;
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] Custom voice folder dialog failed: {ex.Message}");
                 return null;
             }
         }
 
-        private static bool TryAskNewName(string suggestedName, IReadOnlyList<Character> characters, out string newName)
+        private bool TryAskNewName(string suggestedName, IReadOnlyList<Character> characters, out string newName)
         {
             var existingNames = characters.Select(c => c.Name).ToList();
 
             var dialog = new CharacterNameDialog(GetUniqueName(suggestedName, existingNames), existingNames)
             {
-                Owner = Application.Current?.MainWindow
+                Owner = getOwnerWindow()
             };
 
             if (dialog.ShowDialog() == true && dialog.CharacterName.Length > 0)
@@ -330,7 +326,7 @@ namespace MultiUserEdit.Commons
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MultiUserEdit] Failed to create character: {ex}");
+                PluginLog.Error("could not create a shared character", ex);
                 failure = ex.Message;
             }
 

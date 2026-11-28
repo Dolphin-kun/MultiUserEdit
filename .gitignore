@@ -57,3 +57,6 @@ artifacts/
 *.cache
 *.log
 *.tmp
+
+# Native libraries
+MultiUserEdit/Native/

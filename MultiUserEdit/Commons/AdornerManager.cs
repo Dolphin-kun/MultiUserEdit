@@ -9,7 +9,7 @@ using YukkuriMovieMaker.Views;
 
 namespace MultiUserEdit.Commons
 {
-    public class AdornerManager
+    public class AdornerManager(Func<Window?> findMainView)
     {
         private AdornerLayer? adornerLayer;
         private TimelineCollaborationAdorner? collaborationAdorner;
@@ -17,32 +17,19 @@ namespace MultiUserEdit.Commons
         private CancellationTokenSource? attachCts;
         private DispatcherTimer? monitorTimer;
         private CollaborationSession? currentSession;
-        private TimelineView? timelineViewReference;
-        private Window? ownerWindowReference;
         private bool isAttaching;
 
-        public void SetTimelineViewReference(TimelineView timelineView)
-        {
-            timelineViewReference = timelineView;
-            if (currentSession != null)
-                AttachAdorner(currentSession, ownerWindowReference);
-        }
-
-        public void AttachAdorner(MultiUserEditViewModel viewModel, Window? ownerWindow = null)
+        public void AttachAdorner(MultiUserEditViewModel viewModel)
         {
             if (viewModel.CurrentSession != null)
             {
-                AttachAdorner(viewModel.CurrentSession, ownerWindow);
+                AttachAdorner(viewModel.CurrentSession);
             }
         }
 
-        public void AttachAdorner(CollaborationSession session, Window? ownerWindow = null)
+        public void AttachAdorner(CollaborationSession session)
         {
             currentSession = session;
-            if (ownerWindow != null)
-            {
-                ownerWindowReference = ownerWindow;
-            }
 
             Application.Current?.Dispatcher.InvokeAsync(() =>
             {
@@ -188,29 +175,11 @@ namespace MultiUserEdit.Commons
 
         private IEnumerable<TimelineView> EnumerateTimelineViews()
         {
-            var seen = new HashSet<TimelineView>();
+            if (findMainView() is not { } window) yield break;
 
-            if (timelineViewReference != null
-                && PresentationSource.FromVisual(timelineViewReference) != null
-                && seen.Add(timelineViewReference))
+            foreach (var view in FindAll<TimelineView>(window))
             {
-                yield return timelineViewReference;
-            }
-
-            var windows = new List<Window>();
-            if (ownerWindowReference != null) windows.Add(ownerWindowReference);
-            if (Application.Current != null)
-            {
-                foreach (Window window in Application.Current.Windows) windows.Add(window);
-            }
-
-            foreach (var window in windows.Distinct())
-            {
-                foreach (var view in FindAll<TimelineView>(window))
-                {
-                    if (PresentationSource.FromVisual(view) == null) continue;
-                    if (seen.Add(view)) yield return view;
-                }
+                if (PresentationSource.FromVisual(view) != null) yield return view;
             }
         }
 

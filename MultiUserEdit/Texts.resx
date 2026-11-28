@@ -61,6 +61,7 @@
 <data name="CurrentCulture" xml:space="preserve"><value>ja-jp</value></data>
 <data name="PluginName" xml:space="preserve"><value>共同編集</value></data>
 <data name="Host" xml:space="preserve"><value>ホスト</value></data>
+<data name="WebGuest" xml:space="preserve"><value>ゲスト（Web）</value></data>
 <data name="Guest" xml:space="preserve"><value>ゲスト</value></data>
 <data name="Unknown" xml:space="preserve"><value>不明</value></data>
 <data name="DefaultUserName" xml:space="preserve"><value>ユーザー</value></data>
@@ -108,10 +109,13 @@
 <data name="LatestOnlyPleaseUpdate" xml:space="preserve"><value>共同編集は最新のプラグイン同士でのみ利用できます。更新してください。</value></data>
 <data name="OpenUpdatePage" xml:space="preserve"><value>更新ページを開く</value></data>
 <data name="Room" xml:space="preserve"><value>部屋</value></data>
-<data name="SmallRoomLabel" xml:space="preserve"><value>小さい部屋（最大{0}人）</value></data>
-<data name="LargeRoomLabel" xml:space="preserve"><value>大きい部屋（最大{0}人）</value></data>
-<data name="SmallRoomTip" xml:space="preserve"><value>少人数向け。すぐに繋がります。</value></data>
-<data name="LargeRoomTip" xml:space="preserve"><value>多人数向け。専用の中継サーバーを使います。人数が少ない状態が続くと自動で小さい部屋へ移ります。</value></data>
+<data name="NormalRoomLabel" xml:space="preserve"><value>通常の部屋</value></data>
+<data name="NormalRoomTip" xml:space="preserve"><value>ホストが部屋を閉じるまで使える部屋です。最大100人まで参加できます。</value></data>
+<data name="KeptRoomLabel" xml:space="preserve"><value>常設ルーム</value></data>
+<data name="KeptRoomTip" xml:space="preserve"><value>ホストがいなくても続けられる部屋です。内容はサーバーに保存され、最後に使われてから30日で削除されます。アイテムが1つもないまま全員が抜けた場合は、すぐに削除されます。1人3部屋まで作れます。</value></data>
+<data name="DeleteKeptRoom" xml:space="preserve"><value>常設ルームを削除</value></data>
+<data name="DeleteKeptRoomConfirm" xml:space="preserve"><value>この常設ルームを削除します。サーバーに保存された内容は消え、参加中の人も退出になります。よろしいですか？</value></data>
+<data name="RoomKeptLimit" xml:space="preserve"><value>常設ルームは1人3部屋までです。使わなくなった常設ルームに入って「常設ルームを削除」を押してから作成してください。最後に使われてから30日たった常設ルームは自動で削除されます。</value></data>
 <data name="CreateRoom" xml:space="preserve"><value>部屋を作成</value></data>
 <data name="JoinExistingRoom" xml:space="preserve"><value>既存の部屋に参加</value></data>
 <data name="JoinFromClipboard" xml:space="preserve"><value>クリップボードのリンクから参加</value></data>
@@ -208,7 +212,7 @@
 <data name="FileSharingCache" xml:space="preserve"><value>ファイル共有・キャッシュ</value></data>
 <data name="ReceivedFileStorage" xml:space="preserve"><value>受信ファイルの保存形式</value></data>
 <data name="TemporaryStorage" xml:space="preserve"><value>セッション中一時保存 (終了時に自動消去)</value></data>
-<data name="TemporaryStorageTip" xml:space="preserve"><value>YMM4終了時にキャッシュ素材を自動で全削除します</value></data>
+<data name="TemporaryStorageTip" xml:space="preserve"><value>YMM4終了時にキャッシュ素材を自動で全削除します。常設ルームで受け取った素材は、あとで続きを編集できるように残します</value></data>
 <data name="KeepStorage" xml:space="preserve"><value>ストレージに保持 (次回以降もキャッシュ利用)</value></data>
 <data name="KeepStorageTip" xml:space="preserve"><value>一時フォルダに保存して、次回以降もそこから読み込みます</value></data>
 <data name="ConfirmLargeReceive" xml:space="preserve"><value>サイズの大きい素材ファイルを受け取る前に確認する</value></data>
@@ -218,6 +222,22 @@
 <data name="SendLimits" xml:space="preserve"><value>送信の制限</value></data>
 <data name="ConfirmBeforeSend" xml:space="preserve"><value>素材ファイルを送信する前に確認メッセージを表示する</value></data>
 <data name="ConfirmBeforeSendTip" xml:space="preserve"><value>他のユーザーに動画・画像・音声等のファイルが自動送信される前に確認ダイアログを表示します</value></data>
+<data name="UseDirectTransfer" xml:space="preserve"><value>大きいファイルは参加者どうしで直接送る（WebRTC）</value></data>
+<data name="UseDirectTransferTip" xml:space="preserve"><value>4MB以上のファイルを中継サーバーを通さずに直接送信します。直接つながらない場合は中継サーバー経由に切り替わりますが、1GB以上のファイルは中継サーバーでは送れません。直接送信では、相手にあなたのIPアドレスが伝わります。オフにするとすぐに反映され、オンにした場合は次に部屋へ入ったときから有効になります。</value></data>
+<data name="DirectTransferAskTitle" xml:space="preserve"><value>ファイルの送り方</value></data>
+<data name="DirectTransferAskMessage" xml:space="preserve"><value>大きいファイル（4MB以上）を参加者どうしで直接送りますか？
+
+はい（おすすめ）：直接送信（WebRTC）
+速く送れて、中継サーバーの負担も減ります。直接送るため、相手にあなたのIPアドレスが伝わります。
+直接つながらない場合は自動で中継サーバー経由になります（1GB以上のファイルを除く）。
+
+いいえ：すべて中継サーバー経由
+IPアドレスは相手に伝わりませんが、大きいファイルは時間がかかります。1GB以上のファイルは送受信できなくなります。
+
+あとから「設定」→「ファイル」で変更できます。</value></data>
+<data name="LargeFileNoDirectPeer" xml:space="preserve"><value>1GB以上のファイルは直接送信でのみ送ります。次の素材は、直接送信を使えない参加者には送れませんでした（相手が直接送信をオフにしているか、古いバージョンを使っている可能性があります）。</value></data>
+<data name="LargeFileDirectDisabled" xml:space="preserve"><value>1GB以上のファイルは直接送信でのみ送れます。次の素材を送るには、「設定」→「ファイル」で直接送信をオンにして、部屋に入り直してください。</value></data>
+<data name="LargeFileDirectFailed" xml:space="preserve"><value>1GB以上のファイルのため直接送信を試みましたが、相手とつながらなかったか途中で切れたため、送信できませんでした。</value></data>
 <data name="ShareableExtensions" xml:space="preserve"><value>共有可能な拡張子</value></data>
 <data name="SelectAll" xml:space="preserve"><value>すべて選択</value></data>
 <data name="DeselectAll" xml:space="preserve"><value>すべて解除</value></data>
@@ -293,17 +313,11 @@
 
 更新ページを開きますか？</value></data>
 <data name="UpdateRequiredTitle" xml:space="preserve"><value>プラグインの更新が必要です</value></data>
-<data name="RelayConnectFailed" xml:space="preserve"><value>大きい部屋用の中継サーバーに接続できませんでした。
+<data name="RelayConnectFailed" xml:space="preserve"><value>中継サーバーに接続できませんでした。
 
 原因: {0}
 
-小さい部屋は別のサーバーを使うため、こちらだけつながらない場合はお使いの回線やセキュリティソフトが原因のことが多いです。
-この画面をホストに伝えてください。</value></data>
-<data name="RelayConnectFailedCreate" xml:space="preserve"><value>大きい部屋用の中継サーバーに接続できませんでした。
-
-原因: {0}
-
-このまま作成しますか？（参加者も接続できない可能性があります）</value></data>
+お使いの回線やセキュリティソフトが原因のことが多いです。この画面をホストに伝えてください。</value></data>
 <data name="RelayUnavailableTitle" xml:space="preserve"><value>中継サーバーに接続できません</value></data>
 <data name="ConnectionError" xml:space="preserve"><value>接続エラー</value></data>
 <data name="HostIsNewer" xml:space="preserve"><value>ホストのプラグイン ({0}) より古いバージョン ({1}) のため、接続を切断しました。</value></data>
@@ -316,8 +330,6 @@
 <data name="OutdatedPlugin" xml:space="preserve"><value>お使いのプラグイン ({0}) は古いため、共同編集サーバーに接続できません。
 公開中の最新バージョンは {1} です。</value></data>
 <data name="RoomFull" xml:space="preserve"><value>この部屋は参加できる人数の上限に達しました。</value></data>
-<data name="RoomFullAskLarge" xml:space="preserve"><value>この部屋は参加できる人数の上限に達しました。
-ホストに大きい部屋を作ってもらってください。</value></data>
 <data name="RoomFullTitle" xml:space="preserve"><value>満員です</value></data>
 <data name="RoomExpired" xml:space="preserve"><value>この部屋は一定時間やり取りが無かったため、自動的に閉じられました。
 ホストに新しい部屋を作り直してもらってください。</value></data>
@@ -420,9 +432,6 @@ YMM4が落ちたか、通信が途切れている可能性があります。
 <data name="MyFontMissingLead" xml:space="preserve"><value>あなたが使用している以下のフォントが、相手の環境にありません。</value></data>
 <data name="OwnersFew" xml:space="preserve"><value>（{0} さん）</value></data>
 <data name="OwnersMany" xml:space="preserve"><value>（{0} さん ほか {1} 人）</value></data>
-<data name="MigratedMessage" xml:space="preserve"><value>人数が少ない状態が続いたため、小さい部屋へ移動しました。
-ルームIDが変わっているので、新しく招待する場合は招待リンクを取り直してください。</value></data>
-<data name="MigratedTitle" xml:space="preserve"><value>部屋を移動しました</value></data>
 <data name="ProjectTooLargeTitle" xml:space="preserve"><value>プロジェクトが大きすぎます</value></data>
 <data name="ProjectTooLargeMessage" xml:space="preserve"><value>相手のプロジェクトが大きすぎたため、同期を中止しました。</value></data>
 <data name="Checking" xml:space="preserve"><value>確認中...</value></data>
@@ -442,4 +451,12 @@ YMM4が落ちたか、通信が途切れている可能性があります。
 <data name="PeerDataUnreadableTitle" xml:space="preserve"><value>相手のプラグインを読み取れませんでした</value></data>
 <data name="PeerDataUnreadableMessage" xml:space="preserve"><value>相手から受け取った内容を解釈できませんでした。
 同じバージョンのMultiUserEditを使っているか確認してください。</value></data>
+<data name="Scripts" xml:space="preserve"><value>台本</value></data>
+<data name="ScriptAddToTimeline" xml:space="preserve"><value>タイムラインに追加</value></data>
+<data name="ScriptDelete" xml:space="preserve"><value>削除</value></data>
+<data name="ScriptCharacterMissing" xml:space="preserve"><value>キャラクター「{0}」がこの PC の YMM4 にありません。キャラクター設定を確認してください。</value></data>
+<data name="ScriptGenerateFailed" xml:space="preserve"><value>ボイスアイテムを追加できませんでした。YMM4 が別の処理をしている可能性があります。少し待ってからもう一度お試しください。</value></data>
+<data name="RoomIdentityRejected" xml:space="preserve"><value>同じユーザーで別の接続がすでに部屋に入っているため、参加できませんでした。少し待ってからもう一度お試しください。</value></data>
+<data name="RoomRateLimited" xml:space="preserve"><value>短い時間に部屋を作りすぎたため、作成できませんでした。しばらく待ってからもう一度お試しください。</value></data>
+<data name="RoomJoinRateLimited" xml:space="preserve"><value>短い時間に何度も参加を試したため、参加できませんでした。しばらく待ってからもう一度お試しください。</value></data>
 </root>
