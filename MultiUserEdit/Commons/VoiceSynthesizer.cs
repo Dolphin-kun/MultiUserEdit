@@ -1,7 +1,5 @@
 ﻿using Newtonsoft.Json;
-using System.Collections;
 using System.ComponentModel;
-using System.Diagnostics;
 using YukkuriMovieMaker.Project.Items;
 
 namespace MultiUserEdit.Commons
@@ -63,15 +61,7 @@ namespace MultiUserEdit.Commons
         private static void Report(string lead, string item, string note)
         {
             ErrorNotifier.NotifyList(FailureTitle, lead, item, note);
-
-            try
-            {
-                YukkuriMovieMaker.Commons.Log.Default.Write($"[MultiUserEdit] {lead} {item}");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"[MultiUserEdit] could not write to the YMM4 log: {ex.Message}");
-            }
+            PluginLog.Error($"{lead} {item}");
         }
 
         private static bool CanSynthesize(VoiceItem voice)
@@ -119,7 +109,7 @@ namespace MultiUserEdit.Commons
         {
             if (voice is not INotifyDataErrorInfo { HasErrors: true } errors) return;
 
-            foreach (var error in (errors.GetErrors(nameof(VoiceItem.Hatsuon)) as IEnumerable) ?? Array.Empty<object>())
+            foreach (var error in errors.GetErrors(nameof(VoiceItem.Hatsuon)) ?? Array.Empty<object>())
             {
                 var message = error?.ToString();
                 if (string.IsNullOrWhiteSpace(message)) continue;
@@ -172,9 +162,8 @@ namespace MultiUserEdit.Commons
 
                 ReportEngineError(voice);
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] Could not synthesize the voice locally: {ex.Message}");
             }
             finally
             {

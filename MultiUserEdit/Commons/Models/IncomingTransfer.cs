@@ -33,6 +33,7 @@ namespace MultiUserEdit.Commons.Models
         public long ExpectedChunkLength(int chunkIndex) =>
             chunkIndex < TotalChunks - 1 ? ChunkSize : FileSize - (long)(TotalChunks - 1) * ChunkSize;
         public Guid SenderId { get; set; }
+        public Func<int, bool>? AckSink { get; set; }
         public DateTime StartedAt { get; } = DateTime.UtcNow;
         public DateTime LastActivityAt { get; set; } = DateTime.UtcNow;
 
@@ -54,7 +55,7 @@ namespace MultiUserEdit.Commons.Models
                     _ =>
                     {
                         try { work(); }
-                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[MultiUserEdit] chunk write failed: {ex.Message}"); }
+                        catch { }
                         finally { writeSlots.Release(); }
                     },
                     CancellationToken.None,

@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json.Linq;
-using System.Diagnostics;
 using System.Windows;
 using YukkuriMovieMaker.Plugin;
 using YukkuriMovieMaker.Settings;
@@ -79,9 +78,8 @@ namespace MultiUserEdit.Commons
                         TaskScheduler.Default);
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] Resource check failed: {ex.Message}");
             }
         }
 
@@ -307,9 +305,8 @@ namespace MultiUserEdit.Commons
                 foreach (var font in settings.SystemFonts) names.Add(font.FontName);
                 foreach (var font in settings.CustomFonts) names.Add(font.FontName);
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] Font list unavailable: {ex.Message}");
             }
 
             return names;

@@ -8,5 +8,7 @@ namespace MultiUserEdit.Commons.Models
         public List<string>? MediaFileNames { get; set; }
         public int Frame { get; set; }
         public int Layer { get; set; }
+        public string? Digest { get; set; }
+        public bool Unchanged { get; set; }
     }
 }

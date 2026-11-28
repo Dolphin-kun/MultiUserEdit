@@ -61,6 +61,7 @@
 <data name="CurrentCulture" xml:space="preserve"><value>ar-sa</value></data>
 <data name="PluginName" xml:space="preserve"><value>التحرير التعاوني</value></data>
 <data name="Host" xml:space="preserve"><value>المضيف</value></data>
+<data name="WebGuest" xml:space="preserve"><value>ضيف (ويب)</value></data>
 <data name="Guest" xml:space="preserve"><value>ضيف</value></data>
 <data name="Unknown" xml:space="preserve"><value>غير معروف</value></data>
 <data name="DefaultUserName" xml:space="preserve"><value>مستخدم</value></data>
@@ -108,10 +109,13 @@
 <data name="LatestOnlyPleaseUpdate" xml:space="preserve"><value>يعمل التحرير التعاوني فقط بين أحدث إصدارات الإضافة. يُرجى التحديث.</value></data>
 <data name="OpenUpdatePage" xml:space="preserve"><value>فتح صفحة التحديث</value></data>
 <data name="Room" xml:space="preserve"><value>الغرفة</value></data>
-<data name="SmallRoomLabel" xml:space="preserve"><value>غرفة صغيرة (حتى {0})</value></data>
-<data name="LargeRoomLabel" xml:space="preserve"><value>غرفة كبيرة (حتى {0})</value></data>
-<data name="SmallRoomTip" xml:space="preserve"><value>لعدد قليل من الأشخاص. يتصل فورًا.</value></data>
-<data name="LargeRoomTip" xml:space="preserve"><value>لعدد كبير من الأشخاص. يستخدم خادم ترحيل مخصصًا. إذا استمر عدد قليل من الأشخاص لفترة، تنتقل تلقائيًا إلى غرفة صغيرة.</value></data>
+<data name="NormalRoomLabel" xml:space="preserve"><value>غرفة عادية</value></data>
+<data name="NormalRoomTip" xml:space="preserve"><value>غرفة يمكنك استخدامها حتى يغلقها المضيف. يمكن أن ينضم إليها حتى 100 شخص.</value></data>
+<data name="KeptRoomLabel" xml:space="preserve"><value>غرفة دائمة</value></data>
+<data name="KeptRoomTip" xml:space="preserve"><value>غرفة تستمر حتى في غياب المضيف. يُحفظ محتواها على الخادم ويُحذف بعد 30 يومًا من آخر استخدام. إذا غادر الجميع دون وجود أي عنصر، تُحذف فورًا. يمكن لكل شخص إنشاء 3 غرف كحد أقصى.</value></data>
+<data name="DeleteKeptRoom" xml:space="preserve"><value>حذف الغرفة الدائمة</value></data>
+<data name="DeleteKeptRoomConfirm" xml:space="preserve"><value>سيتم حذف هذه الغرفة الدائمة. سيُحذف محتواها المحفوظ على الخادم وسيغادرها جميع الموجودين فيها. هل تريد المتابعة؟</value></data>
+<data name="RoomKeptLimit" xml:space="preserve"><value>يمكنك امتلاك 3 غرف دائمة كحد أقصى. ادخل إلى غرفة لم تعد تستخدمها واضغط "حذف الغرفة الدائمة" قبل إنشاء غرفة جديدة. تُحذف الغرف الدائمة تلقائيًا بعد 30 يومًا من آخر استخدام.</value></data>
 <data name="CreateRoom" xml:space="preserve"><value>إنشاء غرفة</value></data>
 <data name="JoinExistingRoom" xml:space="preserve"><value>الانضمام إلى غرفة موجودة</value></data>
 <data name="JoinFromClipboard" xml:space="preserve"><value>الانضمام عبر الرابط في الحافظة</value></data>
@@ -208,7 +212,7 @@
 <data name="FileSharingCache" xml:space="preserve"><value>مشاركة الملفات وذاكرة التخزين المؤقت</value></data>
 <data name="ReceivedFileStorage" xml:space="preserve"><value>طريقة حفظ الملفات المستلمة</value></data>
 <data name="TemporaryStorage" xml:space="preserve"><value>حفظ مؤقت أثناء الجلسة (يُحذف عند الخروج)</value></data>
-<data name="TemporaryStorageTip" xml:space="preserve"><value>يحذف جميع المواد المخزنة مؤقتًا عند إغلاق YMM4</value></data>
+<data name="TemporaryStorageTip" xml:space="preserve"><value>يحذف جميع المواد المخزنة مؤقتًا عند إغلاق YMM4. تُحفظ المواد المستلمة في غرفة دائمة لتتمكن من المتابعة لاحقًا</value></data>
 <data name="KeepStorage" xml:space="preserve"><value>الاحتفاظ على القرص (إعادة استخدام ذاكرة التخزين المؤقت لاحقًا)</value></data>
 <data name="KeepStorageTip" xml:space="preserve"><value>يحفظ في مجلد مؤقت ويحمّل منه في المرات القادمة</value></data>
 <data name="ConfirmLargeReceive" xml:space="preserve"><value>السؤال قبل استلام ملفات المواد الكبيرة</value></data>
@@ -218,6 +222,22 @@
 <data name="SendLimits" xml:space="preserve"><value>الإرسال</value></data>
 <data name="ConfirmBeforeSend" xml:space="preserve"><value>السؤال قبل إرسال ملفات المواد</value></data>
 <data name="ConfirmBeforeSendTip" xml:space="preserve"><value>يعرض تأكيدًا قبل إرسال ملفات الفيديو والصور والصوت وغيرها تلقائيًا إلى المستخدمين الآخرين</value></data>
+<data name="UseDirectTransfer" xml:space="preserve"><value>إرسال الملفات الكبيرة مباشرة بين المشاركين (WebRTC)</value></data>
+<data name="UseDirectTransferTip" xml:space="preserve"><value>يرسل الملفات التي حجمها 4 ميغابايت أو أكثر مباشرةً دون المرور بخادم الترحيل. إذا تعذّر الاتصال المباشر، يُستخدم خادم الترحيل، لكن لا يمكن إرسال الملفات التي حجمها 1 غيغابايت أو أكثر عبره. يؤدي الإرسال المباشر إلى مشاركة عنوان IP الخاص بك مع المشارك الآخر. يسري الإيقاف فورًا، ويسري التشغيل عند دخولك غرفة في المرة القادمة.</value></data>
+<data name="DirectTransferAskTitle" xml:space="preserve"><value>طريقة إرسال الملفات</value></data>
+<data name="DirectTransferAskMessage" xml:space="preserve"><value>هل تريد إرسال الملفات الكبيرة (4 ميغابايت أو أكثر) مباشرةً بين المشاركين؟
+
+نعم (موصى به): الإرسال المباشر (WebRTC)
+تصل الملفات أسرع ويقل الحمل على خادم الترحيل. لأن الملفات تُرسل مباشرةً، يمكن للمشارك الآخر رؤية عنوان IP الخاص بك.
+إذا تعذّر الاتصال المباشر، يُستخدم خادم الترحيل تلقائيًا (باستثناء الملفات التي حجمها 1 غيغابايت أو أكثر).
+
+لا: استخدام خادم الترحيل دائمًا
+لا تتم مشاركة عنوان IP الخاص بك، لكن الملفات الكبيرة تستغرق وقتًا أطول. لن يمكنك إرسال أو استقبال الملفات التي حجمها 1 غيغابايت أو أكثر.
+
+يمكنك تغيير ذلك لاحقًا من الإعدادات &gt; الملفات.</value></data>
+<data name="LargeFileNoDirectPeer" xml:space="preserve"><value>تُرسل الملفات التي حجمها 1 غيغابايت أو أكثر بالإرسال المباشر فقط. تعذّر إرسال المورد التالي إلى المشاركين الذين لا يمكنهم استخدام الإرسال المباشر (ربما أوقفوه أو يستخدمون إصدارًا أقدم).</value></data>
+<data name="LargeFileDirectDisabled" xml:space="preserve"><value>لا يمكن إرسال الملفات التي حجمها 1 غيغابايت أو أكثر إلا بالإرسال المباشر. لإرسال المورد التالي، شغّل الإرسال المباشر من الإعدادات &gt; الملفات ثم ادخل الغرفة مرة أخرى.</value></data>
+<data name="LargeFileDirectFailed" xml:space="preserve"><value>تمت محاولة الإرسال المباشر لأن حجم الملف 1 غيغابايت أو أكثر، لكن تعذّر الإرسال لأنه لم يمكن الاتصال أو انقطع الاتصال.</value></data>
 <data name="ShareableExtensions" xml:space="preserve"><value>الامتدادات القابلة للمشاركة</value></data>
 <data name="SelectAll" xml:space="preserve"><value>تحديد الكل</value></data>
 <data name="DeselectAll" xml:space="preserve"><value>إلغاء تحديد الكل</value></data>
@@ -293,17 +313,11 @@
 
 هل تريد فتح صفحة التحديث؟</value></data>
 <data name="UpdateRequiredTitle" xml:space="preserve"><value>يلزم تحديث الإضافة</value></data>
-<data name="RelayConnectFailed" xml:space="preserve"><value>تعذّر الاتصال بخادم الترحيل الخاص بالغرف الكبيرة.
+<data name="RelayConnectFailed" xml:space="preserve"><value>تعذّر الاتصال بخادم الترحيل.
 
 السبب: {0}
 
-تستخدم الغرف الصغيرة خادمًا مختلفًا، لذا إذا فشل هذا وحده فالسبب غالبًا شبكتك أو برنامج الحماية.
-يُرجى إبلاغ المضيف بما تعرضه هذه النافذة.</value></data>
-<data name="RelayConnectFailedCreate" xml:space="preserve"><value>تعذّر الاتصال بخادم الترحيل الخاص بالغرف الكبيرة.
-
-السبب: {0}
-
-هل تريد إنشاء الغرفة على أي حال؟ (قد لا يتمكن المشاركون من الاتصال أيضًا)</value></data>
+غالبًا ما يكون السبب شبكتك أو برنامج الحماية. يُرجى إبلاغ المضيف بما تعرضه هذه النافذة.</value></data>
 <data name="RelayUnavailableTitle" xml:space="preserve"><value>يتعذّر الوصول إلى خادم الترحيل</value></data>
 <data name="ConnectionError" xml:space="preserve"><value>خطأ في الاتصال</value></data>
 <data name="HostIsNewer" xml:space="preserve"><value>تم قطع الاتصال لأن إصدارك ({1}) أقدم من إضافة المضيف ({0}).</value></data>
@@ -316,8 +330,6 @@
 <data name="OutdatedPlugin" xml:space="preserve"><value>إضافتك ({0}) قديمة ولا يمكنها الاتصال بخادم التعاون.
 أحدث إصدار هو {1}.</value></data>
 <data name="RoomFull" xml:space="preserve"><value>وصلت هذه الغرفة إلى الحد الأقصى للمشاركين.</value></data>
-<data name="RoomFullAskLarge" xml:space="preserve"><value>وصلت هذه الغرفة إلى الحد الأقصى للمشاركين.
-اطلب من المضيف إنشاء غرفة كبيرة.</value></data>
 <data name="RoomFullTitle" xml:space="preserve"><value>الغرفة ممتلئة</value></data>
 <data name="RoomExpired" xml:space="preserve"><value>أُغلقت هذه الغرفة تلقائيًا لعدم وجود نشاط لفترة.
 اطلب من المضيف إنشاء غرفة جديدة.</value></data>
@@ -420,9 +432,6 @@
 <data name="MyFontMissingLead" xml:space="preserve"><value>الخط التالي الذي تستخدمه غير مثبّت على جهاز المشارك الآخر.</value></data>
 <data name="OwnersFew" xml:space="preserve"><value> ({0})</value></data>
 <data name="OwnersMany" xml:space="preserve"><value> ({0} و{1} آخرون)</value></data>
-<data name="MigratedMessage" xml:space="preserve"><value>استمر وجود عدد قليل من الأشخاص لفترة، لذا انتقلت الغرفة إلى غرفة صغيرة.
-تغيّر معرّف الغرفة، لذا احصل على رابط دعوة جديد قبل دعوة أي شخص آخر.</value></data>
-<data name="MigratedTitle" xml:space="preserve"><value>تم نقل الغرفة</value></data>
 <data name="ProjectTooLargeTitle" xml:space="preserve"><value>المشروع كبير جدًا</value></data>
 <data name="ProjectTooLargeMessage" xml:space="preserve"><value>تم إيقاف المزامنة لأن مشروع المشارك الآخر كبير جدًا.</value></data>
 <data name="Checking" xml:space="preserve"><value>جارٍ التحقق...</value></data>
@@ -442,4 +451,12 @@
 <data name="PeerDataUnreadableTitle" xml:space="preserve"><value>تعذّرت قراءة بيانات المشارك الآخر</value></data>
 <data name="PeerDataUnreadableMessage" xml:space="preserve"><value>تعذّر تفسير ما تم استلامه من المشارك الآخر.
 تأكد من أنكما تستخدمان الإصدار نفسه من MultiUserEdit.</value></data>
+<data name="Scripts" xml:space="preserve"><value>النصوص</value></data>
+<data name="ScriptAddToTimeline" xml:space="preserve"><value>إضافة إلى المخطط الزمني</value></data>
+<data name="ScriptDelete" xml:space="preserve"><value>حذف</value></data>
+<data name="ScriptCharacterMissing" xml:space="preserve"><value>الشخصية "{0}" غير موجودة في YMM4 على هذا الجهاز. تحقق من إعدادات الشخصيات.</value></data>
+<data name="ScriptGenerateFailed" xml:space="preserve"><value>تعذّرت إضافة العنصر الصوتي. ربما يكون YMM4 مشغولاً بمهمة أخرى. انتظر قليلاً ثم حاول مرة أخرى.</value></data>
+<data name="RoomIdentityRejected" xml:space="preserve"><value>تعذّر الانضمام لأن اتصالاً آخر للمستخدم نفسه موجود بالفعل في الغرفة. انتظر قليلاً ثم حاول مرة أخرى.</value></data>
+<data name="RoomRateLimited" xml:space="preserve"><value>تم إنشاء عدد كبير جدًا من الغرف في وقت قصير. انتظر قليلاً ثم حاول مرة أخرى.</value></data>
+<data name="RoomJoinRateLimited" xml:space="preserve"><value>محاولات انضمام كثيرة جدًا في وقت قصير. انتظر قليلاً ثم حاول مرة أخرى.</value></data>
 </root>

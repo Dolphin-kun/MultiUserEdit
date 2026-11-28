@@ -5,7 +5,8 @@
 		<Nullable>enable</Nullable>
 		<UseWPF>true</UseWPF>
 
-		<Version>1.2.5</Version>
+		<Version>2.0.0</Version>
+		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 
 		<!--Pdb内にソースコードのフルパスを含めない-->
 		<RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</RepoRoot>
@@ -32,6 +33,26 @@
 		<Reference Include="ReactiveProperty.Core">
 			<HintPath>$(YMM4RefDirPath)ReactiveProperty.Core.dll</HintPath>
 		</Reference>
+		<Reference Include="NAudio.Core">
+			<HintPath>$(YMM4RefDirPath)NAudio.Core.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="NAudio.Wasapi">
+			<HintPath>$(YMM4RefDirPath)NAudio.Wasapi.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="FFmpeg.AutoGen">
+			<HintPath>$(YMM4RefDirPath)FFmpeg.AutoGen.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="YukkuriMovieMaker.Interop.FFmpeg">
+			<HintPath>$(YMM4RefDirPath)YukkuriMovieMaker.Interop.FFmpeg.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="YukkuriMovieMaker.Plugin.FileSource.FFmpeg">
+			<HintPath>$(YMM4RefDirPath)YukkuriMovieMaker.Plugin.FileSource.FFmpeg.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -48,12 +69,16 @@
 		</PropertyGroup>
 		<ItemGroup>
 			<SatelliteAssemblyOutput Include="$(TargetDir)**\$(TargetName).resources.dll" />
+			<PluginFiles Include="$(ProjectDir)Native\datachannel.dll" />
+			<PluginFiles Include="$(RepoRoot)LICENSE" />
 		</ItemGroup>
 		<MakeDir Directories="$(PluginOutputDir)" />
 		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PluginOutputDir)" ContinueOnError="WarnAndContinue" />
 		<Copy SourceFiles="@(SatelliteAssemblyOutput)" DestinationFiles="@(SatelliteAssemblyOutput->'$(PluginOutputDir)%(RecursiveDir)%(Filename)%(Extension)')" ContinueOnError="WarnAndContinue" />
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(PluginOutputDir)" SkipUnchangedFiles="true" ContinueOnError="WarnAndContinue" />
 		<MakeDir Directories="$(SubPluginOutputDir)" Condition="'$(SubYMM4DirPath)' != ''" />
 		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SubPluginOutputDir)" ContinueOnError="WarnAndContinue" Condition="'$(SubYMM4DirPath)' != ''" />
 		<Copy SourceFiles="@(SatelliteAssemblyOutput)" DestinationFiles="@(SatelliteAssemblyOutput->'$(SubPluginOutputDir)%(RecursiveDir)%(Filename)%(Extension)')" ContinueOnError="WarnAndContinue" Condition="'$(SubYMM4DirPath)' != ''" />
+		<Copy SourceFiles="@(PluginFiles)" DestinationFolder="$(SubPluginOutputDir)" SkipUnchangedFiles="true" ContinueOnError="WarnAndContinue" Condition="'$(SubYMM4DirPath)' != ''" />
 	</Target>
 </Project>

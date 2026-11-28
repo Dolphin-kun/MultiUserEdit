@@ -7,15 +7,14 @@ namespace MultiUserEdit.Commons
 {
     internal static class RelayAvailabilityChecker
     {
-        private const string StatusUrl = "https://mue-relay.ymm4-info.net/status";
 
-        private static readonly HttpClient httpClient = new() { Timeout = TimeSpan.FromSeconds(8) };
+        private static readonly HttpClient httpClient = new(Networking.HappyEyeballs.CreateHandler()) { Timeout = TimeSpan.FromSeconds(8) };
 
         public static async Task<(bool Reachable, string Detail)> CheckAsync()
         {
             try
             {
-                using var response = await httpClient.GetAsync(StatusUrl);
+                using var response = await httpClient.GetAsync(Networking.SessionClient.RelayStatusUrl);
 
                 return response.IsSuccessStatusCode
                     ? (true, string.Empty)

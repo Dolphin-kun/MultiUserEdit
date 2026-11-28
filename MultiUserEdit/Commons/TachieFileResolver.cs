@@ -1,5 +1,4 @@
 ﻿using System.IO;
-using YukkuriMovieMaker.Commons;
 using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
 

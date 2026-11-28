@@ -2,7 +2,6 @@
 using MultiUserEdit.Networking;
 using Newtonsoft.Json.Linq;
 using System.Collections.Concurrent;
-using System.IO;
 using YukkuriMovieMaker.Project.Items;
 
 namespace MultiUserEdit.Commons
@@ -118,7 +117,7 @@ namespace MultiUserEdit.Commons
         {
             if (Suppressed) return;
 
-            if (!sessionClient.IsConnected) return;
+            if (!sessionClient.InRoom) return;
 
             try
             {
@@ -303,7 +302,7 @@ namespace MultiUserEdit.Commons
         {
             if (Suppressed) return;
 
-            if (!sessionClient.IsConnected) return;
+            if (!sessionClient.InRoom) return;
 
             try
             {
@@ -381,7 +380,7 @@ namespace MultiUserEdit.Commons
                     {
                         state.FlushScheduled = false;
                         state.LastSent = DateTime.UtcNow;
-                        toSendItem = state.Item!;
+                        toSendItem = state.Item;
                         toSendTimelineIndex = state.TimelineIndex;
                     }
                     _ = SendItemUpdatedAsync(toSendItem, toSendTimelineIndex);

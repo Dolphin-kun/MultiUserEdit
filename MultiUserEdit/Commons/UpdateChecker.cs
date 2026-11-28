@@ -17,10 +17,27 @@ namespace MultiUserEdit.Commons
 
         public static UpdateChecker Instance { get; } = new();
 
+        private static readonly TimeSpan RecheckInterval = TimeSpan.FromMinutes(10);
+
         private Task? checkTask;
+        private DateTime checkedAt;
+        private string? publishedVersion;
 
         public string CurrentVersion { get; } =
             Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+
+        public string DisplayVersion { get; } = ReadDisplayVersion();
+
+        private static string ReadDisplayVersion()
+        {
+            var informational = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            if (string.IsNullOrWhiteSpace(informational))
+                return Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+
+            var plus = informational.IndexOf('+');
+            var version = plus >= 0 ? informational[..plus] : informational;
+            return version.Replace("-beta", "β", StringComparison.OrdinalIgnoreCase);
+        }
 
         private string latestVersion = Texts.Checking;
         public string LatestVersion
@@ -49,7 +66,20 @@ namespace MultiUserEdit.Commons
 
         public void EnsureChecked()
         {
-            checkTask ??= CheckAsync();
+            lock (this)
+            {
+                if (checkTask != null && (!checkTask.IsCompleted || DateTime.UtcNow - checkedAt < RecheckInterval)) return;
+
+                checkedAt = DateTime.UtcNow;
+                checkTask = CheckAsync();
+            }
+        }
+
+        public async Task<string?> GetPublishedVersionAsync()
+        {
+            EnsureChecked();
+            await checkTask!;
+            return publishedVersion;
         }
 
         public async Task<bool> IsOutdatedAsync(TimeSpan maxWait)
@@ -158,10 +188,15 @@ namespace MultiUserEdit.Commons
                 }
 
                 var latest = versionElement.GetString()?.Trim().TrimStart('v', 'V');
+                publishedVersion = string.IsNullOrWhiteSpace(latest) ? null : latest;
                 LatestVersion = string.IsNullOrWhiteSpace(latest) ? Texts.Unknown : latest;
 
-                if (root.TryGetProperty("downloadURL", out var urlElement))
-                    downloadUrl = urlElement.GetString() ?? string.Empty;
+                if (root.TryGetProperty("downloadURL", out var urlElement)
+                    && Uri.TryCreate(urlElement.GetString(), UriKind.Absolute, out var url)
+                    && url.Scheme == Uri.UriSchemeHttps)
+                {
+                    downloadUrl = url.AbsoluteUri;
+                }
 
                 HasUpdate = IsNewer(latest, CurrentVersion);
             }

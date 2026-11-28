@@ -24,21 +24,6 @@ namespace MultiUserEdit.Commons
             return null;
         }
 
-        public static DependencyObject? FindVisualChildByTypeName(DependencyObject parent, string typeName)
-        {
-            var count = VisualTreeHelper.GetChildrenCount(parent);
-            for (int i = 0; i < count; i++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, i);
-                var type = child.GetType();
-                if (type.Name == typeName || type.FullName == typeName) return child;
-
-                var result = FindVisualChildByTypeName(child, typeName);
-                if (result != null) return result;
-            }
-            return null;
-        }
-
         public static T? FindElementByName<T>(DependencyObject parent, string name) where T : FrameworkElement
         {
             if (parent is FrameworkElement element && element.Name == name)

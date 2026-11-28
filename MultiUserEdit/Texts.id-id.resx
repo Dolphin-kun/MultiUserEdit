@@ -61,6 +61,7 @@
 <data name="CurrentCulture" xml:space="preserve"><value>id-id</value></data>
 <data name="PluginName" xml:space="preserve"><value>Pengeditan Bersama</value></data>
 <data name="Host" xml:space="preserve"><value>Host</value></data>
+<data name="WebGuest" xml:space="preserve"><value>Tamu (Web)</value></data>
 <data name="Guest" xml:space="preserve"><value>Tamu</value></data>
 <data name="Unknown" xml:space="preserve"><value>Tidak diketahui</value></data>
 <data name="DefaultUserName" xml:space="preserve"><value>Pengguna</value></data>
@@ -108,10 +109,13 @@
 <data name="LatestOnlyPleaseUpdate" xml:space="preserve"><value>Pengeditan bersama hanya dapat digunakan antar plugin versi terbaru. Silakan perbarui.</value></data>
 <data name="OpenUpdatePage" xml:space="preserve"><value>Buka halaman pembaruan</value></data>
 <data name="Room" xml:space="preserve"><value>Ruang</value></data>
-<data name="SmallRoomLabel" xml:space="preserve"><value>Ruang kecil (maks. {0})</value></data>
-<data name="LargeRoomLabel" xml:space="preserve"><value>Ruang besar (maks. {0})</value></data>
-<data name="SmallRoomTip" xml:space="preserve"><value>Untuk sedikit orang. Langsung terhubung.</value></data>
-<data name="LargeRoomTip" xml:space="preserve"><value>Untuk banyak orang. Menggunakan server relai khusus. Jika jumlah orang tetap sedikit untuk beberapa waktu, otomatis pindah ke ruang kecil.</value></data>
+<data name="NormalRoomLabel" xml:space="preserve"><value>Ruang biasa</value></data>
+<data name="NormalRoomTip" xml:space="preserve"><value>Ruang yang bisa dipakai sampai host menutupnya. Maksimal 100 orang dapat bergabung.</value></data>
+<data name="KeptRoomLabel" xml:space="preserve"><value>Ruang permanen</value></data>
+<data name="KeptRoomTip" xml:space="preserve"><value>Ruang yang tetap berjalan meski host tidak ada. Isinya disimpan di server dan dihapus 30 hari setelah terakhir digunakan. Jika semua orang keluar saat tidak ada item sama sekali, ruang langsung dihapus. Setiap orang dapat memiliki hingga 3.</value></data>
+<data name="DeleteKeptRoom" xml:space="preserve"><value>Hapus ruang permanen</value></data>
+<data name="DeleteKeptRoomConfirm" xml:space="preserve"><value>Ruang permanen ini akan dihapus. Isinya yang tersimpan di server akan hilang dan semua orang di dalamnya akan keluar. Lanjutkan?</value></data>
+<data name="RoomKeptLimit" xml:space="preserve"><value>Anda dapat memiliki hingga 3 ruang permanen. Masuk ke ruang yang tidak lagi dipakai dan tekan "Hapus ruang permanen" sebelum membuat yang baru. Ruang permanen dihapus otomatis 30 hari setelah terakhir digunakan.</value></data>
 <data name="CreateRoom" xml:space="preserve"><value>Buat ruang</value></data>
 <data name="JoinExistingRoom" xml:space="preserve"><value>Gabung ke ruang yang ada</value></data>
 <data name="JoinFromClipboard" xml:space="preserve"><value>Gabung dari tautan di papan klip</value></data>
@@ -208,7 +212,7 @@
 <data name="FileSharingCache" xml:space="preserve"><value>Berbagi file dan cache</value></data>
 <data name="ReceivedFileStorage" xml:space="preserve"><value>Cara menyimpan file yang diterima</value></data>
 <data name="TemporaryStorage" xml:space="preserve"><value>Simpan sementara selama sesi (dihapus saat keluar)</value></data>
-<data name="TemporaryStorageTip" xml:space="preserve"><value>Menghapus semua materi cache saat YMM4 ditutup</value></data>
+<data name="TemporaryStorageTip" xml:space="preserve"><value>Menghapus semua aset cache saat YMM4 ditutup. Aset yang diterima di ruang permanen tetap disimpan agar bisa dilanjutkan nanti</value></data>
 <data name="KeepStorage" xml:space="preserve"><value>Simpan di penyimpanan (pakai cache lagi lain kali)</value></data>
 <data name="KeepStorageTip" xml:space="preserve"><value>Menyimpan ke folder sementara dan memuat dari sana lain kali</value></data>
 <data name="ConfirmLargeReceive" xml:space="preserve"><value>Tanyakan sebelum menerima file materi besar</value></data>
@@ -218,6 +222,22 @@
 <data name="SendLimits" xml:space="preserve"><value>Pengiriman</value></data>
 <data name="ConfirmBeforeSend" xml:space="preserve"><value>Tanyakan sebelum mengirim file materi</value></data>
 <data name="ConfirmBeforeSendTip" xml:space="preserve"><value>Menampilkan konfirmasi sebelum video, gambar, audio, dan file lain dikirim otomatis ke pengguna lain</value></data>
+<data name="UseDirectTransfer" xml:space="preserve"><value>Kirim file besar langsung antarpeserta (WebRTC)</value></data>
+<data name="UseDirectTransferTip" xml:space="preserve"><value>Mengirim file berukuran 4 MB atau lebih secara langsung tanpa melalui server relay. Jika koneksi langsung tidak memungkinkan, server relay digunakan, tetapi file berukuran 1 GB atau lebih tidak dapat dikirim melalui server relay. Pengiriman langsung membagikan alamat IP Anda kepada peserta lain. Menonaktifkan berlaku seketika; mengaktifkan berlaku saat Anda masuk ke ruang berikutnya.</value></data>
+<data name="DirectTransferAskTitle" xml:space="preserve"><value>Cara mengirim file</value></data>
+<data name="DirectTransferAskMessage" xml:space="preserve"><value>Kirim file besar (4 MB atau lebih) langsung antarpeserta?
+
+Ya (disarankan): Pengiriman langsung (WebRTC)
+File sampai lebih cepat dan beban server relay berkurang. Karena dikirim langsung, peserta lain dapat melihat alamat IP Anda.
+Jika koneksi langsung tidak memungkinkan, server relay digunakan secara otomatis (kecuali file berukuran 1 GB atau lebih).
+
+Tidak: Selalu gunakan server relay
+Alamat IP Anda tidak dibagikan, tetapi file besar membutuhkan waktu lebih lama. File berukuran 1 GB atau lebih tidak dapat dikirim atau diterima.
+
+Anda dapat mengubahnya nanti di Pengaturan &gt; File.</value></data>
+<data name="LargeFileNoDirectPeer" xml:space="preserve"><value>File berukuran 1 GB atau lebih hanya dikirim melalui pengiriman langsung. Aset berikut tidak dapat dikirim ke peserta yang tidak dapat menggunakan pengiriman langsung (mungkin mereka menonaktifkannya atau memakai versi lama).</value></data>
+<data name="LargeFileDirectDisabled" xml:space="preserve"><value>File berukuran 1 GB atau lebih hanya dapat dikirim melalui pengiriman langsung. Untuk mengirim aset berikut, aktifkan pengiriman langsung di Pengaturan &gt; File lalu masuk ke ruang lagi.</value></data>
+<data name="LargeFileDirectFailed" xml:space="preserve"><value>Pengiriman langsung dicoba karena ukuran file 1 GB atau lebih, tetapi file tidak dapat dikirim karena koneksi gagal dibuat atau terputus.</value></data>
 <data name="ShareableExtensions" xml:space="preserve"><value>Ekstensi yang dapat dibagikan</value></data>
 <data name="SelectAll" xml:space="preserve"><value>Pilih semua</value></data>
 <data name="DeselectAll" xml:space="preserve"><value>Batalkan semua</value></data>
@@ -293,17 +313,11 @@ Pengeditan bersama hanya dapat digunakan antar plugin versi terbaru, jadi Anda t
 
 Buka halaman pembaruan?</value></data>
 <data name="UpdateRequiredTitle" xml:space="preserve"><value>Plugin perlu diperbarui</value></data>
-<data name="RelayConnectFailed" xml:space="preserve"><value>Tidak dapat terhubung ke server relai untuk ruang besar.
+<data name="RelayConnectFailed" xml:space="preserve"><value>Tidak dapat terhubung ke server relai.
 
 Penyebab: {0}
 
-Ruang kecil memakai server lain, jadi jika hanya yang ini gagal, biasanya penyebabnya jaringan atau perangkat lunak keamanan Anda.
-Sampaikan isi jendela ini kepada host.</value></data>
-<data name="RelayConnectFailedCreate" xml:space="preserve"><value>Tidak dapat terhubung ke server relai untuk ruang besar.
-
-Penyebab: {0}
-
-Tetap buat ruang? (Peserta mungkin juga tidak dapat terhubung)</value></data>
+Penyebabnya biasanya jaringan atau perangkat lunak keamanan Anda. Sampaikan isi jendela ini kepada host.</value></data>
 <data name="RelayUnavailableTitle" xml:space="preserve"><value>Server relai tidak dapat dijangkau</value></data>
 <data name="ConnectionError" xml:space="preserve"><value>Kesalahan koneksi</value></data>
 <data name="HostIsNewer" xml:space="preserve"><value>Koneksi diputus karena versi Anda ({1}) lebih lama dari plugin host ({0}).</value></data>
@@ -316,8 +330,6 @@ Periksa jaringan Anda lalu gabung ke ruang lagi.</value></data>
 <data name="OutdatedPlugin" xml:space="preserve"><value>Plugin Anda ({0}) sudah usang dan tidak dapat terhubung ke server kolaborasi.
 Versi terbaru adalah {1}.</value></data>
 <data name="RoomFull" xml:space="preserve"><value>Ruang ini sudah mencapai batas peserta.</value></data>
-<data name="RoomFullAskLarge" xml:space="preserve"><value>Ruang ini sudah mencapai batas peserta.
-Minta host untuk membuat ruang besar.</value></data>
 <data name="RoomFullTitle" xml:space="preserve"><value>Ruang penuh</value></data>
 <data name="RoomExpired" xml:space="preserve"><value>Ruang ini ditutup otomatis karena tidak ada aktivitas selama beberapa waktu.
 Minta host untuk membuat ruang baru.</value></data>
@@ -420,9 +432,6 @@ Jika memilih Tidak, file ini tidak akan diterima.</value></data>
 <data name="MyFontMissingLead" xml:space="preserve"><value>Font berikut yang Anda gunakan tidak terpasang di PC peserta lain.</value></data>
 <data name="OwnersFew" xml:space="preserve"><value> ({0})</value></data>
 <data name="OwnersMany" xml:space="preserve"><value> ({0} dan {1} lainnya)</value></data>
-<data name="MigratedMessage" xml:space="preserve"><value>Jumlah orang tetap sedikit untuk beberapa waktu, jadi ruang dipindah ke ruang kecil.
-ID ruang telah berubah, jadi ambil tautan undangan baru sebelum mengundang orang lain.</value></data>
-<data name="MigratedTitle" xml:space="preserve"><value>Ruang dipindahkan</value></data>
 <data name="ProjectTooLargeTitle" xml:space="preserve"><value>Proyek terlalu besar</value></data>
 <data name="ProjectTooLargeMessage" xml:space="preserve"><value>Sinkronisasi dihentikan karena proyek peserta lain terlalu besar.</value></data>
 <data name="Checking" xml:space="preserve"><value>Memeriksa...</value></data>
@@ -442,4 +451,12 @@ ID ruang telah berubah, jadi ambil tautan undangan baru sebelum mengundang orang
 <data name="PeerDataUnreadableTitle" xml:space="preserve"><value>Data peserta lain tidak dapat dibaca</value></data>
 <data name="PeerDataUnreadableMessage" xml:space="preserve"><value>Isi yang diterima dari peserta lain tidak dapat dipahami.
 Pastikan Anda berdua memakai versi MultiUserEdit yang sama.</value></data>
+<data name="Scripts" xml:space="preserve"><value>Naskah</value></data>
+<data name="ScriptAddToTimeline" xml:space="preserve"><value>Tambahkan ke timeline</value></data>
+<data name="ScriptDelete" xml:space="preserve"><value>Hapus</value></data>
+<data name="ScriptCharacterMissing" xml:space="preserve"><value>Karakter "{0}" tidak ada di YMM4 pada PC ini. Periksa pengaturan karakter.</value></data>
+<data name="ScriptGenerateFailed" xml:space="preserve"><value>Tidak dapat menambahkan item suara. YMM4 mungkin sedang sibuk. Tunggu sebentar lalu coba lagi.</value></data>
+<data name="RoomIdentityRejected" xml:space="preserve"><value>Tidak dapat bergabung karena koneksi lain dari pengguna yang sama sudah ada di ruang. Tunggu sebentar lalu coba lagi.</value></data>
+<data name="RoomRateLimited" xml:space="preserve"><value>Terlalu banyak ruang dibuat dalam waktu singkat. Tunggu sebentar lalu coba lagi.</value></data>
+<data name="RoomJoinRateLimited" xml:space="preserve"><value>Terlalu banyak percobaan bergabung dalam waktu singkat. Tunggu sebentar lalu coba lagi.</value></data>
 </root>

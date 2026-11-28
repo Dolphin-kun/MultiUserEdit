@@ -20,8 +20,10 @@ namespace MultiUserEdit.Commons.EventHandlers
             try
             {
                 var itemType = ItemTypeResolver.Resolve(editEvent.ItemTypeName);
+                if (itemType != null && !typeof(IItem).IsAssignableFrom(itemType)) return;
                 if (itemType == null)
                 {
+                    RenderReadiness.MarkMissing(editEvent.ItemId, editEvent.TimelineIndex);
                     if (editEvent.ExecutorId != viewModel.LocalUserId)
                     {
                         ResourceAvailabilityChecker.Notify(editEvent.ItemId, editEvent.ExecutorId,
@@ -33,7 +35,11 @@ namespace MultiUserEdit.Commons.EventHandlers
                 var isOwnEvent = editEvent.ExecutorId == viewModel.LocalUserId;
                 if (isOwnEvent)
                 {
-                    AddItem(editEvent, viewModel, timeline, itemType, editEvent.ItemJson);
+                    var ownJson = LocalMediaGuard.StripVoiceCache(
+                        ItemJsonSanitizer.RemoveUnknownEnumValues(
+                            MediaFileResolver.ResolveJsonFileReferences(editEvent.ItemJson, itemType, editEvent.MediaFileNames,
+                                MediaFileResolver.GetTachieBaseDirectoryFromJson(editEvent.ItemJson))));
+                    if (AddItem(editEvent, viewModel, timeline, itemType, ownJson) != null) RenderReadiness.MarkPresent(editEvent.ItemId);
                     return;
                 }
 
@@ -81,6 +87,7 @@ namespace MultiUserEdit.Commons.EventHandlers
 
                 var item = AddItem(editEvent, viewModel, timeline, itemType, itemJson);
                 if (item == null) return;
+                RenderReadiness.MarkPresent(editEvent.ItemId);
 
                 VoiceSynthesizer.Request(item);
 
@@ -98,6 +105,7 @@ namespace MultiUserEdit.Commons.EventHandlers
             }
             catch (Exception ex)
             {
+                RenderReadiness.MarkMissing(editEvent.ItemId, editEvent.TimelineIndex);
                 if (ItemJsonSanitizer.GetMissingPluginName(ex) is { } pluginName)
                 {
                     ErrorNotifier.NotifyList(

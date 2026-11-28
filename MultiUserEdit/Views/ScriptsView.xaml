@@ -1,0 +1,83 @@
+<UserControl x:Class="MultiUserEdit.Views.ScriptsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:MultiUserEdit"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="450" d:DesignWidth="400">
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="{x:Static loc:Texts.Scripts}" FontWeight="Bold" FontSize="14" Margin="0,0,0,6" />
+
+        <Border Grid.Row="1" BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl x:Name="Rows" ItemsSource="{Binding Scripts}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="0,0,0,1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="130" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0" MinHeight="24" BorderThickness="0,0,1,0" VerticalAlignment="Top" VerticalContentAlignment="Center"
+                                              ItemsSource="{Binding DataContext.ScriptCharacters, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                              SelectedValuePath="Name" SelectedValue="{Binding CharacterName}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Rectangle Width="4" Height="14" Margin="0,0,6,0">
+                                                        <Rectangle.Fill>
+                                                            <SolidColorBrush Color="{Binding Color}" />
+                                                        </Rectangle.Fill>
+                                                    </Rectangle>
+                                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                    <TextBox Grid.Column="1" MinHeight="24" BorderThickness="0" Padding="4,2" VerticalContentAlignment="Center"
+                                             TextWrapping="Wrap" MaxLength="2000"
+                                             Text="{Binding Serif, UpdateSourceTrigger=PropertyChanged}"
+                                             PreviewKeyDown="OnSerifKeyDown" />
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top" MinHeight="24">
+                                        <TextBlock Text="{Binding AuthorName}" Opacity="0.6" FontSize="11" VerticalAlignment="Center" Margin="6,0,2,0" />
+                                        <Button Content="✕" Width="24" Background="Transparent" BorderThickness="0" Cursor="Hand"
+                                                ToolTip="{x:Static loc:Texts.ScriptDelete}"
+                                                Command="{Binding DataContext.DeleteScriptCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                    <Style.Triggers>
+                                                        <MultiDataTrigger>
+                                                            <MultiDataTrigger.Conditions>
+                                                                <Condition Binding="{Binding IsShared}" Value="False" />
+                                                                <Condition Binding="{Binding Serif}" Value="" />
+                                                            </MultiDataTrigger.Conditions>
+                                                            <Setter Property="Visibility" Value="Hidden" />
+                                                        </MultiDataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <Button Grid.Row="2" Content="{x:Static loc:Texts.ScriptAddToTimeline}" Margin="0,6,0,0" Padding="0,4" Cursor="Hand"
+                Command="{Binding AddScriptsToTimelineCommand}" />
+    </Grid>
+</UserControl>

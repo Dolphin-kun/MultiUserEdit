@@ -45,6 +45,11 @@ namespace MultiUserEdit.Commons.EventHandlers
                 if (File.Exists(savePath)) onCompleted(string.Empty, savePath);
             }
 
+            lock (remaining)
+            {
+                if (!finished) viewModel.RequestMissingFiles([.. remaining]);
+            }
+
             if (timeout == null) return;
 
             _ = GiveUpWhenStalledAsync(timeout.Value);

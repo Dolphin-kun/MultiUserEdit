@@ -1,9 +1,5 @@
-﻿using Reactive.Bindings;
-using System.Windows;
-using YukkuriMovieMaker.Project;
+﻿using YukkuriMovieMaker.Project;
 using YukkuriMovieMaker.Project.Items;
-using YukkuriMovieMaker.ViewModels;
-using YukkuriMovieMaker.Views;
 
 namespace MultiUserEdit.Commons
 {
@@ -82,36 +78,6 @@ namespace MultiUserEdit.Commons
             return GetLocalCharacters().FirstOrDefault(c => c.Name == localName);
         }
 
-        public static IReadOnlyList<Character> GetLocalCharacters()
-        {
-            var settingsCharacters = CharacterSettingsAccessor.GetCharacters();
-            if (settingsCharacters != null) return [.. settingsCharacters];
-
-            var uiCharacters = GetCharactersFromActiveTimelineView();
-            return uiCharacters == null ? [] : [.. uiCharacters];
-        }
-
-        private static ReadOnlyReactiveCollection<Character>? GetCharactersFromActiveTimelineView()
-        {
-            try
-            {
-                return Application.Current.Dispatcher.Invoke(() =>
-                {
-                    foreach (Window window in Application.Current.Windows)
-                    {
-                        var timelineView = VisualTreeHelperExtensions.FindVisualChild<TimelineView>(window);
-                        if (timelineView?.DataContext is TimelineViewModel timelineViewModel)
-                        {
-                            return timelineViewModel.Characters;
-                        }
-                    }
-                    return null;
-                });
-            }
-            catch
-            {
-                return null;
-            }
-        }
+        public static IReadOnlyList<Character> GetLocalCharacters() => [.. CharacterSettingsAccessor.GetCharacters() ?? []];
     }
 }

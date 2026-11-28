@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Text;
 using System.Windows;
 using System.Windows.Threading;
@@ -31,7 +30,6 @@ namespace MultiUserEdit.Commons
 
         public static void NotifyOnce(string title, string message)
         {
-            Debug.WriteLine($"[MultiUserEdit] {title}: {message}");
 
             if (!notified.TryAdd($"{title}\n{message}", 0)) return;
 
@@ -46,7 +44,6 @@ namespace MultiUserEdit.Commons
 
         public static void NotifyList(string title, string lead, string item, string note = "", bool once = true)
         {
-            Debug.WriteLine($"[MultiUserEdit] {title}: {lead} {item}");
 
             if (once && !notified.TryAdd($"{title}\n{lead}\n{note}\n{item}", 0)) return;
 

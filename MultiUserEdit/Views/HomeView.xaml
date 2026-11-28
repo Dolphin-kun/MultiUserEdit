@@ -5,7 +5,6 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:icons="clr-namespace:YukkuriMovieMaker.Resources.Icons;assembly=YukkuriMovieMaker.Plugin"
-             xmlns:vm="clr-namespace:MultiUserEdit.ViewModels"
              mc:Ignorable="d"
              d:DesignHeight="500" d:DesignWidth="400">
 
@@ -94,16 +93,16 @@
                         </StackPanel.Style>
 
                         <WrapPanel Margin="0,0,0,8">
-                            <RadioButton GroupName="RoomSize" Cursor="Hand" Margin="0,0,12,4"
-                                         IsChecked="{Binding IsSmallRoomSelected, Mode=TwoWay}"
-                                         ToolTip="{x:Static loc:Texts.SmallRoomTip}">
-                                <TextBlock Text="{x:Static vm:MultiUserEditViewModel.SmallRoomLabel}" FontSize="12" VerticalAlignment="Center" />
+                            <RadioButton GroupName="RoomKind" Cursor="Hand" Margin="0,0,12,4"
+                                         IsChecked="{Binding IsNormalRoomSelected, Mode=TwoWay}"
+                                         ToolTip="{x:Static loc:Texts.NormalRoomTip}">
+                                <TextBlock Text="{x:Static loc:Texts.NormalRoomLabel}" FontSize="12" VerticalAlignment="Center" />
                             </RadioButton>
 
-                            <RadioButton GroupName="RoomSize" Cursor="Hand" Margin="0,0,0,4"
-                                         IsChecked="{Binding IsLargeRoomSelected, Mode=TwoWay}"
-                                         ToolTip="{x:Static loc:Texts.LargeRoomTip}">
-                                <TextBlock Text="{x:Static vm:MultiUserEditViewModel.LargeRoomLabel}" FontSize="12" VerticalAlignment="Center" />
+                            <RadioButton GroupName="RoomKind" Cursor="Hand" Margin="0,0,0,4"
+                                         IsChecked="{Binding IsKeptRoomSelected, Mode=TwoWay}"
+                                         ToolTip="{x:Static loc:Texts.KeptRoomTip}">
+                                <TextBlock Text="{x:Static loc:Texts.KeptRoomLabel}" FontSize="12" VerticalAlignment="Center" />
                             </RadioButton>
                         </WrapPanel>
 
@@ -148,6 +147,10 @@
                         </Button>
 
                         <Button Command="{Binding DisconnectCommand}" Cursor="Hand" Height="32" Content="{x:Static loc:Texts.Disconnect}" />
+
+                        <Button Command="{Binding DeleteKeptRoomCommand}" Cursor="Hand" Height="32" Margin="0,6,0,0"
+                                Content="{x:Static loc:Texts.DeleteKeptRoom}"
+                                Visibility="{Binding IsKeptRoomOwner, Converter={StaticResource BoolToVisConverter}}" />
                     </StackPanel>
 
                     <Separator Margin="0,10,0,8" />

@@ -3,7 +3,6 @@ using MultiUserEdit.Commons.Models;
 using MultiUserEdit.Networking;
 using MultiUserEdit.Settings;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.IO;
 using YukkuriMovieMaker.Commons;
 
@@ -11,13 +10,12 @@ namespace MultiUserEdit.Commons
 {
     internal class FileTransferManager
     {
-        private const int ChunkSize = 256 * 1024;
+        private const int ChunkSize = 32 * 1024;
         private static readonly TimeSpan TransferTimeout = TimeSpan.FromMinutes(3);
 
         private static readonly TimeSpan RequestWindow = TimeSpan.FromSeconds(15);
 
-        private const int AckWindow = 24;
-        private const int AckInterval = 4;
+        private const int MaxWindow = 128;
         private static readonly TimeSpan AckPollInterval = TimeSpan.FromMilliseconds(20);
         private static readonly TimeSpan AckStallTimeout = TimeSpan.FromSeconds(30);
 
@@ -84,6 +82,20 @@ namespace MultiUserEdit.Commons
 
         public Func<Guid, bool>? PeerHasFileChannel { get; set; }
 
+        public Func<Guid, bool>? IsPeerPresent { get; set; }
+
+        public Func<bool>? KeepsReceivedFiles { get; set; }
+
+        public PeerTransport? Peers { get; set; }
+
+        public Func<Guid, bool>? CanUseDirect { get; set; }
+
+        public Func<Task<bool>>? ConfirmDirect { get; set; }
+
+        private const long DirectThreshold = 4L * 1024 * 1024;
+
+        private const long RelayLimit = 1024L * 1024 * 1024;
+
         public Action<Guid, Guid, int>? SendChunkAck { get; set; }
 
         public Action<Guid, Guid>? DeclineTransfer { get; set; }
@@ -94,7 +106,6 @@ namespace MultiUserEdit.Commons
         private const long MaxReceiveBytes = 32L * 1024 * 1024 * 1024;
         private const long FreeSpaceMargin = 512L * 1024 * 1024;
 
-        private readonly ConcurrentDictionary<string, string> receivedHashes = new(StringComparer.OrdinalIgnoreCase);
 
         private static bool IsPlausible(FileTransferStartEvent evt)
         {
@@ -127,20 +138,46 @@ namespace MultiUserEdit.Commons
                 using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, ChunkSize, FileOptions.SequentialScan);
                 return Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(stream));
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] Hash failed for {path}: {ex.Message}");
                 return null;
             }
         }
 
         private bool HasHash(string path, string expectedHash)
         {
-            var actual = receivedHashes.TryGetValue(path, out var known)
-                ? known
-                : ComputeHashAsync(path).GetAwaiter().GetResult();
-
+            var actual = CachedHash(path) ?? RememberHash(path, HashFile(path));
             return actual != null && string.Equals(actual, expectedHash, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string? CachedHash(string path)
+        {
+            try
+            {
+                var info = new FileInfo(path);
+                return info.Exists
+                    && hashCache.TryGetValue(path, out var cached)
+                    && cached.WriteTime == info.LastWriteTimeUtc
+                    && cached.Size == info.Length ? cached.Hash : null;
+            }
+            catch (IOException)
+            {
+                return null;
+            }
+        }
+
+        private string? RememberHash(string path, string? hash)
+        {
+            if (hash == null) return null;
+            try
+            {
+                var info = new FileInfo(path);
+                hashCache[path] = (info.LastWriteTimeUtc, info.Length, hash);
+            }
+            catch (IOException)
+            {
+            }
+            return hash;
         }
 
         private readonly ConcurrentDictionary<string, FileTask> activeUploads = new();
@@ -148,10 +185,11 @@ namespace MultiUserEdit.Commons
         private readonly ConcurrentDictionary<Guid, FileTask> activeDownloads = new();
 
         private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Guid, int>> acknowledged = new();
+        private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<TransferPacer, byte>> pacers = new();
 
         private readonly ConcurrentDictionary<Guid, Announcement> announcements = new();
         private readonly ConcurrentDictionary<string, byte> announcingPaths = new();
-        private readonly ConcurrentDictionary<string, (DateTime WriteTime, long Size, string Hash)> hashCache = new();
+        private readonly ConcurrentDictionary<string, (DateTime WriteTime, long Size, string Hash)> hashCache = new(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, bool> sendDecisions = new(StringComparer.OrdinalIgnoreCase);
         private readonly ConcurrentDictionary<string, (DateTime WriteTime, long Size)> announcedFiles = new(StringComparer.OrdinalIgnoreCase);
 
@@ -205,9 +243,8 @@ namespace MultiUserEdit.Commons
                     catch { }
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] Temp cleanup failed: {ex.Message}");
             }
         }
 
@@ -231,9 +268,8 @@ namespace MultiUserEdit.Commons
                     }
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] Temp cleanup failed: {ex.Message}");
             }
         }
 
@@ -406,12 +442,10 @@ namespace MultiUserEdit.Commons
             {
                 if (announcement.Replies.IsEmpty)
                 {
-                    Debug.WriteLine($"[MultiUserEdit] No reply within the request window, sending to everyone: {fileName}");
                     await SendChunksAsync(filePath, fileName, transferId, sessionClient, executorId, null);
                     return;
                 }
 
-                Debug.WriteLine($"[MultiUserEdit] Skipped transfer (all peers already have it): {fileName}");
                 RecordSent(filePath, wasTransferred: false);
                 return;
             }
@@ -585,39 +619,111 @@ namespace MultiUserEdit.Commons
             {
                 var fileSize = fileInfo.Length;
                 var totalChunks = (int)Math.Ceiling((double)fileSize / ChunkSize);
-
                 var hash = await ComputeHashAsync(filePath);
+                acknowledged.GetOrAdd(transferId, _ => new());
+
+                var recipients = ResolveRecipients(targetIds) ?? [];
+                var candidates = Peers != null && fileSize >= DirectThreshold
+                    ? recipients.Where(id => CanUseDirect?.Invoke(id) == true).Distinct().ToList()
+                    : [];
+                var directAllowed = candidates.Count > 0 && (ConfirmDirect == null || await ConfirmDirect());
+                List<Guid> direct = directAllowed ? candidates : [];
+
+                var relayAllowed = fileSize < RelayLimit;
+                IReadOnlyList<string>? relayTargets = !relayAllowed
+                    ? []
+                    : direct.Count == 0
+                        ? targetIds
+                        : [.. recipients.Except(direct).Select(id => id.ToString())];
+
+                if (!relayAllowed && recipients.Count > direct.Count)
+                {
+                    var reason = Peers == null || (candidates.Count > 0 && !directAllowed)
+                        ? Texts.LargeFileDirectDisabled
+                        : Texts.LargeFileNoDirectPeer;
+                    ErrorNotifier.NotifyList(Texts.SendFailedTitle, reason, ErrorNotifier.Quote(fileName), once: false);
+                }
+
+                var work = direct
+                    .Select(peer => SendToPeerAsync(peer, filePath, fileName, fileSize, transferId, totalChunks, hash, fileTask, sessionClient, executorId, relayAllowed))
+                    .ToList();
+                if (relayTargets == null || relayTargets.Count > 0)
+                    work.Add(SendViaRelayAsync(filePath, fileName, fileSize, transferId, totalChunks, hash, relayTargets, 0, true, fileTask, sessionClient, executorId));
+
+                if (work.Count == 0) return;
+                await Task.WhenAll(work);
+                RecordSent(filePath, wasTransferred: true);
+            }
+            finally
+            {
+                acknowledged.TryRemove(transferId, out _);
+                activeUploads.TryRemove(filePath, out _);
+                NotifySummary();
+            }
+        }
+
+        private async Task SendToPeerAsync(Guid peer, string filePath, string fileName, long fileSize, Guid transferId, int totalChunks,
+            string? hash, FileTask fileTask, SessionClient sessionClient, Guid executorId, bool relayAllowed)
+        {
+            var start = new PeerTransferStart(transferId, fileName, fileSize, totalChunks, ChunkSize, hash, null);
+            var (result, next) = await Peers!.SendFileAsync(peer, start, filePath, read =>
+            {
+                fileTask.TransferredBytes = Math.Min(fileTask.TotalBytes, fileTask.TransferredBytes + read);
+                NotifyProgress();
+            });
+
+            if (result is PeerSendResult.Completed or PeerSendResult.Cancelled) return;
+
+            if (!relayAllowed)
+            {
+                ErrorNotifier.NotifyList(Texts.SendFailedTitle, Texts.LargeFileDirectFailed, ErrorNotifier.Quote(fileName), once: false);
+                return;
+            }
+
+            await SendViaRelayAsync(filePath, fileName, fileSize, transferId, totalChunks, hash, [peer.ToString()],
+                result == PeerSendResult.NotConnected ? 0 : Math.Clamp(next, 0, totalChunks), result == PeerSendResult.NotConnected, fileTask, sessionClient, executorId);
+        }
+
+        private async Task SendViaRelayAsync(string filePath, string fileName, long fileSize, Guid transferId, int totalChunks, string? hash,
+            IReadOnlyList<string>? targetIds, int firstChunk, bool sendStart, FileTask fileTask, SessionClient sessionClient, Guid executorId)
+        {
+            if (sendStart)
+            {
                 var startEvt = new FileTransferStartEvent(transferId, fileName, fileSize, totalChunks, ChunkSize, hash)
                 {
                     DateTime = DateTime.UtcNow,
                     ExecutorId = executorId
                 };
                 await SendBulkAsync(sessionClient, targetIds, startEvt);
+            }
 
-                var buffer = new byte[ChunkSize];
-                await using var stream = OpenForSequentialReadAsync(filePath);
+            var buffer = new byte[ChunkSize];
+            await using var stream = OpenForSequentialReadAsync(filePath);
+            if (firstChunk > 0) stream.Seek((long)firstChunk * ChunkSize, SeekOrigin.Begin);
 
-                var targetGuids = targetIds?
-                    .Select(id => Guid.TryParse(id, out var parsed) ? parsed : Guid.Empty)
-                    .ToArray();
+            var targetGuids = targetIds?
+                .Select(id => Guid.TryParse(id, out var parsed) ? parsed : Guid.Empty)
+                .ToArray();
 
-                var waiters = new List<Guid>(ResolveRecipients(targetIds) ?? []);
-                var hadWaiters = waiters.Count > 0;
-                acknowledged.GetOrAdd(transferId, _ => new());
+            var waiters = new List<Guid>(ResolveRecipients(targetIds) ?? []);
+            var hadWaiters = waiters.Count > 0;
+            var pacer = new TransferPacer(MaxWindow);
+            var registered = pacers.GetOrAdd(transferId, _ => new());
+            registered[pacer] = 0;
 
-                for (int chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++)
+            try
+            {
+                for (int chunkIndex = firstChunk; chunkIndex < totalChunks; chunkIndex++)
                 {
                     if (IsCancelledByEveryone(transferId, targetGuids))
                     {
-                        Debug.WriteLine($"[MultiUserEdit] Every receiver cancelled: {fileName}");
                         return;
                     }
 
-                    await WaitForAckWindowAsync(transferId, chunkIndex, waiters);
+                    await WaitForAckWindowAsync(transferId, chunkIndex - firstChunk, chunkIndex, waiters, pacer);
 
                     if (hadWaiters && waiters.Count == 0)
                     {
-                        Debug.WriteLine($"[MultiUserEdit] No receivers left, stopping: {fileName}");
                         return;
                     }
 
@@ -629,32 +735,47 @@ namespace MultiUserEdit.Commons
                         DateTime = DateTime.UtcNow,
                         ExecutorId = executorId
                     };
+                    pacer.Sent(chunkIndex);
                     await SendBulkAsync(sessionClient, targetIds, chunkEvt);
 
                     fileTask.TransferredBytes = Math.Min(fileTask.TotalBytes, fileTask.TransferredBytes + read);
                     NotifyProgress();
                 }
-
-                RecordSent(filePath, wasTransferred: true);
             }
             finally
             {
-                acknowledged.TryRemove(transferId, out _);
-                activeUploads.TryRemove(filePath, out _);
-                NotifySummary();
+                registered.TryRemove(pacer, out _);
+                if (registered.IsEmpty) pacers.TryRemove(new KeyValuePair<Guid, ConcurrentDictionary<TransferPacer, byte>>(transferId, registered));
             }
         }
 
-        private async Task WaitForAckWindowAsync(Guid transferId, int chunkIndex, List<Guid> waiters)
+        public bool IsCancelledBy(Guid transferId, Guid peer) => cancelledTargets.ContainsKey(CancelKey(transferId, peer));
+
+        public bool AcceptDirectTransfer(Guid sender, PeerTransferStart start, Func<int, bool> ackSink)
+        {
+            HandleTransferStart(new FileTransferStartEvent(start.TransferId, start.FileName, start.FileSize, start.TotalChunks, start.ChunkSize, start.Hash)
+            {
+                DateTime = DateTime.UtcNow,
+                ExecutorId = sender
+            });
+
+            if (!incomingTransfers.TryGetValue(start.TransferId, out var transfer) || transfer.SenderId != sender) return false;
+            transfer.AckSink = ackSink;
+            return true;
+        }
+
+        private async Task WaitForAckWindowAsync(Guid transferId, int sentSoFar, int chunkIndex, List<Guid> waiters, TransferPacer pacer)
         {
             if (waiters.Count == 0) return;
 
             waiters.RemoveAll(waiter => cancelledTargets.ContainsKey(CancelKey(transferId, waiter)));
 
-            if (GetPeerIds?.Invoke() is { } peers)
+            if (IsPeerPresent is { } isPresent)
+                waiters.RemoveAll(waiter => !isPresent(waiter));
+            else if (GetPeerIds?.Invoke() is { } peers)
                 waiters.RemoveAll(waiter => !peers.Contains(waiter));
 
-            if (waiters.Count == 0 || chunkIndex < AckWindow) return;
+            if (waiters.Count == 0 || sentSoFar < pacer.Window) return;
 
             var acked = acknowledged.GetOrAdd(transferId, _ => new());
             var stalledSince = DateTime.UtcNow;
@@ -669,7 +790,7 @@ namespace MultiUserEdit.Commons
                 foreach (var waiter in waiters)
                     slowest = Math.Min(slowest, acked.TryGetValue(waiter, out var value) ? value : -1);
 
-                if (chunkIndex - slowest < AckWindow) return;
+                if (chunkIndex - slowest < pacer.Window) return;
 
                 if (slowest != previousSlowest)
                 {
@@ -679,7 +800,6 @@ namespace MultiUserEdit.Commons
                 else if (DateTime.UtcNow - stalledSince > AckStallTimeout)
                 {
                     waiters.RemoveAll(waiter => (acked.TryGetValue(waiter, out var value) ? value : -1) <= slowest);
-                    Debug.WriteLine($"[MultiUserEdit] Dropped receivers that stopped replying: {transferId}");
                     previousSlowest = int.MinValue;
                     continue;
                 }
@@ -693,6 +813,10 @@ namespace MultiUserEdit.Commons
             if (!acknowledged.TryGetValue(evt.TransferId, out var acked)) return;
 
             acked.AddOrUpdate(evt.ExecutorId, evt.ChunkIndex, (_, existing) => Math.Max(existing, evt.ChunkIndex));
+            if (pacers.TryGetValue(evt.TransferId, out var registered))
+            {
+                foreach (var pacer in registered.Keys) pacer.Acked(evt.ExecutorId, evt.ChunkIndex);
+            }
         }
 
         private readonly ConcurrentDictionary<string, SentFileRecord> sentFiles = new(StringComparer.OrdinalIgnoreCase);
@@ -711,9 +835,8 @@ namespace MultiUserEdit.Commons
                     _ => new SentFileRecord(filePath, size, DateTime.Now, wasTransferred),
                     (_, existing) => new SentFileRecord(filePath, size, DateTime.Now, wasTransferred || existing.WasTransferred));
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] Record sent file failed: {ex.Message}");
                 return;
             }
 
@@ -736,7 +859,6 @@ namespace MultiUserEdit.Commons
 
             if (!string.IsNullOrEmpty(expectedHash) && !HasHash(localPath, expectedHash)) return false;
 
-            Debug.WriteLine($"[MultiUserEdit] Reused a local file instead of receiving: {localPath}");
             TransferCompleted?.Invoke(transferId.ToString(), localPath);
             return true;
         }
@@ -747,14 +869,12 @@ namespace MultiUserEdit.Commons
 
             if (!MultiUserEditSettings.Default.IsExtensionAllowed(evt.FileName))
             {
-                Debug.WriteLine($"[MultiUserEdit] Security Block: Rejected file announcement with disallowed extension: {evt.FileName}");
                 NotifyBlocked(evt.FileName);
                 return false;
             }
 
-            if (ReceiveBlockedReason?.Invoke(evt.ExecutorId, evt.FileName) is { } refused)
+            if (ReceiveBlockedReason?.Invoke(evt.ExecutorId, evt.FileName) is not null)
             {
-                Debug.WriteLine($"[MultiUserEdit] Not requesting {evt.FileName}: {refused}");
                 return false;
             }
 
@@ -821,25 +941,15 @@ namespace MultiUserEdit.Commons
         {
             try
             {
-                var info = new FileInfo(filePath);
-                if (!info.Exists) return null;
-
-                if (hashCache.TryGetValue(filePath, out var cached) &&
-                    cached.WriteTime == info.LastWriteTimeUtc && cached.Size == info.Length)
-                {
-                    return cached.Hash;
-                }
+                if (!File.Exists(filePath)) return null;
+                if (CachedHash(filePath) is { } cached) return cached;
 
                 await using var stream = OpenForSequentialReadAsync(filePath);
                 var hashBytes = await System.Security.Cryptography.SHA256.HashDataAsync(stream);
-                var hash = Convert.ToHexStringLower(hashBytes);
-
-                hashCache[filePath] = (info.LastWriteTimeUtc, info.Length, hash);
-                return hash;
+                return RememberHash(filePath, Convert.ToHexStringLower(hashBytes));
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] Hash failed for {filePath}: {ex.Message}");
                 return null;
             }
         }
@@ -858,7 +968,6 @@ namespace MultiUserEdit.Commons
         {
             if (!MultiUserEditSettings.Default.IsExtensionAllowed(evt.FileName))
             {
-                Debug.WriteLine($"[MultiUserEdit] Security Block: Rejected file transfer with disallowed extension: {evt.FileName}");
                 NotifyBlocked(evt.FileName);
                 DeclineTransfer?.Invoke(evt.ExecutorId, evt.TransferId);
                 return;
@@ -866,14 +975,12 @@ namespace MultiUserEdit.Commons
 
             if (ReceiveBlockedReason?.Invoke(evt.ExecutorId, evt.FileName) is { } refused)
             {
-                Debug.WriteLine($"[MultiUserEdit] Refused {evt.FileName}: {refused}");
                 DeclineTransfer?.Invoke(evt.ExecutorId, evt.TransferId);
                 return;
             }
 
             if (!IsPlausible(evt))
             {
-                Debug.WriteLine($"[MultiUserEdit] Refused an implausible transfer: {evt.FileName} size={evt.FileSize} chunks={evt.TotalChunks} chunkSize={evt.ChunkSize}");
                 DeclineTransfer?.Invoke(evt.ExecutorId, evt.TransferId);
                 return;
             }
@@ -890,7 +997,6 @@ namespace MultiUserEdit.Commons
 
             if (receiveDecisions.TryGetValue(SharedFileKey(evt.FileName, evt.FileSize), out var accepted) && !accepted)
             {
-                Debug.WriteLine($"[MultiUserEdit] Declined earlier, not receiving: {evt.FileName}");
                 DeclineTransfer?.Invoke(evt.ExecutorId, evt.TransferId);
                 return;
             }
@@ -929,44 +1035,52 @@ namespace MultiUserEdit.Commons
             if (!incomingTransfers.TryGetValue(evt.TransferId, out var transfer)) return;
 
             if (evt.ExecutorId != transfer.SenderId) return;
-
-            if (evt.ChunkIndex < 0 || evt.ChunkIndex >= transfer.TotalChunks || evt.TotalChunks != transfer.TotalChunks)
+            if (evt.TotalChunks != transfer.TotalChunks)
             {
                 AbortTransfer(evt.TransferId, transfer);
                 return;
             }
-
-            if (DateTime.UtcNow - transfer.LastActivityAt > TransferTimeout)
-            {
-                AbortTransfer(evt.TransferId, transfer);
-                return;
-            }
-
-            transfer.LastActivityAt = DateTime.UtcNow;
 
             byte[] chunkBytes;
             try
             {
                 chunkBytes = Convert.FromBase64String(evt.Data);
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] FileTransfer decode failed: {ex.Message}");
                 AbortTransfer(evt.TransferId, transfer);
                 return;
             }
 
-            if (chunkBytes.Length != transfer.ExpectedChunkLength(evt.ChunkIndex))
+            HandleChunkBytes(evt.ExecutorId, evt.TransferId, evt.ChunkIndex, chunkBytes);
+        }
+
+        public void HandleChunkBytes(Guid sender, Guid transferId, int chunkIndex, byte[] chunkBytes)
+        {
+            if (!incomingTransfers.TryGetValue(transferId, out var transfer)) return;
+            if (sender != transfer.SenderId) return;
+
+            if (chunkIndex < 0 || chunkIndex >= transfer.TotalChunks)
             {
-                Debug.WriteLine($"[MultiUserEdit] Chunk {evt.ChunkIndex} has the wrong size: {transfer.FileName}");
-                AbortTransfer(evt.TransferId, transfer);
+                AbortTransfer(transferId, transfer);
                 return;
             }
 
-            if (!transfer.TryMarkReceived(evt.ChunkIndex)) return;
+            if (DateTime.UtcNow - transfer.LastActivityAt > TransferTimeout)
+            {
+                AbortTransfer(transferId, transfer);
+                return;
+            }
 
-            var transferId = evt.TransferId;
-            var chunkIndex = evt.ChunkIndex;
+            transfer.LastActivityAt = DateTime.UtcNow;
+
+            if (chunkBytes.Length != transfer.ExpectedChunkLength(chunkIndex))
+            {
+                AbortTransfer(transferId, transfer);
+                return;
+            }
+
+            if (!transfer.TryMarkReceived(chunkIndex)) return;
 
             transfer.QueueWrite(() => WriteChunk(transferId, transfer, chunkIndex, chunkBytes));
         }
@@ -977,9 +1091,8 @@ namespace MultiUserEdit.Commons
             {
                 if (!transfer.WriteChunk(chunkIndex, chunkBytes, chunkBytes.Length)) return;
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] FileTransfer write failed: {ex.Message}");
                 AbortTransfer(transferId, transfer);
                 return;
             }
@@ -987,7 +1100,7 @@ namespace MultiUserEdit.Commons
             transfer.ReceivedChunks++;
 
             var isLastChunk = transfer.ReceivedChunks >= transfer.TotalChunks;
-            if (isLastChunk || chunkIndex % AckInterval == 0)
+            if (transfer.AckSink?.Invoke(chunkIndex) != true)
                 SendChunkAck?.Invoke(transfer.SenderId, transferId, chunkIndex);
 
             if (activeDownloads.TryGetValue(transferId, out var downTask))
@@ -1012,9 +1125,8 @@ namespace MultiUserEdit.Commons
             {
                 NotifySummary();
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] progress update failed: {ex.Message}");
             }
 
             try
@@ -1046,8 +1158,9 @@ namespace MultiUserEdit.Commons
                 if (!string.IsNullOrEmpty(saveDirectory)) Directory.CreateDirectory(saveDirectory);
 
                 File.Move(transfer.TempPath, transfer.SavePath, overwrite: true);
-                receivedFiles[transfer.SavePath] = 0;
-                if (actualHash != null) receivedHashes[transfer.SavePath] = actualHash;
+                if (KeepsReceivedFiles?.Invoke() == true) receivedFiles.TryRemove(transfer.SavePath, out _);
+                else receivedFiles[transfer.SavePath] = 0;
+                RememberHash(transfer.SavePath, actualHash);
                 NoteSharedFile(Path.GetFileName(transfer.SavePath), new FileInfo(transfer.SavePath).Length);
                 RememberOwner(transfer.SavePath, ownerName);
 
@@ -1055,7 +1168,7 @@ namespace MultiUserEdit.Commons
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[MultiUserEdit] FileTransfer save failed: {ex.Message}");
+                PluginLog.Error("could not save a received file", ex);
             }
         }
 
@@ -1149,6 +1262,9 @@ namespace MultiUserEdit.Commons
             TransferSummaryChanged?.Invoke(summary);
         }
 
+        public bool IsReceivingFile(string fileName) =>
+            incomingTransfers.Values.Any(transfer => string.Equals(transfer.FileName, fileName, StringComparison.OrdinalIgnoreCase));
+
         public bool IsReceivingAny()
         {
             var now = DateTime.UtcNow;
@@ -1169,9 +1285,8 @@ namespace MultiUserEdit.Commons
 
                 RemoveEmptyDirectories();
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] Could not clean up incomplete transfers: {ex.Message}");
             }
         }
 

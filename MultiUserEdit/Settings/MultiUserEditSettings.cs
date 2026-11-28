@@ -40,6 +40,20 @@ namespace MultiUserEdit.Settings
             set => Set(ref profileId, value);
         }
 
+        private bool useDirectTransfer = true;
+        public bool UseDirectTransfer
+        {
+            get => useDirectTransfer;
+            set => Set(ref useDirectTransfer, value);
+        }
+
+        private bool directTransferAsked;
+        public bool DirectTransferAsked
+        {
+            get => directTransferAsked;
+            set => Set(ref directTransferAsked, value);
+        }
+
         private bool confirmBeforeFileSend = true;
         public bool ConfirmBeforeFileSend
         {
@@ -94,6 +108,33 @@ namespace MultiUserEdit.Settings
         {
             get => allowedExtensions;
             set => Set(ref allowedExtensions, value);
+        }
+
+        private string keptRoomKeys = string.Empty;
+        public string KeptRoomKeys
+        {
+            get => keptRoomKeys;
+            set => Set(ref keptRoomKeys, value);
+        }
+
+        private Dictionary<string, string> ParseKeptRoomKeys() =>
+            KeptRoomKeys
+                .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                .Select(line => line.Split('=', 2))
+                .Where(parts => parts.Length == 2)
+                .GroupBy(parts => parts[0].Trim(), StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.Last()[1].Trim(), StringComparer.OrdinalIgnoreCase);
+
+        public string? GetKeptRoomKey(string roomId) =>
+            ParseKeptRoomKeys().TryGetValue(roomId, out var key) ? key : null;
+
+        public void SetKeptRoomKey(string roomId, string? hostKey)
+        {
+            var keys = ParseKeptRoomKeys();
+            if (string.IsNullOrEmpty(hostKey)) keys.Remove(roomId);
+            else keys[roomId] = hostKey;
+
+            KeptRoomKeys = string.Join("\n", keys.Select(pair => $"{pair.Key}={pair.Value}"));
         }
 
         public bool IsExtensionAllowed(string filePath)

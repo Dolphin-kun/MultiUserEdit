@@ -126,18 +126,18 @@ namespace MultiUserEdit.Views
             ReadOnlyRadio.IsChecked = perm.Level == PermissionLevel.ReadOnly;
             LiveMirrorRadio.IsChecked = perm.Level == PermissionLevel.LiveMirror;
 
-            AddItemsCheck.IsChecked = perm.CanAddItems;
-            DeleteItemsCheck.IsChecked = perm.CanDeleteItems;
-            DeleteOthersCheck.IsChecked = perm.CanDeleteOthersItems;
-            MoveItemsCheck.IsChecked = perm.CanMoveItems;
-            EditPropsCheck.IsChecked = perm.CanEditProperties;
-            AddScenesCheck.IsChecked = perm.CanAddScenes;
-            DeleteScenesCheck.IsChecked = perm.CanDeleteScenes;
-            ShareFilesCheck.IsChecked = perm.CanShareFiles;
-            ShareVideosCheck.IsChecked = perm.CanShareVideos;
-            ShareImagesCheck.IsChecked = perm.CanShareImages;
-            ShareAudioCheck.IsChecked = perm.CanShareAudio;
-            SyncSeekCheck.IsChecked = perm.CanSyncSeekPosition;
+            AddItemsCheck.Value = perm.CanAddItems;
+            DeleteItemsCheck.Value = perm.CanDeleteItems;
+            DeleteOthersCheck.Value = perm.CanDeleteOthersItems;
+            MoveItemsCheck.Value = perm.CanMoveItems;
+            EditPropsCheck.Value = perm.CanEditProperties;
+            AddScenesCheck.Value = perm.CanAddScenes;
+            DeleteScenesCheck.Value = perm.CanDeleteScenes;
+            ShareFilesCheck.Value = perm.CanShareFiles;
+            ShareVideosCheck.Value = perm.CanShareVideos;
+            ShareImagesCheck.Value = perm.CanShareImages;
+            ShareAudioCheck.Value = perm.CanShareAudio;
+            SyncSeekCheck.Value = perm.CanSyncSeekPosition;
         }
 
         private PermissionLevel GetSelectedLevel()
@@ -188,18 +188,18 @@ namespace MultiUserEdit.Views
             if (canManage)
             {
                 ResultPermission.Level = GetSelectedLevel();
-                ResultPermission.CanAddItems = AddItemsCheck.IsChecked == true;
-                ResultPermission.CanMoveItems = MoveItemsCheck.IsChecked == true;
-                ResultPermission.CanDeleteItems = DeleteItemsCheck.IsChecked == true;
-                ResultPermission.CanDeleteOthersItems = DeleteOthersCheck.IsChecked == true;
-                ResultPermission.CanEditProperties = EditPropsCheck.IsChecked == true;
-                ResultPermission.CanAddScenes = AddScenesCheck.IsChecked == true;
-                ResultPermission.CanDeleteScenes = DeleteScenesCheck.IsChecked == true;
-                ResultPermission.CanShareFiles = ShareFilesCheck.IsChecked == true;
-                ResultPermission.CanShareVideos = ShareVideosCheck.IsChecked == true;
-                ResultPermission.CanShareImages = ShareImagesCheck.IsChecked == true;
-                ResultPermission.CanShareAudio = ShareAudioCheck.IsChecked == true;
-                ResultPermission.CanSyncSeekPosition = SyncSeekCheck.IsChecked == true;
+                ResultPermission.CanAddItems = AddItemsCheck.Value;
+                ResultPermission.CanMoveItems = MoveItemsCheck.Value;
+                ResultPermission.CanDeleteItems = DeleteItemsCheck.Value;
+                ResultPermission.CanDeleteOthersItems = DeleteOthersCheck.Value;
+                ResultPermission.CanEditProperties = EditPropsCheck.Value;
+                ResultPermission.CanAddScenes = AddScenesCheck.Value;
+                ResultPermission.CanDeleteScenes = DeleteScenesCheck.Value;
+                ResultPermission.CanShareFiles = ShareFilesCheck.Value;
+                ResultPermission.CanShareVideos = ShareVideosCheck.Value;
+                ResultPermission.CanShareImages = ShareImagesCheck.Value;
+                ResultPermission.CanShareAudio = ShareAudioCheck.Value;
+                ResultPermission.CanSyncSeekPosition = SyncSeekCheck.Value;
             }
 
             DialogResult = true;

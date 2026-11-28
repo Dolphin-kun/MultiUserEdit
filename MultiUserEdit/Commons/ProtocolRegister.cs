@@ -40,15 +40,12 @@ namespace MultiUserEdit.Commons
 
                 using var commandKey = key.CreateSubKey(@"shell\open\command");
 
-                var psCommand = $"powershell.exe -WindowStyle Hidden -Command \"[System.IO.File]::WriteAllText([System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'deeplink.txt'), '%1'); Start-Process '{processPath}'\"";
-                commandKey?.SetValue("", psCommand);
+                commandKey?.SetValue("", $"\"{processPath}\" \"%1\"");
 
-                Debug.WriteLine($"[MultiUserEdit] Protocol {UriScheme}:// registered to {processPath}");
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] Protocol registration failed: {ex.Message}");
                 return false;
             }
         }
@@ -58,12 +55,10 @@ namespace MultiUserEdit.Commons
             try
             {
                 Registry.CurrentUser.DeleteSubKeyTree(@$"Software\Classes\{UriScheme}", false);
-                Debug.WriteLine($"[MultiUserEdit] Protocol {UriScheme}:// unregistered");
                 return true;
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] Protocol unregistration failed: {ex.Message}");
                 return false;
             }
         }

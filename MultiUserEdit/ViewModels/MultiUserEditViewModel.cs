@@ -74,6 +74,10 @@ namespace MultiUserEdit.ViewModels
 
         public ObservableCollection<string> ReceivedMessages => CurrentSession?.ReceivedMessages ?? [];
         public ObservableCollection<Participant> Participants => CurrentSession?.Participants ?? [];
+        public ObservableCollection<ScriptEntry> Scripts => CurrentSession?.Scripts ?? [];
+        public ICommand? AddScriptsToTimelineCommand => CurrentSession?.AddScriptsToTimelineCommand;
+        public System.Collections.ObjectModel.ObservableCollection<YukkuriMovieMaker.Project.Character> ScriptCharacters => CurrentSession?.ScriptCharacters ?? [];
+        public ICommand? DeleteScriptCommand => CurrentSession?.DeleteScriptCommand;
         public ObservableCollection<TransferItemInfo> ActiveTransfers => CurrentSession?.ActiveTransfers ?? [];
 
         public ICommand? CreateRoomCommand => CurrentSession?.CreateRoomCommand;
@@ -84,6 +88,8 @@ namespace MultiUserEdit.ViewModels
         public ICommand? RegisterProtocolCommand => CurrentSession?.RegisterProtocolCommand;
         public ICommand? UnregisterProtocolCommand => CurrentSession?.UnregisterProtocolCommand;
         public ICommand? DisconnectCommand => CurrentSession?.DisconnectCommand;
+        public ICommand? DeleteKeptRoomCommand => CurrentSession?.DeleteKeptRoomCommand;
+        public bool IsKeptRoomOwner => CurrentSession?.IsKeptRoomOwner ?? false;
         public ICommand? SyncNowCommand => CurrentSession?.SyncNowCommand;
         public ICommand? KickUserCommand => CurrentSession?.KickUserCommand;
 
@@ -158,20 +164,16 @@ namespace MultiUserEdit.ViewModels
 
         public bool IsConnected => CurrentSession?.IsConnected ?? false;
 
-        public static string SmallRoomLabel => string.Format(Texts.SmallRoomLabel, Networking.SessionClient.SmallRoomLimit);
-
-        public static string LargeRoomLabel => string.Format(Texts.LargeRoomLabel, Networking.SessionClient.LargeRoomLimit);
-
-        public bool IsLargeRoomSelected
+        public bool IsNormalRoomSelected
         {
-            get => CurrentSession?.IsLargeRoomSelected ?? false;
-            set => CurrentSession?.IsLargeRoomSelected = value;
+            get => CurrentSession?.IsNormalRoomSelected ?? true;
+            set => CurrentSession?.IsNormalRoomSelected = value;
         }
 
-        public bool IsSmallRoomSelected
+        public bool IsKeptRoomSelected
         {
-            get => CurrentSession?.IsSmallRoomSelected ?? true;
-            set => CurrentSession?.IsSmallRoomSelected = value;
+            get => CurrentSession?.IsKeptRoomSelected ?? false;
+            set => CurrentSession?.IsKeptRoomSelected = value;
         }
 
         public bool HasDivergenceWarning => CurrentSession?.HasDivergenceWarning ?? false;
@@ -184,11 +186,6 @@ namespace MultiUserEdit.ViewModels
             DismissDivergenceWarningCommand = new ActionCommand(
                 _ => true,
                 _ => CurrentSession?.DismissDivergenceWarning());
-        }
-
-        public void SetTimelineViewReference(YukkuriMovieMaker.Views.TimelineView timelineView)
-        {
-            CurrentSession?.SetTimelineViewReference(timelineView);
         }
 
         public void SetTimelineToolInfo(TimelineToolInfo info)
@@ -263,31 +260,6 @@ namespace MultiUserEdit.ViewModels
         internal void HandleSceneRemoved(SceneRemovedEvent evt)
         {
             CurrentSession?.HandleSceneRemoved(evt);
-        }
-
-        public static string ExtractRoomId(string input)
-        {
-            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
-            input = input.Trim();
-
-            if (Uri.TryCreate(input, UriKind.Absolute, out var uri))
-            {
-                var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-                var id = query["roomId"] ?? query["id"];
-                if (!string.IsNullOrEmpty(id)) return id;
-            }
-
-            if (input.Contains("roomId="))
-            {
-                var parts = input.Split("roomId=");
-                if (parts.Length > 1)
-                {
-                    var id = parts[1].Split('&')[0];
-                    return id;
-                }
-            }
-
-            return input;
         }
 
         internal void HandleSyncScenesBegin(SyncScenesBeginEvent evt)
@@ -365,15 +337,6 @@ namespace MultiUserEdit.ViewModels
             CurrentSession?.HandleMissingResource(evt);
         }
 
-        internal void HandleRoomMigration(Commons.Events.RoomMigrationEvent evt)
-        {
-            CurrentSession?.HandleRoomMigration(evt);
-        }
-
-        internal void HandleRoomMigrationAck(Commons.Events.RoomMigrationAckEvent evt)
-        {
-            CurrentSession?.HandleRoomMigrationAck(evt);
-        }
 
         internal void SyncFrom(Guid sourceUserId)
         {
@@ -381,6 +344,8 @@ namespace MultiUserEdit.ViewModels
         }
 
         internal bool IsReceivingFiles() => CurrentSession?.IsReceivingFiles() ?? false;
+
+        internal void RequestMissingFiles(IReadOnlyList<string> fileNames) => CurrentSession?.RequestMissingFiles(fileNames);
 
         internal string GetUserName(Guid userId) =>
             Participants.FirstOrDefault(p => p.UserId == userId)?.UserName ?? string.Empty;

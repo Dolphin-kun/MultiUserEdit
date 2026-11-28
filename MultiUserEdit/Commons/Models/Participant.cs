@@ -26,7 +26,10 @@ namespace MultiUserEdit.Commons.Models
         private UserRole role;
         public UserRole Role { get => role; set => Set(ref role, value, nameof(Role), nameof(RoleText)); }
 
-        public string RoleText => Role == UserRole.Host ? Texts.Host : Texts.Guest;
+        private bool isWeb;
+        public bool IsWeb { get => isWeb; set => Set(ref isWeb, value, nameof(IsWeb), nameof(RoleText)); }
+
+        public string RoleText => Role == UserRole.Host ? Texts.Host : IsWeb ? Texts.WebGuest : Texts.Guest;
 
         private DateTime lastActivity;
         public DateTime LastActivity { get => lastActivity; set => Set(ref lastActivity, value); }
@@ -38,12 +41,22 @@ namespace MultiUserEdit.Commons.Models
             set => Set(ref status, value, nameof(Status), nameof(StatusBrush), nameof(StatusText));
         }
 
+        private static readonly Brush ActiveBrush = Frozen(Color.FromRgb(76, 175, 80));
+        private static readonly Brush AwayBrush = Frozen(Color.FromRgb(255, 152, 0));
+        private static readonly Brush OfflineBrush = Frozen(Color.FromRgb(158, 158, 158));
+
+        private static Brush Frozen(Color color)
+        {
+            var brush = new SolidColorBrush(color);
+            brush.Freeze();
+            return brush;
+        }
+
         public Brush StatusBrush => Status switch
         {
-            UserStatus.Active => new SolidColorBrush(Color.FromRgb(76, 175, 80)),
-            UserStatus.Away => new SolidColorBrush(Color.FromRgb(255, 152, 0)),
-            UserStatus.Disconnected => new SolidColorBrush(Color.FromRgb(158, 158, 158)),
-            _ => new SolidColorBrush(Color.FromRgb(158, 158, 158))
+            UserStatus.Active => ActiveBrush,
+            UserStatus.Away => AwayBrush,
+            _ => OfflineBrush
         };
 
         public string StatusText => Status switch

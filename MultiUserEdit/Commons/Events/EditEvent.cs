@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace MultiUserEdit.Commons.Events
 {
@@ -29,15 +29,35 @@ namespace MultiUserEdit.Commons.Events
     [JsonDerivedType(typeof(StateDigestRequestEvent), 34)]
     [JsonDerivedType(typeof(StateDigestEvent), 35)]
     [JsonDerivedType(typeof(MissingResourceEvent), 36)]
-    [JsonDerivedType(typeof(RoomMigrationEvent), 37)]
-    [JsonDerivedType(typeof(RoomMigrationAckEvent), 38)]
     [JsonDerivedType(typeof(FileTransferCancelEvent), 39)]
     [JsonDerivedType(typeof(FileChunkAckEvent), 40)]
     [JsonDerivedType(typeof(SyncScenesChunkEvent), 41)]
     [JsonDerivedType(typeof(SyncScenesBeginEvent), 42)]
+    [JsonDerivedType(typeof(FileWantedEvent), 43)]
+    [JsonDerivedType(typeof(FileOfferEvent), 44)]
+    [JsonDerivedType(typeof(FilePullEvent), 45)]
+    [JsonDerivedType(typeof(PreviewRequestEvent), 46)]
+    [JsonDerivedType(typeof(PreviewFrameEvent), 47)]
+    [JsonDerivedType(typeof(ItemSchemaRequestEvent), 48)]
+    [JsonDerivedType(typeof(ItemSchemaEvent), 49)]
+    [JsonDerivedType(typeof(CreateItemRequestEvent), 50)]
+    [JsonDerivedType(typeof(ItemVisualsRequestEvent), 51)]
+    [JsonDerivedType(typeof(ItemVisualsEvent), 52)]
+    [JsonDerivedType(typeof(CreateItemResultEvent), 53)]
+    [JsonDerivedType(typeof(MediaRequestEvent), 54)]
+    [JsonDerivedType(typeof(MediaResultEvent), 55)]
+    [JsonDerivedType(typeof(CatalogRequestEvent), 56)]
+    [JsonDerivedType(typeof(CatalogEvent), 57)]
+    [JsonDerivedType(typeof(RtcSignalEvent), 58)]
+    [JsonDerivedType(typeof(RenderStatusEvent), 59)]
+    [JsonDerivedType(typeof(ScriptEvent), 60)]
+    [JsonDerivedType(typeof(ScriptListEvent), 61)]
+    [JsonDerivedType(typeof(CatchUpRequestEvent), 62)]
+    [JsonDerivedType(typeof(CatchUpEvent), 63)]
     public abstract record EditEvent
     {
         public DateTime DateTime { get; init; }
         public Guid ExecutorId { get; init; }
+        public long Stamp { get; init; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿Key,Parameter,ja-jp,en-us,zh-cn,zh-tw,ko-kr,es-es,ar-sa,id-id,
 PluginName,,共同編集,Collaborative Editing,协同编辑,協同編輯,공동 편집,Edición colaborativa,التحرير التعاوني,Pengeditan Bersama,
 Host,,ホスト,Host,房主,房主,호스트,Anfitrión,المضيف,Host,
+WebGuest,,ゲスト（Web）,Guest (Web),访客（Web）,訪客（Web）,게스트(Web),Invitado (Web),ضيف (ويب),Tamu (Web),
 Guest,,ゲスト,Guest,访客,訪客,게스트,Invitado,ضيف,Tamu,
 Unknown,,不明,Unknown,未知,未知,알 수 없음,Desconocido,غير معروف,Tidak diketahui,
 DefaultUserName,,ユーザー,User,用户,使用者,사용자,Usuario,مستخدم,Pengguna,
@@ -48,10 +49,13 @@ NewVersionPublishedFormat,0: version,新しいバージョン {0} が公開さ�
 LatestOnlyPleaseUpdate,,共同編集は最新のプラグイン同士でのみ利用できます。更新してください。,Collaborative editing works only between the latest plugin versions. Please update.,协同编辑只能在最新版本的插件之间使用。请更新。,協同編輯只能在最新版本的外掛之間使用。請更新。,공동 편집은 최신 플러그인끼리만 사용할 수 있습니다. 업데이트해 주세요.,La edición colaborativa solo funciona entre las versiones más recientes del complemento. Actualízalo.,يعمل التحرير التعاوني فقط بين أحدث إصدارات الإضافة. يُرجى التحديث.,Pengeditan bersama hanya dapat digunakan antar plugin versi terbaru. Silakan perbarui.,
 OpenUpdatePage,,更新ページを開く,Open update page,打开更新页面,開啟更新頁面,업데이트 페이지 열기,Abrir página de actualización,فتح صفحة التحديث,Buka halaman pembaruan,
 Room,,部屋,Room,房间,房間,방,Sala,الغرفة,Ruang,
-SmallRoomLabel,0: max people,小さい部屋（最大{0}人）,Small room (up to {0}),小房间（最多 {0} 人）,小房間（最多 {0} 人）,작은 방(최대 {0}명),Sala pequeña (hasta {0}),غرفة صغيرة (حتى {0}),Ruang kecil (maks. {0}),
-LargeRoomLabel,0: max people,大きい部屋（最大{0}人）,Large room (up to {0}),大房间（最多 {0} 人）,大房間（最多 {0} 人）,큰 방(최대 {0}명),Sala grande (hasta {0}),غرفة كبيرة (حتى {0}),Ruang besar (maks. {0}),
-SmallRoomTip,,少人数向け。すぐに繋がります。,For a few people. Connects right away.,适合少数人。可立即连接。,適合少數人。可立即連線。,소수 인원용. 바로 연결됩니다.,Para pocas personas. Se conecta al instante.,لعدد قليل من الأشخاص. يتصل فورًا.,Untuk sedikit orang. Langsung terhubung.,
-LargeRoomTip,,多人数向け。専用の中継サーバーを使います。人数が少ない状態が続くと自動で小さい部屋へ移ります。,"For many people. Uses a dedicated relay server. If only a few people stay for a while, the room moves to a small room automatically.",适合多人。使用专用中继服务器。人数持续较少时会自动转移到小房间。,適合多人。使用專用中繼伺服器。人數持續較少時會自動轉移到小房間。,다수 인원용. 전용 중계 서버를 사용합니다. 인원이 적은 상태가 계속되면 자동으로 작은 방으로 이동합니다.,"Para muchas personas. Usa un servidor de retransmisión dedicado. Si hay pocas personas durante un tiempo, pasa automáticamente a una sala pequeña.",لعدد كبير من الأشخاص. يستخدم خادم ترحيل مخصصًا. إذا استمر عدد قليل من الأشخاص لفترة، تنتقل تلقائيًا إلى غرفة صغيرة.,"Untuk banyak orang. Menggunakan server relai khusus. Jika jumlah orang tetap sedikit untuk beberapa waktu, otomatis pindah ke ruang kecil.",
+NormalRoomLabel,,通常の部屋,Regular room,普通房间,一般房間,일반 방,Sala normal,غرفة عادية,Ruang biasa,
+NormalRoomTip,,ホストが部屋を閉じるまで使える部屋です。最大100人まで参加できます。,A room you can use until the host closes it. Up to 100 people can join.,可以使用到房主关闭房间为止。最多可加入 100 人。,可以使用到房主關閉房間為止。最多可加入 100 人。,호스트가 방을 닫을 때까지 사용할 수 있는 방입니다. 최대 100명까지 참가할 수 있습니다.,Una sala que puedes usar hasta que el anfitrión la cierre. Pueden unirse hasta 100 personas.,غرفة يمكنك استخدامها حتى يغلقها المضيف. يمكن أن ينضم إليها حتى 100 شخص.,Ruang yang bisa dipakai sampai host menutupnya. Maksimal 100 orang dapat bergabung.,
+KeptRoomLabel,,常設ルーム,Persistent room,常驻房间,常駐房間,상설 방,Sala permanente,غرفة دائمة,Ruang permanen,
+KeptRoomTip,,ホストがいなくても続けられる部屋です。内容はサーバーに保存され、最後に使われてから30日で削除されます。アイテムが1つもないまま全員が抜けた場合は、すぐに削除されます。1人3部屋まで作れます。,"A room that keeps going even when the host is away. Its contents are saved on the server and deleted 30 days after it was last used. If everyone leaves while it has no items, it is deleted right away. Each person can have up to 3.",即使房主不在也能继续的房间。内容保存在服务器上，最后一次使用 30 天后删除。如果在没有任何项目的情况下所有人都离开，房间会立即删除。每人最多可创建 3 个。,即使房主不在也能繼續的房間。內容儲存在伺服器上，最後一次使用 30 天後刪除。如果在沒有任何項目的情況下所有人都離開，房間會立即刪除。每人最多可建立 3 個。,"호스트가 없어도 계속할 수 있는 방입니다. 내용은 서버에 저장되며, 마지막 사용 후 30일이 지나면 삭제됩니다. 아이템이 하나도 없는 상태에서 모두 나가면 바로 삭제됩니다. 1인당 3개까지 만들 수 있습니다.","Una sala que sigue funcionando aunque el anfitrión no esté. Su contenido se guarda en el servidor y se elimina 30 días después del último uso. Si todos salen sin que haya ningún elemento, se elimina de inmediato. Cada persona puede tener hasta 3.",غرفة تستمر حتى في غياب المضيف. يُحفظ محتواها على الخادم ويُحذف بعد 30 يومًا من آخر استخدام. إذا غادر الجميع دون وجود أي عنصر، تُحذف فورًا. يمكن لكل شخص إنشاء 3 غرف كحد أقصى.,"Ruang yang tetap berjalan meski host tidak ada. Isinya disimpan di server dan dihapus 30 hari setelah terakhir digunakan. Jika semua orang keluar saat tidak ada item sama sekali, ruang langsung dihapus. Setiap orang dapat memiliki hingga 3.",
+DeleteKeptRoom,,常設ルームを削除,Delete persistent room,删除常驻房间,刪除常駐房間,상설 방 삭제,Eliminar sala permanente,حذف الغرفة الدائمة,Hapus ruang permanen,
+DeleteKeptRoomConfirm,,この常設ルームを削除します。サーバーに保存された内容は消え、参加中の人も退出になります。よろしいですか？,This persistent room will be deleted. Its contents saved on the server will be removed and everyone in it will leave. Continue?,将删除此常驻房间。保存在服务器上的内容将被清除，房间内的人也会退出。确定吗？,將刪除此常駐房間。儲存在伺服器上的內容將被清除，房間內的人也會退出。確定嗎？,이 상설 방을 삭제합니다. 서버에 저장된 내용이 지워지고 참가 중인 사람도 퇴장합니다. 계속하시겠습니까?,Se eliminará esta sala permanente. Se borrará su contenido guardado en el servidor y todos los que estén dentro saldrán. ¿Continuar?,سيتم حذف هذه الغرفة الدائمة. سيُحذف محتواها المحفوظ على الخادم وسيغادرها جميع الموجودين فيها. هل تريد المتابعة؟,Ruang permanen ini akan dihapus. Isinya yang tersimpan di server akan hilang dan semua orang di dalamnya akan keluar. Lanjutkan?,
+RoomKeptLimit,,常設ルームは1人3部屋までです。使わなくなった常設ルームに入って「常設ルームを削除」を押してから作成してください。最後に使われてから30日たった常設ルームは自動で削除されます。,"You can have up to 3 persistent rooms. Join one you no longer use and press ""Delete persistent room"" before creating a new one. Persistent rooms are deleted automatically 30 days after they were last used.",每人最多可拥有 3 个常驻房间。请进入不再使用的常驻房间并点击“删除常驻房间”后再创建。最后一次使用 30 天后的常驻房间会自动删除。,每人最多可擁有 3 個常駐房間。請進入不再使用的常駐房間並點擊「刪除常駐房間」後再建立。最後一次使用 30 天後的常駐房間會自動刪除。,"상설 방은 1인당 3개까지입니다. 더 이상 사용하지 않는 상설 방에 들어가 ""상설 방 삭제""를 누른 뒤 만드세요. 마지막 사용 후 30일이 지난 상설 방은 자동으로 삭제됩니다.","Puedes tener hasta 3 salas permanentes. Entra en una que ya no uses y pulsa ""Eliminar sala permanente"" antes de crear otra. Las salas permanentes se eliminan automáticamente 30 días después del último uso.","يمكنك امتلاك 3 غرف دائمة كحد أقصى. ادخل إلى غرفة لم تعد تستخدمها واضغط ""حذف الغرفة الدائمة"" قبل إنشاء غرفة جديدة. تُحذف الغرف الدائمة تلقائيًا بعد 30 يومًا من آخر استخدام.","Anda dapat memiliki hingga 3 ruang permanen. Masuk ke ruang yang tidak lagi dipakai dan tekan ""Hapus ruang permanen"" sebelum membuat yang baru. Ruang permanen dihapus otomatis 30 hari setelah terakhir digunakan.",
 CreateRoom,,部屋を作成,Create room,创建房间,建立房間,방 만들기,Crear sala,إنشاء غرفة,Buat ruang,
 JoinExistingRoom,,既存の部屋に参加,Join an existing room,加入现有房间,加入現有房間,기존 방에 참가,Unirse a una sala existente,الانضمام إلى غرفة موجودة,Gabung ke ruang yang ada,
 JoinFromClipboard,,クリップボードのリンクから参加,Join from the link in the clipboard,通过剪贴板中的链接加入,透過剪貼簿中的連結加入,클립보드의 링크로 참가,Unirse con el enlace del portapapeles,الانضمام عبر الرابط في الحافظة,Gabung dari tautan di papan klip,
@@ -148,7 +152,7 @@ ShowOperatorNameHint,,オフにすると、ほかの参加者が操作中のア�
 FileSharingCache,,ファイル共有・キャッシュ,File sharing and cache,文件共享・缓存,檔案共享・快取,파일 공유・캐시,Uso compartido de archivos y caché,مشاركة الملفات وذاكرة التخزين المؤقت,Berbagi file dan cache,
 ReceivedFileStorage,,受信ファイルの保存形式,How received files are kept,接收文件的保存方式,接收檔案的保存方式,수신 파일 저장 방식,Cómo se guardan los archivos recibidos,طريقة حفظ الملفات المستلمة,Cara menyimpan file yang diterima,
 TemporaryStorage,,セッション中一時保存 (終了時に自動消去),Keep only during the session (deleted on exit),会话期间临时保存（退出时自动清除）,工作階段期間暫存（結束時自動清除）,세션 중 임시 저장(종료 시 자동 삭제),Guardar solo durante la sesión (se borra al salir),حفظ مؤقت أثناء الجلسة (يُحذف عند الخروج),Simpan sementara selama sesi (dihapus saat keluar),
-TemporaryStorageTip,,YMM4終了時にキャッシュ素材を自動で全削除します,Deletes all cached assets when YMM4 exits,YMM4 退出时自动删除所有缓存素材,YMM4 結束時自動刪除所有快取素材,YMM4 종료 시 캐시 소재를 모두 자동 삭제합니다,Borra todos los recursos en caché al cerrar YMM4,يحذف جميع المواد المخزنة مؤقتًا عند إغلاق YMM4,Menghapus semua materi cache saat YMM4 ditutup,
+TemporaryStorageTip,,YMM4終了時にキャッシュ素材を自動で全削除します。常設ルームで受け取った素材は、あとで続きを編集できるように残します,Deletes all cached assets when YMM4 exits. Assets received in a persistent room are kept so you can continue later,YMM4 退出时自动删除所有缓存素材。在常驻房间中收到的素材会保留，以便之后继续编辑,YMM4 結束時自動刪除所有快取素材。在常駐房間中收到的素材會保留，以便之後繼續編輯,YMM4 종료 시 캐시 소재를 모두 자동 삭제합니다. 상설 방에서 받은 소재는 나중에 이어서 편집할 수 있도록 남겨 둡니다,Borra todos los recursos en caché al cerrar YMM4. Los recibidos en una sala permanente se conservan para que puedas continuar más tarde,يحذف جميع المواد المخزنة مؤقتًا عند إغلاق YMM4. تُحفظ المواد المستلمة في غرفة دائمة لتتمكن من المتابعة لاحقًا,Menghapus semua aset cache saat YMM4 ditutup. Aset yang diterima di ruang permanen tetap disimpan agar bisa dilanjutkan nanti,
 KeepStorage,,ストレージに保持 (次回以降もキャッシュ利用),Keep on disk (reuse the cache next time),保留在存储中（以后继续使用缓存）,保留在儲存空間中（之後繼續使用快取）,저장소에 보관(다음에도 캐시 사용),Conservar en disco (reutilizar la caché la próxima vez),الاحتفاظ على القرص (إعادة استخدام ذاكرة التخزين المؤقت لاحقًا),Simpan di penyimpanan (pakai cache lagi lain kali),
 KeepStorageTip,,一時フォルダに保存して、次回以降もそこから読み込みます,Saves to a temporary folder and loads from there next time,保存到临时文件夹，以后也从那里读取,儲存到暫存資料夾，之後也從那裡讀取,임시 폴더에 저장하고 다음에도 거기서 불러옵니다,Guarda en una carpeta temporal y carga desde allí la próxima vez,يحفظ في مجلد مؤقت ويحمّل منه في المرات القادمة,Menyimpan ke folder sementara dan memuat dari sana lain kali,
 ConfirmLargeReceive,,サイズの大きい素材ファイルを受け取る前に確認する,Ask before receiving large asset files,接收大型素材文件前确认,接收大型素材檔案前確認,큰 소재 파일을 받기 전에 확인,Preguntar antes de recibir archivos de recursos grandes,السؤال قبل استلام ملفات المواد الكبيرة,Tanyakan sebelum menerima file materi besar,
@@ -158,6 +162,85 @@ MBOrMore,,MB 以上,MB or more,MB 以上,MB 以上,MB 이상,MB o más,ميغا�
 SendLimits,,送信の制限,Sending,发送限制,傳送限制,송신 제한,Envío,الإرسال,Pengiriman,
 ConfirmBeforeSend,,素材ファイルを送信する前に確認メッセージを表示する,Ask before sending asset files,发送素材文件前显示确认消息,傳送素材檔案前顯示確認訊息,소재 파일을 보내기 전에 확인 메시지 표시,Preguntar antes de enviar archivos de recursos,السؤال قبل إرسال ملفات المواد,Tanyakan sebelum mengirim file materi,
 ConfirmBeforeSendTip,,他のユーザーに動画・画像・音声等のファイルが自動送信される前に確認ダイアログを表示します,"Shows a confirmation before videos, images, audio and other files are sent to other users automatically",在视频・图片・音频等文件自动发送给其他用户前显示确认对话框,在影片・圖片・音訊等檔案自動傳送給其他使用者前顯示確認對話方塊,동영상・이미지・음성 등의 파일이 다른 사용자에게 자동 송신되기 전에 확인 대화 상자를 표시합니다,"Muestra una confirmación antes de que se envíen automáticamente vídeos, imágenes, audio y otros archivos a otros usuarios",يعرض تأكيدًا قبل إرسال ملفات الفيديو والصور والصوت وغيرها تلقائيًا إلى المستخدمين الآخرين,"Menampilkan konfirmasi sebelum video, gambar, audio, dan file lain dikirim otomatis ke pengguna lain",
+UseDirectTransfer,,大きいファイルは参加者どうしで直接送る（WebRTC）,Send large files directly between participants (WebRTC),大文件在参与者之间直接发送（WebRTC）,大型檔案在參與者之間直接傳送（WebRTC）,큰 파일은 참가자끼리 직접 보내기 (WebRTC),Enviar archivos grandes directamente entre participantes (WebRTC),إرسال الملفات الكبيرة مباشرة بين المشاركين (WebRTC),Kirim file besar langsung antarpeserta (WebRTC),
+UseDirectTransferTip,,4MB以上のファイルを中継サーバーを通さずに直接送信します。直接つながらない場合は中継サーバー経由に切り替わりますが、1GB以上のファイルは中継サーバーでは送れません。直接送信では、相手にあなたのIPアドレスが伝わります。オフにするとすぐに反映され、オンにした場合は次に部屋へ入ったときから有効になります。,"Sends files of 4 MB or more directly instead of through the relay server. If a direct connection is not possible, the relay server is used instead, but files of 1 GB or more cannot be sent through the relay server. Direct sending shares your IP address with the other participant. Turning this off takes effect immediately; turning it on takes effect the next time you join a room.",4MB以上的文件不经过中继服务器而直接发送。无法直接连接时会改用中继服务器，但1GB以上的文件无法通过中继服务器发送。直接发送时，对方会得知你的IP地址。关闭后立即生效，开启后将在下次进入房间时生效。,4MB以上的檔案不經過中繼伺服器而直接傳送。無法直接連線時會改用中繼伺服器，但1GB以上的檔案無法透過中繼伺服器傳送。直接傳送時，對方會得知你的IP位址。關閉後立即生效，開啟後會在下次進入房間時生效。,"4MB 이상의 파일을 중계 서버를 거치지 않고 직접 보냅니다. 직접 연결할 수 없으면 중계 서버를 사용하지만, 1GB 이상의 파일은 중계 서버로 보낼 수 없습니다. 직접 보낼 때는 상대방에게 IP 주소가 전달됩니다. 끄면 바로 적용되고, 켜면 다음에 방에 들어갈 때부터 적용됩니다.","Envía directamente los archivos de 4 MB o más sin pasar por el servidor de retransmisión. Si no es posible conectar directamente, se usa el servidor de retransmisión, pero los archivos de 1 GB o más no se pueden enviar por él. El envío directo comparte tu dirección IP con el otro participante. Desactivarlo tiene efecto de inmediato; activarlo tiene efecto la próxima vez que entres en una sala.",يرسل الملفات التي حجمها 4 ميغابايت أو أكثر مباشرةً دون المرور بخادم الترحيل. إذا تعذّر الاتصال المباشر، يُستخدم خادم الترحيل، لكن لا يمكن إرسال الملفات التي حجمها 1 غيغابايت أو أكثر عبره. يؤدي الإرسال المباشر إلى مشاركة عنوان IP الخاص بك مع المشارك الآخر. يسري الإيقاف فورًا، ويسري التشغيل عند دخولك غرفة في المرة القادمة.,"Mengirim file berukuran 4 MB atau lebih secara langsung tanpa melalui server relay. Jika koneksi langsung tidak memungkinkan, server relay digunakan, tetapi file berukuran 1 GB atau lebih tidak dapat dikirim melalui server relay. Pengiriman langsung membagikan alamat IP Anda kepada peserta lain. Menonaktifkan berlaku seketika; mengaktifkan berlaku saat Anda masuk ke ruang berikutnya.",
+DirectTransferAskTitle,,ファイルの送り方,How to send files,文件发送方式,檔案傳送方式,파일 보내는 방법,Cómo enviar archivos,طريقة إرسال الملفات,Cara mengirim file,
+DirectTransferAskMessage,,"大きいファイル（4MB以上）を参加者どうしで直接送りますか？
+
+はい（おすすめ）：直接送信（WebRTC）
+速く送れて、中継サーバーの負担も減ります。直接送るため、相手にあなたのIPアドレスが伝わります。
+直接つながらない場合は自動で中継サーバー経由になります（1GB以上のファイルを除く）。
+
+いいえ：すべて中継サーバー経由
+IPアドレスは相手に伝わりませんが、大きいファイルは時間がかかります。1GB以上のファイルは送受信できなくなります。
+
+あとから「設定」→「ファイル」で変更できます。","Send large files (4 MB or more) directly between participants?
+
+Yes (recommended): Direct sending (WebRTC)
+Files arrive faster and the relay server is less loaded. Because files are sent directly, the other participant can see your IP address.
+If a direct connection is not possible, the relay server is used automatically (except for files of 1 GB or more).
+
+No: Always use the relay server
+Your IP address is not shared, but large files take longer. Files of 1 GB or more can no longer be sent or received.
+
+You can change this later in Settings > Files.","是否在参与者之间直接发送大文件（4MB以上）？
+
+是（推荐）：直接发送（WebRTC）
+发送更快，也能减轻中继服务器的负担。由于是直接发送，对方会得知你的IP地址。
+无法直接连接时会自动改用中继服务器（1GB以上的文件除外）。
+
+否：全部经由中继服务器
+对方不会得知你的IP地址，但大文件需要更长时间。将无法收发1GB以上的文件。
+
+之后可以在“设置”→“文件”中更改。","是否在參與者之間直接傳送大型檔案（4MB以上）？
+
+是（建議）：直接傳送（WebRTC）
+傳送更快，也能減輕中繼伺服器的負擔。由於是直接傳送，對方會得知你的IP位址。
+無法直接連線時會自動改用中繼伺服器（1GB以上的檔案除外）。
+
+否：全部經由中繼伺服器
+對方不會得知你的IP位址，但大型檔案需要更長時間。將無法收發1GB以上的檔案。
+
+之後可以在「設定」→「檔案」中變更。","큰 파일(4MB 이상)을 참가자끼리 직접 보낼까요?
+
+예(권장): 직접 보내기(WebRTC)
+더 빠르게 보낼 수 있고 중계 서버의 부담도 줄어듭니다. 직접 보내기 때문에 상대방에게 IP 주소가 전달됩니다.
+직접 연결할 수 없으면 자동으로 중계 서버를 사용합니다(1GB 이상의 파일 제외).
+
+아니요: 모두 중계 서버를 통해 보내기
+IP 주소는 전달되지 않지만 큰 파일은 시간이 더 걸립니다. 1GB 이상의 파일은 주고받을 수 없게 됩니다.
+
+나중에 [설정] → [파일]에서 바꿀 수 있습니다.","¿Enviar los archivos grandes (4 MB o más) directamente entre participantes?
+
+Sí (recomendado): Envío directo (WebRTC)
+Los archivos llegan más rápido y se reduce la carga del servidor de retransmisión. Como se envían directamente, el otro participante puede ver tu dirección IP.
+Si no es posible conectar directamente, se usa el servidor de retransmisión automáticamente (excepto para archivos de 1 GB o más).
+
+No: Usar siempre el servidor de retransmisión
+Tu dirección IP no se comparte, pero los archivos grandes tardan más. Ya no podrás enviar ni recibir archivos de 1 GB o más.
+
+Puedes cambiarlo más tarde en Ajustes > Archivos.","هل تريد إرسال الملفات الكبيرة (4 ميغابايت أو أكثر) مباشرةً بين المشاركين؟
+
+نعم (موصى به): الإرسال المباشر (WebRTC)
+تصل الملفات أسرع ويقل الحمل على خادم الترحيل. لأن الملفات تُرسل مباشرةً، يمكن للمشارك الآخر رؤية عنوان IP الخاص بك.
+إذا تعذّر الاتصال المباشر، يُستخدم خادم الترحيل تلقائيًا (باستثناء الملفات التي حجمها 1 غيغابايت أو أكثر).
+
+لا: استخدام خادم الترحيل دائمًا
+لا تتم مشاركة عنوان IP الخاص بك، لكن الملفات الكبيرة تستغرق وقتًا أطول. لن يمكنك إرسال أو استقبال الملفات التي حجمها 1 غيغابايت أو أكثر.
+
+يمكنك تغيير ذلك لاحقًا من الإعدادات > الملفات.","Kirim file besar (4 MB atau lebih) langsung antarpeserta?
+
+Ya (disarankan): Pengiriman langsung (WebRTC)
+File sampai lebih cepat dan beban server relay berkurang. Karena dikirim langsung, peserta lain dapat melihat alamat IP Anda.
+Jika koneksi langsung tidak memungkinkan, server relay digunakan secara otomatis (kecuali file berukuran 1 GB atau lebih).
+
+Tidak: Selalu gunakan server relay
+Alamat IP Anda tidak dibagikan, tetapi file besar membutuhkan waktu lebih lama. File berukuran 1 GB atau lebih tidak dapat dikirim atau diterima.
+
+Anda dapat mengubahnya nanti di Pengaturan > File.",
+LargeFileNoDirectPeer,,1GB以上のファイルは直接送信でのみ送ります。次の素材は、直接送信を使えない参加者には送れませんでした（相手が直接送信をオフにしているか、古いバージョンを使っている可能性があります）。,Files of 1 GB or more are sent only by direct sending. The following asset could not be sent to participants who cannot use direct sending (they may have turned it off or be using an older version).,1GB以上的文件仅通过直接发送传送。以下素材未能发送给无法使用直接发送的参与者（对方可能关闭了直接发送，或正在使用旧版本）。,1GB以上的檔案僅透過直接傳送。以下素材未能傳送給無法使用直接傳送的參與者（對方可能關閉了直接傳送，或正在使用舊版本）。,1GB 이상의 파일은 직접 보내기로만 보냅니다. 다음 소재는 직접 보내기를 사용할 수 없는 참가자에게 보내지 못했습니다(상대방이 직접 보내기를 껐거나 이전 버전을 사용 중일 수 있습니다).,Los archivos de 1 GB o más solo se envían mediante envío directo. El siguiente recurso no se pudo enviar a los participantes que no pueden usar el envío directo (puede que lo tengan desactivado o usen una versión anterior).,تُرسل الملفات التي حجمها 1 غيغابايت أو أكثر بالإرسال المباشر فقط. تعذّر إرسال المورد التالي إلى المشاركين الذين لا يمكنهم استخدام الإرسال المباشر (ربما أوقفوه أو يستخدمون إصدارًا أقدم).,File berukuran 1 GB atau lebih hanya dikirim melalui pengiriman langsung. Aset berikut tidak dapat dikirim ke peserta yang tidak dapat menggunakan pengiriman langsung (mungkin mereka menonaktifkannya atau memakai versi lama).,
+LargeFileDirectDisabled,,1GB以上のファイルは直接送信でのみ送れます。次の素材を送るには、「設定」→「ファイル」で直接送信をオンにして、部屋に入り直してください。,"Files of 1 GB or more can only be sent by direct sending. To send the following asset, turn on direct sending in Settings > Files and join the room again.",1GB以上的文件只能通过直接发送传送。要发送以下素材，请在“设置”→“文件”中开启直接发送，然后重新进入房间。,1GB以上的檔案只能透過直接傳送。要傳送以下素材，請在「設定」→「檔案」中開啟直接傳送，然後重新進入房間。,1GB 이상의 파일은 직접 보내기로만 보낼 수 있습니다. 다음 소재를 보내려면 [설정] → [파일]에서 직접 보내기를 켜고 방에 다시 들어가세요.,"Los archivos de 1 GB o más solo se pueden enviar mediante envío directo. Para enviar el siguiente recurso, activa el envío directo en Ajustes > Archivos y vuelve a entrar en la sala.",لا يمكن إرسال الملفات التي حجمها 1 غيغابايت أو أكثر إلا بالإرسال المباشر. لإرسال المورد التالي، شغّل الإرسال المباشر من الإعدادات > الملفات ثم ادخل الغرفة مرة أخرى.,"File berukuran 1 GB atau lebih hanya dapat dikirim melalui pengiriman langsung. Untuk mengirim aset berikut, aktifkan pengiriman langsung di Pengaturan > File lalu masuk ke ruang lagi.",
+LargeFileDirectFailed,,1GB以上のファイルのため直接送信を試みましたが、相手とつながらなかったか途中で切れたため、送信できませんでした。,"Direct sending was tried because the file is 1 GB or more, but it could not be sent because the connection could not be made or was lost.",由于文件为1GB以上，已尝试直接发送，但因无法与对方连接或连接中断，未能发送。,由於檔案為1GB以上，已嘗試直接傳送，但因無法與對方連線或連線中斷，未能傳送。,"1GB 이상의 파일이라 직접 보내기를 시도했지만, 상대방과 연결되지 않았거나 도중에 끊겨서 보내지 못했습니다.","Se intentó el envío directo porque el archivo es de 1 GB o más, pero no se pudo enviar porque no se logró la conexión o se perdió.",تمت محاولة الإرسال المباشر لأن حجم الملف 1 غيغابايت أو أكثر، لكن تعذّر الإرسال لأنه لم يمكن الاتصال أو انقطع الاتصال.,"Pengiriman langsung dicoba karena ukuran file 1 GB atau lebih, tetapi file tidak dapat dikirim karena koneksi gagal dibuat atau terputus.",
 ShareableExtensions,,共有可能な拡張子,Shareable extensions,可共享的扩展名,可共享的副檔名,공유 가능한 확장자,Extensiones compartibles,الامتدادات القابلة للمشاركة,Ekstensi yang dapat dibagikan,
 SelectAll,,すべて選択,Select all,全选,全選,모두 선택,Seleccionar todo,تحديد الكل,Pilih semua,
 DeselectAll,,すべて解除,Deselect all,全部取消,全部取消,모두 해제,Deseleccionar todo,إلغاء تحديد الكل,Batalkan semua,
@@ -303,80 +386,39 @@ Open the update page?","{0}
 
 Buka halaman pembaruan?",
 UpdateRequiredTitle,,プラグインの更新が必要です,Plugin update required,需要更新插件,需要更新外掛,플러그인 업데이트가 필요합니다,Hay que actualizar el complemento,يلزم تحديث الإضافة,Plugin perlu diperbarui,
-RelayConnectFailed,0: cause,"大きい部屋用の中継サーバーに接続できませんでした。
+RelayConnectFailed,0: cause,"中継サーバーに接続できませんでした。
 
 原因: {0}
 
-小さい部屋は別のサーバーを使うため、こちらだけつながらない場合はお使いの回線やセキュリティソフトが原因のことが多いです。
-この画面をホストに伝えてください。","Could not connect to the relay server for large rooms.
+お使いの回線やセキュリティソフトが原因のことが多いです。この画面をホストに伝えてください。","Could not connect to the relay server.
 
 Cause: {0}
 
-Small rooms use a different server, so if only this one fails, your network or security software is usually the cause.
-Please tell the host what this window says.","无法连接到大房间用的中继服务器。
+Your network or security software is usually the cause. Please tell the host what this window says.","无法连接到中继服务器。
 
 原因：{0}
 
-小房间使用其他服务器，如果只有这里无法连接，通常是你的网络或安全软件导致的。
-请将此画面告知房主。","無法連線到大房間用的中繼伺服器。
+通常是你的网络或安全软件导致的。请将此画面告知房主。","無法連線到中繼伺服器。
 
 原因：{0}
 
-小房間使用其他伺服器，如果只有這裡無法連線，通常是你的網路或安全軟體導致的。
-請將此畫面告知房主。","큰 방용 중계 서버에 연결하지 못했습니다.
+通常是你的網路或安全軟體導致的。請將此畫面告知房主。","중계 서버에 연결하지 못했습니다.
 
 원인: {0}
 
-작은 방은 다른 서버를 사용하므로, 이쪽만 연결되지 않는다면 사용 중인 회선이나 보안 소프트웨어가 원인인 경우가 많습니다.
-이 화면을 호스트에게 알려 주세요.","No se pudo conectar al servidor de retransmisión de salas grandes.
+사용 중인 회선이나 보안 소프트웨어가 원인인 경우가 많습니다. 이 화면을 호스트에게 알려 주세요.","No se pudo conectar al servidor de retransmisión.
 
 Causa: {0}
 
-Las salas pequeñas usan otro servidor, así que si solo falla este, la causa suele ser tu red o tu software de seguridad.
-Comunica al anfitrión lo que dice esta ventana.","تعذّر الاتصال بخادم الترحيل الخاص بالغرف الكبيرة.
+La causa suele ser tu red o tu software de seguridad. Comunica al anfitrión lo que dice esta ventana.","تعذّر الاتصال بخادم الترحيل.
 
 السبب: {0}
 
-تستخدم الغرف الصغيرة خادمًا مختلفًا، لذا إذا فشل هذا وحده فالسبب غالبًا شبكتك أو برنامج الحماية.
-يُرجى إبلاغ المضيف بما تعرضه هذه النافذة.","Tidak dapat terhubung ke server relai untuk ruang besar.
+غالبًا ما يكون السبب شبكتك أو برنامج الحماية. يُرجى إبلاغ المضيف بما تعرضه هذه النافذة.","Tidak dapat terhubung ke server relai.
 
 Penyebab: {0}
 
-Ruang kecil memakai server lain, jadi jika hanya yang ini gagal, biasanya penyebabnya jaringan atau perangkat lunak keamanan Anda.
-Sampaikan isi jendela ini kepada host.",
-RelayConnectFailedCreate,0: cause,"大きい部屋用の中継サーバーに接続できませんでした。
-
-原因: {0}
-
-このまま作成しますか？（参加者も接続できない可能性があります）","Could not connect to the relay server for large rooms.
-
-Cause: {0}
-
-Create the room anyway? (Participants may not be able to connect either)","无法连接到大房间用的中继服务器。
-
-原因：{0}
-
-仍要创建吗？（参与者可能也无法连接）","無法連線到大房間用的中繼伺服器。
-
-原因：{0}
-
-仍要建立嗎？（參與者可能也無法連線）","큰 방용 중계 서버에 연결하지 못했습니다.
-
-원인: {0}
-
-그래도 만드시겠습니까? (참가자도 연결하지 못할 수 있습니다)","No se pudo conectar al servidor de retransmisión de salas grandes.
-
-Causa: {0}
-
-¿Crear la sala de todos modos? (Puede que los participantes tampoco puedan conectarse)","تعذّر الاتصال بخادم الترحيل الخاص بالغرف الكبيرة.
-
-السبب: {0}
-
-هل تريد إنشاء الغرفة على أي حال؟ (قد لا يتمكن المشاركون من الاتصال أيضًا)","Tidak dapat terhubung ke server relai untuk ruang besar.
-
-Penyebab: {0}
-
-Tetap buat ruang? (Peserta mungkin juga tidak dapat terhubung)",
+Penyebabnya biasanya jaringan atau perangkat lunak keamanan Anda. Sampaikan isi jendela ini kepada host.",
 RelayUnavailableTitle,,中継サーバーに接続できません,Cannot reach the relay server,无法连接到中继服务器,無法連線到中繼伺服器,중계 서버에 연결할 수 없습니다,No se puede acceder al servidor de retransmisión,يتعذّر الوصول إلى خادم الترحيل,Server relai tidak dapat dijangkau,
 ConnectionError,,接続エラー,Connection error,连接错误,連線錯誤,연결 오류,Error de conexión,خطأ في الاتصال,Kesalahan koneksi,
 HostIsNewer,"0: host version, 1: your version",ホストのプラグイン ({0}) より古いバージョン ({1}) のため、接続を切断しました。,Disconnected because your version ({1}) is older than the host's plugin ({0}).,你的版本（{1}）比房主的插件（{0}）旧，因此已断开连接。,你的版本（{1}）比房主的外掛（{0}）舊，因此已中斷連線。,호스트의 플러그인({0})보다 오래된 버전({1})이라 연결을 끊었습니다.,Se desconectó porque tu versión ({1}) es anterior al complemento del anfitrión ({0}).,تم قطع الاتصال لأن إصدارك ({1}) أقدم من إضافة المضيف ({0}).,Koneksi diputus karena versi Anda ({1}) lebih lama dari plugin host ({0}).,
@@ -410,15 +452,6 @@ La versión más reciente es {1}.","إضافتك ({0}) قديمة ولا يمك�
 أحدث إصدار هو {1}.","Plugin Anda ({0}) sudah usang dan tidak dapat terhubung ke server kolaborasi.
 Versi terbaru adalah {1}.",
 RoomFull,,この部屋は参加できる人数の上限に達しました。,This room has reached its participant limit.,此房间已达到可加入人数的上限。,此房間已達到可加入人數的上限。,이 방은 참가 가능 인원의 상한에 도달했습니다.,Esta sala alcanzó el límite de participantes.,وصلت هذه الغرفة إلى الحد الأقصى للمشاركين.,Ruang ini sudah mencapai batas peserta.,
-RoomFullAskLarge,,"この部屋は参加できる人数の上限に達しました。
-ホストに大きい部屋を作ってもらってください。","This room has reached its participant limit.
-Ask the host to create a large room.","此房间已达到可加入人数的上限。
-请让房主创建大房间。","此房間已達到可加入人數的上限。
-請房主建立大房間。","이 방은 참가 가능 인원의 상한에 도달했습니다.
-호스트에게 큰 방을 만들어 달라고 요청하세요.","Esta sala alcanzó el límite de participantes.
-Pide al anfitrión que cree una sala grande.","وصلت هذه الغرفة إلى الحد الأقصى للمشاركين.
-اطلب من المضيف إنشاء غرفة كبيرة.","Ruang ini sudah mencapai batas peserta.
-Minta host untuk membuat ruang besar.",
 RoomFullTitle,,満員です,Room is full,房间已满,房間已滿,인원 초과,Sala llena,الغرفة ممتلئة,Ruang penuh,
 RoomExpired,,"この部屋は一定時間やり取りが無かったため、自動的に閉じられました。
 ホストに新しい部屋を作り直してもらってください。","This room was closed automatically because there was no activity for a while.
@@ -717,16 +750,6 @@ MyPluginMissingLead,,あなたが使用している以下のプラグインが�
 MyFontMissingLead,,あなたが使用している以下のフォントが、相手の環境にありません。,The following font you use is not installed on the other participant's PC.,你使用的以下字体在对方的环境中不存在。,你使用的以下字型在對方的環境中不存在。,내가 사용하는 다음 글꼴이 상대 환경에 없습니다.,La siguiente fuente que usas no está instalada en el equipo del otro participante.,الخط التالي الذي تستخدمه غير مثبّت على جهاز المشارك الآخر.,Font berikut yang Anda gunakan tidak terpasang di PC peserta lain.,
 OwnersFew,0: user names,（{0} さん）," ({0})",（{0}）,（{0}）," ({0} 님)"," ({0})"," ({0})"," ({0})",
 OwnersMany,"0: user name, 1: other count",（{0} さん ほか {1} 人）," ({0} and {1} more)",（{0} 等 {1} 人）,（{0} 等 {1} 人）," ({0} 님 외 {1}명)"," ({0} y {1} más)"," ({0} و{1} آخرون)"," ({0} dan {1} lainnya)",
-MigratedMessage,,"人数が少ない状態が続いたため、小さい部屋へ移動しました。
-ルームIDが変わっているので、新しく招待する場合は招待リンクを取り直してください。","Only a few people stayed for a while, so the room moved to a small room.
-The room ID has changed, so get a new invite link before inviting anyone else.","由于人数持续较少，已转移到小房间。
-房间 ID 已更改，如需邀请新成员，请重新获取邀请链接。","由於人數持續較少，已轉移到小房間。
-房間 ID 已變更，如需邀請新成員，請重新取得邀請連結。","인원이 적은 상태가 계속되어 작은 방으로 이동했습니다.
-방 ID가 바뀌었으므로 새로 초대하려면 초대 링크를 다시 받아 주세요.","Hubo pocas personas durante un tiempo, así que la sala pasó a una sala pequeña.
-El ID de la sala cambió; obtén un enlace de invitación nuevo antes de invitar a alguien más.","استمر وجود عدد قليل من الأشخاص لفترة، لذا انتقلت الغرفة إلى غرفة صغيرة.
-تغيّر معرّف الغرفة، لذا احصل على رابط دعوة جديد قبل دعوة أي شخص آخر.","Jumlah orang tetap sedikit untuk beberapa waktu, jadi ruang dipindah ke ruang kecil.
-ID ruang telah berubah, jadi ambil tautan undangan baru sebelum mengundang orang lain.",
-MigratedTitle,,部屋を移動しました,Moved to another room,已转移房间,已轉移房間,방을 이동했습니다,Se cambió de sala,تم نقل الغرفة,Ruang dipindahkan,
 ProjectTooLargeTitle,,プロジェクトが大きすぎます,The project is too large,项目过大,專案過大,프로젝트가 너무 큽니다,El proyecto es demasiado grande,المشروع كبير جدًا,Proyek terlalu besar,
 ProjectTooLargeMessage,,相手のプロジェクトが大きすぎたため、同期を中止しました。,Syncing was stopped because the other participant's project is too large.,对方的项目过大，已中止同步。,對方的專案過大，已中止同步。,상대의 프로젝트가 너무 커서 동기화를 중지했습니다.,Se detuvo la sincronización porque el proyecto del otro participante es demasiado grande.,تم إيقاف المزامنة لأن مشروع المشارك الآخر كبير جدًا.,Sinkronisasi dihentikan karena proyek peserta lain terlalu besar.,
 Checking,,確認中...,Checking...,正在检查...,正在檢查...,확인 중...,Comprobando...,جارٍ التحقق...,Memeriksa...,
@@ -753,3 +776,11 @@ Check that you are both using the same version of MultiUserEdit.","无法解析�
 Comprueba que ambos usáis la misma versión de MultiUserEdit.","تعذّر تفسير ما تم استلامه من المشارك الآخر.
 تأكد من أنكما تستخدمان الإصدار نفسه من MultiUserEdit.","Isi yang diterima dari peserta lain tidak dapat dipahami.
 Pastikan Anda berdua memakai versi MultiUserEdit yang sama.",
+Scripts,,台本,Scripts,台本,台本,대본,Guiones,النصوص,Naskah,
+ScriptAddToTimeline,,タイムラインに追加,Add to timeline,添加到时间线,新增到時間軸,타임라인에 추가,Añadir a la línea de tiempo,إضافة إلى المخطط الزمني,Tambahkan ke timeline,
+ScriptDelete,,削除,Delete,删除,刪除,삭제,Eliminar,حذف,Hapus,
+ScriptCharacterMissing,0: character name,キャラクター「{0}」がこの PC の YMM4 にありません。キャラクター設定を確認してください。,"The character ""{0}"" is not set up in YMM4 on this PC. Check the character settings.",这台电脑的 YMM4 中没有角色“{0}”。请检查角色设置。,這台電腦的 YMM4 中沒有角色「{0}」。請檢查角色設定。,"이 PC의 YMM4에 캐릭터 ""{0}""이(가) 없습니다. 캐릭터 설정을 확인하세요.","El personaje ""{0}"" no está configurado en YMM4 en este PC. Revisa la configuración de personajes.","الشخصية ""{0}"" غير موجودة في YMM4 على هذا الجهاز. تحقق من إعدادات الشخصيات.","Karakter ""{0}"" tidak ada di YMM4 pada PC ini. Periksa pengaturan karakter.",
+ScriptGenerateFailed,,ボイスアイテムを追加できませんでした。YMM4 が別の処理をしている可能性があります。少し待ってからもう一度お試しください。,Could not add the voice item. YMM4 may be busy with another task. Please wait a moment and try again.,无法添加语音项目。YMM4 可能正在处理其他操作。请稍后再试。,無法新增語音項目。YMM4 可能正在處理其他操作。請稍後再試。,보이스 아이템을 추가하지 못했습니다. YMM4가 다른 작업 중일 수 있습니다. 잠시 후 다시 시도하세요.,No se pudo añadir el elemento de voz. Es posible que YMM4 esté ocupado con otra tarea. Espera un momento e inténtalo de nuevo.,تعذّرت إضافة العنصر الصوتي. ربما يكون YMM4 مشغولاً بمهمة أخرى. انتظر قليلاً ثم حاول مرة أخرى.,Tidak dapat menambahkan item suara. YMM4 mungkin sedang sibuk. Tunggu sebentar lalu coba lagi.,
+RoomIdentityRejected,,同じユーザーで別の接続がすでに部屋に入っているため、参加できませんでした。少し待ってからもう一度お試しください。,"Could not join because another connection with the same user is already in the room. Please wait a moment and try again.",由于同一用户的其他连接已在房间中，无法加入。请稍后再试。,由於同一使用者的其他連線已在房間中，無法加入。請稍後再試。,같은 사용자의 다른 연결이 이미 방에 있어 참여할 수 없습니다. 잠시 후 다시 시도하세요.,"No se pudo unir porque otra conexión del mismo usuario ya está en la sala. Espera un momento e inténtalo de nuevo.",تعذّر الانضمام لأن اتصالاً آخر للمستخدم نفسه موجود بالفعل في الغرفة. انتظر قليلاً ثم حاول مرة أخرى.,"Tidak dapat bergabung karena koneksi lain dari pengguna yang sama sudah ada di ruang. Tunggu sebentar lalu coba lagi.",
+RoomRateLimited,,短い時間に部屋を作りすぎたため、作成できませんでした。しばらく待ってからもう一度お試しください。,"Too many rooms were created in a short time. Please wait a while and try again.",短时间内创建的房间过多，无法创建。请稍后再试。,短時間內建立的房間過多，無法建立。請稍後再試。,짧은 시간에 방을 너무 많이 만들어 만들 수 없습니다. 잠시 후 다시 시도하세요.,"Se crearon demasiadas salas en poco tiempo. Espera un rato e inténtalo de nuevo.",تم إنشاء عدد كبير جدًا من الغرف في وقت قصير. انتظر قليلاً ثم حاول مرة أخرى.,"Terlalu banyak ruang dibuat dalam waktu singkat. Tunggu sebentar lalu coba lagi.",
+RoomJoinRateLimited,,短い時間に何度も参加を試したため、参加できませんでした。しばらく待ってからもう一度お試しください。,"Too many join attempts in a short time. Please wait a while and try again.",短时间内尝试加入的次数过多，无法加入。请稍后再试。,短時間內嘗試加入的次數過多，無法加入。請稍後再試。,짧은 시간에 너무 많이 참가를 시도하여 참가할 수 없습니다. 잠시 후 다시 시도하세요.,"Demasiados intentos de unirse en poco tiempo. Espera un rato e inténtalo de nuevo.",محاولات انضمام كثيرة جدًا في وقت قصير. انتظر قليلاً ثم حاول مرة أخرى.,"Terlalu banyak percobaan bergabung dalam waktu singkat. Tunggu sebentar lalu coba lagi.",

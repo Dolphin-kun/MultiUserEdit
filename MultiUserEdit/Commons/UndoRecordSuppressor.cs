@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Diagnostics;
 using System.Reflection;
 using YukkuriMovieMaker.UndoRedo;
 
@@ -30,9 +29,8 @@ namespace MultiUserEdit.Commons
                     {
                         IsUndoRedoingField?.SetValue(manager, false);
                     }
-                    catch (Exception ex)
+                    catch
                     {
-                        Debug.WriteLine($"[MultiUserEdit] UndoRecordSuppressor unsilence failed: {ex.Message}");
                     }
                 }
 
@@ -49,9 +47,8 @@ namespace MultiUserEdit.Commons
                         foreach (var command in snapshot) commands.Add(command);
                     }
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Debug.WriteLine($"[MultiUserEdit] UndoRecordSuppressor restore failed: {ex.Message}");
                 }
             }
         }
@@ -65,9 +62,8 @@ namespace MultiUserEdit.Commons
                 IsUndoRedoingField.SetValue(manager, true);
                 return new Scope(manager, null, null, silenced: true);
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] UndoRecordSuppressor silence failed: {ex.Message}");
                 return Suppress(manager);
             }
         }
@@ -94,9 +90,8 @@ namespace MultiUserEdit.Commons
 
                 return new Scope(manager, collector, snapshot);
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"[MultiUserEdit] UndoRecordSuppressor failed: {ex.Message}");
                 return new Scope(null, null, null);
             }
         }

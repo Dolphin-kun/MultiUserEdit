@@ -9,6 +9,11 @@ namespace MultiUserEdit
     [PluginDetails(AuthorName = "いるかぁぁ", ContentId = "nc505669")]
     public class MultiUserEditPlugin : IToolPlugin
     {
+        public MultiUserEditPlugin()
+        {
+            Commons.DeepLinkListener.Start();
+            Commons.AudioProxy.DeleteCache();
+        }
 
         public string Name => Texts.PluginName;
         public Type ViewModelType => typeof(MultiUserEditViewModel);

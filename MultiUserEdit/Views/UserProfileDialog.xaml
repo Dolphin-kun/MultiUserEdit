@@ -1,6 +1,7 @@
 ﻿<Window x:Class="MultiUserEdit.Views.UserProfileDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ymm="clr-namespace:YukkuriMovieMaker.Controls;assembly=YukkuriMovieMaker.Controls"
         xmlns:loc="clr-namespace:MultiUserEdit"
         xmlns:icons="clr-namespace:YukkuriMovieMaker.Resources.Icons;assembly=YukkuriMovieMaker.Plugin"
         Title="{x:Static loc:Texts.UserInfo}" Height="440" Width="380"
@@ -92,20 +93,102 @@
                             <Separator Margin="0,10" />
 
                             <TextBlock Text="{x:Static loc:Texts.CustomizeRules}" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
-                            <CheckBox x:Name="AddItemsCheck" Content="{x:Static loc:Texts.AllowAddItems}" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="DeleteItemsCheck" Content="{x:Static loc:Texts.AllowDeleteItems}" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="DeleteOthersCheck" Content="{x:Static loc:Texts.AllowDeleteOthersItems}"
-                                      IsEnabled="{Binding IsChecked, ElementName=DeleteItemsCheck}"
-                                      Cursor="Hand" Margin="18,2,0,3" FontSize="11" />
-                            <CheckBox x:Name="MoveItemsCheck" Content="{x:Static loc:Texts.AllowMoveItems}" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="EditPropsCheck" Content="{x:Static loc:Texts.AllowEditItems}" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="AddScenesCheck" Content="{x:Static loc:Texts.AllowAddScenes}" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="DeleteScenesCheck" Content="{x:Static loc:Texts.AllowDeleteScenes}" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="ShareFilesCheck" Content="{x:Static loc:Texts.AllowSendFiles}" Cursor="Hand" Margin="0,3" />
-                            <CheckBox x:Name="ShareVideosCheck" Content="{x:Static loc:Texts.Video}" IsEnabled="{Binding IsChecked, ElementName=ShareFilesCheck}" Cursor="Hand" Margin="18,2,0,2" FontSize="11" />
-                            <CheckBox x:Name="ShareImagesCheck" Content="{x:Static loc:Texts.Image}" IsEnabled="{Binding IsChecked, ElementName=ShareFilesCheck}" Cursor="Hand" Margin="18,2,0,2" FontSize="11" />
-                            <CheckBox x:Name="ShareAudioCheck" Content="{x:Static loc:Texts.Audio}" IsEnabled="{Binding IsChecked, ElementName=ShareFilesCheck}" Cursor="Hand" Margin="18,2,0,3" FontSize="11" />
-                            <CheckBox x:Name="SyncSeekCheck" Content="{x:Static loc:Texts.AutoFollowHost}" Cursor="Hand" Margin="0,3" />
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Static loc:Texts.AllowAddItems}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" />
+                                <ymm:ToggleSlider x:Name="AddItemsCheck" Grid.Column="1" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Static loc:Texts.AllowDeleteItems}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" />
+                                <ymm:ToggleSlider x:Name="DeleteItemsCheck" Grid.Column="1" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Margin="18,2,0,3" IsEnabled="{Binding Value, ElementName=DeleteItemsCheck}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Static loc:Texts.AllowDeleteOthersItems}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" FontSize="11" />
+                                <ymm:ToggleSlider x:Name="DeleteOthersCheck" Grid.Column="1" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Static loc:Texts.AllowMoveItems}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" />
+                                <ymm:ToggleSlider x:Name="MoveItemsCheck" Grid.Column="1" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Static loc:Texts.AllowEditItems}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" />
+                                <ymm:ToggleSlider x:Name="EditPropsCheck" Grid.Column="1" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Static loc:Texts.AllowAddScenes}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" />
+                                <ymm:ToggleSlider x:Name="AddScenesCheck" Grid.Column="1" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Static loc:Texts.AllowDeleteScenes}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" />
+                                <ymm:ToggleSlider x:Name="DeleteScenesCheck" Grid.Column="1" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Static loc:Texts.AllowSendFiles}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" />
+                                <ymm:ToggleSlider x:Name="ShareFilesCheck" Grid.Column="1" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Margin="18,2,0,2" IsEnabled="{Binding Value, ElementName=ShareFilesCheck}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Static loc:Texts.Video}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" FontSize="11" />
+                                <ymm:ToggleSlider x:Name="ShareVideosCheck" Grid.Column="1" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Margin="18,2,0,2" IsEnabled="{Binding Value, ElementName=ShareFilesCheck}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Static loc:Texts.Image}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" FontSize="11" />
+                                <ymm:ToggleSlider x:Name="ShareImagesCheck" Grid.Column="1" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Margin="18,2,0,3" IsEnabled="{Binding Value, ElementName=ShareFilesCheck}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Static loc:Texts.Audio}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" FontSize="11" />
+                                <ymm:ToggleSlider x:Name="ShareAudioCheck" Grid.Column="1" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{x:Static loc:Texts.AutoFollowHost}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" />
+                                <ymm:ToggleSlider x:Name="SyncSeekCheck" Grid.Column="1" VerticalAlignment="Center" />
+                            </Grid>
                         </StackPanel>
                     </ScrollViewer>
                 </TabItem>

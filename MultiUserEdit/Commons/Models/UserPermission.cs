@@ -17,6 +17,23 @@
         public bool CanShareAudio { get; set; } = true;
         public bool CanSyncSeekPosition { get; set; } = false;
 
+        public void CopyFrom(UserPermission other)
+        {
+            Level = other.Level;
+            CanAddItems = other.CanAddItems;
+            CanMoveItems = other.CanMoveItems;
+            CanDeleteItems = other.CanDeleteItems;
+            CanDeleteOthersItems = other.CanDeleteOthersItems;
+            CanEditProperties = other.CanEditProperties;
+            CanAddScenes = other.CanAddScenes;
+            CanDeleteScenes = other.CanDeleteScenes;
+            CanShareFiles = other.CanShareFiles;
+            CanShareVideos = other.CanShareVideos;
+            CanShareImages = other.CanShareImages;
+            CanShareAudio = other.CanShareAudio;
+            CanSyncSeekPosition = other.CanSyncSeekPosition;
+        }
+
         public static UserPermission CreateFromLevel(PermissionLevel level)
         {
             return level switch
